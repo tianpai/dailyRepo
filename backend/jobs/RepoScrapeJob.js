@@ -61,10 +61,6 @@ export async function prepTrendingData() {
   return dataList;
 }
 
-(async () => {
-  console.log(await prepTrendingData());
-})();
-
 export async function saveData(repos) {
   const today = getTodayUTC();
   for (const repo of repos) {
