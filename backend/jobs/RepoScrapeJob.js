@@ -67,7 +67,7 @@ export async function prepTrendingData() {
 
 export async function saveData(repos) {
   const today = getTodayUTC();
-  repos.forEach(async (repo) => {
+  for (const repo of repos) {
     const existingRepo = await Repo.findOne({
       fullName: repo.fullName,
     });
@@ -85,5 +85,5 @@ export async function saveData(repos) {
       const newRepo = new Repo(repo);
       await newRepo.save();
     }
-  });
+  }
 }
