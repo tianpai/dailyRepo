@@ -1,8 +1,34 @@
 import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import repoRoutes from "./routes/RepoRoutes.js";
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
+mongoose
+  .connect(process.env.MONGO)
+  .then(() => {
+    console.log("MongoDB connected");
+  })
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+    process.exit(1);
+  });
+
+app.use(express.json());
+app.use("/api/repos", repoRoutes);
+
+const server = app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
+});
+
+/* Graceful shutdown */
+process.on("SIGTERM", () => {
+  debug("SIGTERM signal received: closing HTTP server");
+  server.close(() => {
+    debug("HTTP server closed", Date.now());
+  });
 });
