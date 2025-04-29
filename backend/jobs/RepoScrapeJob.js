@@ -7,7 +7,9 @@ export async function prepTrendingData() {
   const trendingList = await getTrending();
   const dataList = [];
   const today = getTodayUTC();
-  trendingList.forEach(async (repo) => {
+
+  // forEach does not work with async/await
+  for (const repo of trendingList) {
     try {
       const fullRepoData = await getRepo(repo);
       const {
@@ -55,9 +57,13 @@ export async function prepTrendingData() {
     } catch (error) {
       console.error("Error fetching repo data:", error);
     }
-  });
+  }
   return dataList;
 }
+
+(async () => {
+  console.log(await prepTrendingData());
+})();
 
 export async function saveData(repos) {
   const today = getTodayUTC();
