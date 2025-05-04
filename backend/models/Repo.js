@@ -12,13 +12,13 @@ const RepoSchema = new mongoose.Schema({
   lastUpdate: Number,
   forks: { type: Map, of: Number },
   stars: { type: Map, of: Number },
-  watches: { type: Map, of: Number },
   age: Number,
   owner: String,
   stats: {
     trends: Number,
     category: [String],
     scrapedDate: String,
+    message: String,
   },
 });
 
