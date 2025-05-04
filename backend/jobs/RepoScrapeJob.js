@@ -3,83 +3,132 @@ import { getTodayUTC } from "../utils/time.js";
 import { calculateTrendScore } from "../utils/trendScore.js";
 import Repo from "../models/Repo.js";
 
-export async function prepTrendingData() {
-  const trendingList = await getTrending();
-  const dataList = [];
-  const today = getTodayUTC();
+/**
+ * Turn the full GitHub repo payload + languages into your DB object.
+ *
+ * @param {Object} data           The raw repo JSON from getRepo()
+ * @param {Object} languages      The object from fetchLanguages()
+ * @param {string} today          A date string like "2025-05-04"
+ * @returns {Object}              Cleaned-up repo document ready to save
+ */
+function transformRepo(data, languages, today) {
+  const {
+    name,
+    full_name,
+    description,
+    html_url,
+    license,
+    created_at,
+    updated_at,
+    topics = [],
+    stargazers_count: starsCount,
+    watchers_count: watchesCount,
+    forks_count: forksCount,
+    owner: { login: owner },
+  } = data;
 
-  // forEach does not work with async/await
-  for (const repo of trendingList) {
-    try {
-      const fullRepoData = await getRepo(repo);
-      const {
-        name,
-        full_name: fullName,
-        description,
-        url,
-        license,
-        created_at: createdAt,
-        updated_at: lastUpdate,
-        topics,
-        stargazers_count: stars,
-        watchers_count: watches,
-        forks_count: forks,
-        owner: { login: owner },
-      } = fullRepoData;
+  // Timestamps as Numbers
+  const createdMs = new Date(created_at).getTime();
+  const updatedMs = new Date(updated_at).getTime();
+  const age = createdMs ? Date.now() - createdMs : 0;
 
-      const languageJSON = await fetch(fullRepoData.languages_url).then((res) =>
-        res.json(),
-      );
+  return {
+    // basic info
+    name,
+    fullName: full_name,
+    description,
+    url: html_url,
+    owner,
 
-      const age = Date.now() - new Date(createdAt);
-      const repoDataToSave = {
-        name,
-        fullName,
-        description,
-        url,
-        language: languageJSON,
-        lastUpdate: new Date(lastUpdate).getTime(),
-        createdAt: new Date(createdAt).getTime(),
+    // languages from fetchLanguages()
+    language: languages,
+
+    // dates
+    createdAt: createdMs,
+    lastUpdate: updatedMs,
+    age,
+
+    // GitHub‐specific metadata
+    topics,
+    license: license?.name || null,
+
+    // stats keyed by today’s date
+    stars: { [today]: starsCount },
+    forks: { [today]: forksCount },
+    watches: { [today]: watchesCount },
+
+    // compute trend score however you like
+    stats: {
+      trends: calculateTrendScore({
+        stars: starsCount,
+        forks: forksCount,
+        watches: watchesCount,
         age,
-        topics: topics || [],
-        license: license?.name || "No license",
-        stars: { [today]: stars },
-        forks: { [today]: forks },
-        watches: { [today]: watches },
-        owner,
-        stats: {
-          trends: calculateTrendScore({ stars, forks, watches, age }),
-          scrapedDate: getTodayUTC(),
-          category: [],
-        },
-      };
-      dataList.push(repoDataToSave);
-    } catch (error) {
-      console.error("Error fetching repo data:", error);
-    }
-  }
-  return dataList;
+      }),
+      scrapedDate: today,
+      category: [], // fill in if you categorize later
+    },
+  };
 }
 
-export async function saveData(repos) {
-  const today = getTodayUTC();
-  for (const repo of repos) {
-    const existingRepo = await Repo.findOne({
-      fullName: repo.fullName,
-    });
-
-    if (existingRepo) {
-      existingRepo.stars.set(today, repo.stars[today]);
-      existingRepo.forks.set(today, repo.forks[today]);
-      existingRepo.watches.set(today, repo.watches[today]);
-      existingRepo.lastUpdate = repo.lastUpdate;
-      existingRepo.stats.trends = repo.stats.trends;
-      existingRepo.stats.scrapedDate = today;
-
-      await existingRepo.save();
-    } else {
-      const newRepo = new Repo(repo);
-      await newRepo.save();
-    }
+/**
+ * Make request to GitHub API for languages.
+ */
+async function fetchLanguages(url) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(
+      `fetchLanguages(${url}) failed: ${res.status} ${res.statusText}`,
+    );
   }
+  return res.json();
+}
+
+/**
+ * Fetch full repo metadata + languages, then transform into DB-ready form.
+ * @param {string} rawName  e.g. "facebook/react"
+ * @param {string} today    e.g. "2025-05-04"
+ */
+async function processOneRepo(rawName, today) {
+  const fullData = await getRepo(rawName);
+  const langs = await fetchLanguages(fullData.languages_url);
+  return transformRepo(fullData, langs, today);
+}
+
+export async function prepTrendingData() {
+  const trendingList = await getTrending();
+  const today = getTodayUTC();
+
+  const results = await Promise.allSettled(
+    trendingList.map((repoName) => processOneRepo(repoName, today)),
+  );
+
+  const repos = results
+    .filter((result) => result.status === "fulfilled")
+    .map((result) => result.value);
+
+  results.forEach((r) => {
+    if (r.status === "rejected") {
+      console.error("Error processing repo:", r.reason);
+    }
+  });
+
+  return repos;
+}
+
+/**
+ * Upsert an array of already‑prepared repo objects in one bulkWrite.
+ */
+export async function saveTrendingData(repos) {
+  if (!repos.length) return; // guard against empty ops
+
+  const ops = repos.map((repo) => ({
+    updateOne: {
+      filter: { fullName: repo.fullName },
+      update: { $set: repo },
+      upsert: true,
+    },
+  }));
+
+  await Repo.bulkWrite(ops);
 }
