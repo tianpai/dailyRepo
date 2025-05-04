@@ -6,37 +6,50 @@ import { prepTrendingData, saveData } from "./jobs/RepoScrapeJob.js";
 
 dotenv.config();
 
-async function runScrapeJob() {
-  console.log(`Scrape job starts at ${new Date().toISOString()}`);
-  try {
+/* ------------------------------------------------------------------ */
+/* DB helpers                                                         */
+/* ------------------------------------------------------------------ */
+async function ensureMongoConnected() {
+  if (mongoose.connection.readyState !== 1) {
     await mongoose.connect(process.env.MONGO, {
-      serverSelectionTimeoutMS: 10000, // 10 seconds timeout
+      serverSelectionTimeoutMS: 10_000,
     });
     console.log("MongoDB connected");
+  }
+}
 
-    const repo = await prepTrendingData();
-    console.log(`Preparing ${repo.length}`);
-    await saveData(repo);
+/* ------------------------------------------------------------------ */
+/* Job                                                                */
+/* ------------------------------------------------------------------ */
+export async function runScrapeJob() {
+  console.log(`[${new Date().toISOString()}] ▶ Scrape job starts`);
+  try {
+    await ensureMongoConnected();
+
+    const repos = await prepTrendingData();
+    console.log(`Preparing ${repos.length} repos…`);
+    await saveData(repos);
 
     const cacheKey = process.env.CACHE_KEY_TRENDING;
     if (cacheKey) {
       deleteCached(cacheKey);
       console.log(`Cache key ${cacheKey} deleted`);
-    } else {
-      console.warn("Cache key not found in environment variables");
     }
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
+    process.exitCode = 0; // let platforms mark success
+  } catch (err) {
+    console.error("❌ Job error:", err);
+    process.exitCode = 1;
   } finally {
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.connection.close();
-      console.log("MongoDB connection closed");
-    }
-    console.log(`Scrape job ends at ${new Date().toISOString()}`);
+    await mongoose.disconnect(); // always close the socket
+    console.log(
+      `[${new Date().toISOString()}] ⏹ Scrape job ends (exit ${process.exitCode})`,
+    );
   }
 }
 
-/* syntax includes seconds */
+/* ------------------------------------------------------------------ */
+/* Local cron trigger (Node‑Cron keeps the process running)           */
+/* ------------------------------------------------------------------ */
 const schedules = {
   everyDay2amUTC: "0 0 2 * * *",
   everyThreeDay2amUTC: "0 0 2 */3 * *",
@@ -44,14 +57,12 @@ const schedules = {
 
 cron.schedule(schedules.everyDay2amUTC, runScrapeJob);
 
-/* CLI manual trigger (testing only) */
+/* Manual CLI trigger: `node scheduler.js --run-now` */
 if (process.argv.includes("--run-now")) {
   runScrapeJob();
 }
 
-/*
- * handle unhandled promises rejections
- */
+/* Guard for unhandled promise rejections */
 process.on("unhandledRejection", (err) => {
   console.error("Unhandled Rejection:", err);
   process.exit(1);
