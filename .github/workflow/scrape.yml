@@ -1,0 +1,30 @@
+name: Daily Repo Scrape
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # runs at 02:00 UTC every day
+  workflow_dispatch: # allows manual runs
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    # all "run:" commands below will execute in the `backend/` dir
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Install production deps
+        run: npm ci --omit=dev
+
+      - name: Run scraper
+        run: node scheduler.js --run-now
+        env:
+          PORT: ${{ secrets.PORT }}
+          MONGO: ${{ secrets.MONGO }}
+          CACHE_KEY_TRENDING: ${{ secrets.CACHE_KEY_TRENDING }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
