@@ -4,6 +4,10 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
+    "start": "node server.js",
+    "scrape": "node scheduler.js --run-now",
+    "dev:server": "nodemon server.js",
+    "dev:scraper": "nodemon scheduler.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "tianpai (github)",
