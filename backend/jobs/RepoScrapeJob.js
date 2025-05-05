@@ -12,6 +12,7 @@ import Repo from "../models/Repo.js";
  * @returns {Object}              Cleaned-up repo document ready to save
  */
 function transformRepo(data, languages, today) {
+  // API Raw data
   const {
     name,
     full_name,
@@ -23,6 +24,7 @@ function transformRepo(data, languages, today) {
     topics = [],
     stargazers_count: starsCount,
     forks_count: forksCount,
+    subscribers_count: watchesCount,
     owner: { login: owner },
   } = data;
 
@@ -54,6 +56,7 @@ function transformRepo(data, languages, today) {
     // stats keyed by today’s date
     stars: { [today]: starsCount },
     forks: { [today]: forksCount },
+    watches: { [today]: watchesCount },
 
     // compute trend score however you like
     stats: {
