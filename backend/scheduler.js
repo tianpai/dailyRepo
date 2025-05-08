@@ -64,11 +64,15 @@ export async function runScrapeJob() {
 }
 
 // Schedule the job to run daily at 02:00 UTC
-cron.schedule("0 0 2 * * *", runScrapeJob);
+const task = cron.schedule("0 0 2 * * *", runScrapeJob);
 
 // Optionally run immediately via CLI flag
 if (process.argv.includes("--run-now")) {
-  runScrapeJob();
+  runScrapeJob().finally(() => {
+    task.stop();
+    console.log("Scheduler stopped.");
+    process.exit(0);
+  });
 }
 
 // Catch unhandled promise rejections
