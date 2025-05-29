@@ -27,7 +27,7 @@ jobs:
           curl --digest \
             -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
             -H "Content-Type: application/json" \
-            -X POST "https://cloud.mongodb.com/api/atlas/v1.0/orgs/${{ secrets.ATLAS_ORG_ID }}/accessList" \
+            -X POST "https://cloud.mongodb.com/api/atlas/v1.0/orgs/${{ secrets.ATLAS_PROJECT_ID }}/accessList" \
             -d "[{ \"ipAddress\": \"${{ steps.get_ip.outputs.ip }}\", \"comment\": \"github-action runner\" }]"
 
       - name: Install production deps
@@ -56,4 +56,4 @@ jobs:
           echo "Removing ${{ steps.get_ip.outputs.ip }} from org access list"
           curl --digest \
             -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
-            -X DELETE "https://cloud.mongodb.com/api/atlas/v1.0/orgs/${{ secrets.ATLAS_ORG_ID }}/accessList/${{ steps.get_ip.outputs.ip }}"
+            -X DELETE "https://cloud.mongodb.com/api/atlas/v1.0/orgs/${{ secrets.ATLAS_PROJECT_ID }}/accessList/${{ steps.get_ip.outputs.ip }}"
