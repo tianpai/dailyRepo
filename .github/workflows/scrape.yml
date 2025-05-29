@@ -21,6 +21,10 @@ jobs:
       - name: Install production deps
         run: npm ci --omit=dev
 
+      - name: Verify MongoDB connection
+        run: |
+          node -e "require('mongodb').MongoClient.connect(process.env.MONGO).then(client => client.close())"
+
       - name: Run scraper
         run: node scheduler.js --run-now
         env:

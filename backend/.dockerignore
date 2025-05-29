@@ -1,0 +1,13 @@
+# .dockerignore
+node_modules
+.git
+.gitignore
+.env
+Dockerfile
+.dockerignore
+*.log
+npm-debug.log
+README.md
+scripts/
+jobs/
+scheduler.js
