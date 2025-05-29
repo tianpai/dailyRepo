@@ -17,7 +17,9 @@ jobs:
       - name: Get runner public IP
         id: get_ip
         run: |
-          echo "ip=$(curl -s https://ipinfo.io/ip)" >> $GITHUB_OUTPUT
+          echo "IP=$(curl -s https://ipinfo.io/ip)"
+          echo "Runner public IP: $IP"
+          echo "ip=$IP" >> $GITHUB_OUTPUT
 
       - name: Add IP to MongoDB Atlas
         run: |
