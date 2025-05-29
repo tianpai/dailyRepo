@@ -2,33 +2,55 @@ name: Daily Repo Scrape
 
 on:
   schedule:
-    - cron: "0 2 * * *" # runs at 02:00 UTC every day
-  workflow_dispatch: # allows manual runs
+    - cron: "0 2 * * *"
+  workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
-    # all "run:" commands below will execute in the `backend/` dir
     defaults:
       run:
         working-directory: backend
-
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Get runner public IP
+        id: get_ip
+        run: |
+          echo "ip=$(curl -s https://ipinfo.io/ip)" >> $GITHUB_OUTPUT
+
+      - name: Add IP to MongoDB Atlas
+        run: |
+          curl --digest \
+            -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -X POST "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.ATLAS_PROJECT_ID }}/accessList" \
+            -d "[{ \"ipAddress\": \"${{ steps.get_ip.outputs.ip }}\", \"comment\": \"github-action runner\" }]"
+        # optional: retry logic if Atlas is slow
 
       - name: Install production deps
         run: npm ci --omit=dev
 
       - name: Verify MongoDB connection
         run: |
-          node -e "require('mongodb').MongoClient.connect(process.env.MONGO).then(client => client.close())"
+          node -e "require('mongodb').MongoClient.connect(process.env.MONGO).then(c=>c.close())"
+        env:
+          MONGO: ${{ secrets.MONGO }}
+          PORT: ${{ secrets.PORT }}
+          CACHE_KEY_TRENDING: ${{ secrets.CACHE_KEY_TRENDING }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run scraper
         run: node scheduler.js --run-now
         env:
-          PORT: ${{ secrets.PORT }}
           MONGO: ${{ secrets.MONGO }}
+          PORT: ${{ secrets.PORT }}
           CACHE_KEY_TRENDING: ${{ secrets.CACHE_KEY_TRENDING }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove runner IP from MongoDB Atlas
+        if: always()
+        run: |
+          curl --digest \
+            -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
+            -X DELETE "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.ATLAS_PROJECT_ID }}/accessList/${{ steps.get_ip.outputs.ip }}"
