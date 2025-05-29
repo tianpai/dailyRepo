@@ -1,0 +1,62 @@
+# ========================================================================
+# STAGE 1: DEPENDENCY INSTALLATION (Builder stage)
+# ========================================================================
+
+# Use lightweight Node.js 18 Alpine base image (5x smaller than regular Node)
+FROM node:18-alpine AS builder
+
+# Set working directory inside container (creates if not exists)
+WORKDIR /usr/src/app
+
+# Copy ONLY package.json and package-lock.json FIRST (optimizes Docker cache)
+# This allows reusing dependency layers when only code changes
+COPY package*.json ./
+
+# Install PRODUCTION dependencies ONLY (no devDependencies)
+# --omit=dev: Skips dev dependencies (saves space and reduces vulnerabilities)
+# ci: Clean-install from lockfile (faster and more reliable than npm install)
+RUN npm ci --omit=dev
+
+# ========================================================================
+# STAGE 2: RUNTIME IMAGE (Final production image)
+# ========================================================================
+
+# Start fresh with same base image
+FROM node:18-alpine
+
+# Set same working directory for consistency
+WORKDIR /usr/src/app
+
+# Copy ONLY production dependencies from builder stage (not devDependencies)
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+
+# Copy ALL application code (filtered by .dockerignore)
+COPY . .
+
+# ====================== SECURITY HARDENING ==============================
+# Create non-root user (express-user) and set permissions
+RUN adduser -D express-user && \
+    chown -R express-user /usr/src/app  # Recursive ownership change
+
+# Switch to non-root user (reduces container breakout risk)
+USER express-user
+
+# ====================== RUNTIME CONFIGURATION ===========================
+# Set production environment (enables Express optimizations)
+ENV NODE_ENV=production
+
+# Set default PORT (override with -e PORT=xxxx at runtime)
+ENV PORT=3000
+
+# Expose port to host system (matches Express server port)
+EXPOSE 3000
+
+# ====================== HEALTH MONITORING ===============================
+# Check container health every 30s (adjust endpoint as needed)
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:3000/health || exit 1  # Replace /health with your endpoint
+
+# ====================== START COMMAND ===================================
+# Launch Express server (using node directly - no dev tools)
+# Entry point is your server.js file
+CMD ["node", "server.js"]  
