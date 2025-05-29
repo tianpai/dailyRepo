@@ -46,15 +46,15 @@ USER express-user
 ENV NODE_ENV=production
 
 # Set default PORT (override with -e PORT=xxxx at runtime)
-ENV PORT=3000
+ENV PORT=6969
 
 # Expose port to host system (matches Express server port)
-EXPOSE 3000
+EXPOSE 6969
 
 # ====================== HEALTH MONITORING ===============================
 # Check container health every 30s (adjust endpoint as needed)
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:3000/health || exit 1  # Replace /health with your endpoint
+  CMD curl -f http://localhost:{PORT}/health || exit 1  # Replace /health with your endpoint
 
 # ====================== START COMMAND ===================================
 # Launch Express server (using node directly - no dev tools)

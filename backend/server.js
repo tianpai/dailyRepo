@@ -19,6 +19,11 @@ mongoose
   });
 
 app.use(express.json());
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.use("/api/repos", repoRoutes);
 
 const server = app.listen(port, () => {
