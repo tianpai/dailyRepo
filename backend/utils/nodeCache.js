@@ -1,22 +1,39 @@
 import NodeCache from "node-cache";
 
-const cacheTime = 25 * 60 * 60; // 25 hours
-const cache = new NodeCache({ stdTTL: cacheTime });
+const cache = new NodeCache({
+  stdTTL: 14400, // 4 hours in seconds
+  checkperiod: 1800, // 30 minutes in seconds
+  maxKeys: 50, // <- SAFETY VALVE: Prevent memory leaks
+});
 
-export function getCached(key) {
+/**
+ * Assume date is in YYYY-MM-DD format
+ * example:
+ * getTrendCacheKey("2025-04-02") "trending:2025-04-02"
+ */
+export function getTrendCacheKey(date) {
+  return `trending:${date}`;
+}
+
+export const TTL = {
+  DATED: 24 * 60 * 60, // 1 day
+  ALL_TIME: 7 * 24 * 60 * 60, // 1 week
+};
+
+export function getCache(key) {
   return cache.get(key);
 }
 
-export function setCached(key, value) {
-  cache.set(key, value);
+export function setCache(key, value, ttl = undefined) {
+  return cache.set(key, value, ttl);
 }
 
-export function deleteCached(key) {
-  cache.del(key);
+export function delCache(key) {
+  return cache.del(key);
 }
 
 export function clearCache() {
-  cache.flushAll();
+  return cache.flushAll();
 }
 
 export default cache;
