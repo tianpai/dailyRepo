@@ -57,6 +57,7 @@ function transformRepo(data, languages, today) {
     stars: { [today]: starsCount },
     forks: { [today]: forksCount },
     watches: { [today]: watchesCount },
+    trendingDate: today,
 
     // compute trend score however you like
     stats: {
