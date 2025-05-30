@@ -1,13 +1,11 @@
 import cron from "node-cron";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { deleteCached } from "./utils/nodeCache.js";
 import { prepTrendingData, saveTrendingData } from "./jobs/RepoScrapeJob.js";
 
 dotenv.config();
 
 const MONGO_URI = process.env.MONGO;
-const CACHE_KEY = process.env.CACHE_KEY_TRENDING;
 
 /**
  * Ensure a MongoDB connection is established.
@@ -40,15 +38,15 @@ export async function runScrapeJob() {
 
     // 3. Persist to MongoDB
     await saveTrendingData(repos);
+    repos.forEach((r) => {
+      const stars = Object.values(r.stars)[0];
+      const forks = Object.values(r.forks)[0];
+      console.log(`  • [${r.fullName}] stars=${stars}, forks=${forks}`);
+    });
     console.log(
       `💾 Saved ${repos.length} repos to database at ${new Date().toISOString()}`,
     );
 
-    // 4. Invalidate cache if configured
-    if (CACHE_KEY) {
-      deleteCached(CACHE_KEY);
-      console.log(`🔄 Cleared cache key: ${CACHE_KEY}`);
-    }
 
     process.exitCode = 0;
   } catch (err) {
