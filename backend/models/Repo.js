@@ -21,6 +21,10 @@ const RepoSchema = new mongoose.Schema({
     scrapedDate: String,
     message: String,
   },
+  trendingDate: {
+    type: String, // Store as YYYY-MM-DD string
+    index: true, // for query performance
+  },
 });
 
 const Repo = mongoose.model("Repo", RepoSchema);

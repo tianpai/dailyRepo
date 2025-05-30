@@ -24,7 +24,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-app.use("/api/repos", repoRoutes);
+app.use("/api/v1/repos", repoRoutes);
 
 const server = app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
