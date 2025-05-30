@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
-  getLatest,
-  getHistory,
+  getTrending,
+  getStarHistory,
   getRanking,
 } from "../controller/RepoController.js";
 
@@ -11,27 +11,10 @@ async function notImplemented(_, res) {
   res.status(501).json({ error: "Not implemented" });
 }
 
-/**
- * GET /api/repo/latest
- * Purpose: Get the latest trending repos
- * No query parameters
- *
- * It should return today's if available, otherwise the most recent available
- */
-repoRouter.get("/latest", getLatest);
+const router = Router();
 
-/**
- * GET /api/repo/historical?date=YYYY-MM-DD
- * Purpose: Get trending repos for a specific historical date
- * Query parameter: date (required, in YYYY-MM-DD format)
- */
-repoRouter.get("/history", getHistory);
+router.get("/trending", getTrending); // ?date=YYYY-MM-DD
+router.get("/:id/star-history", getStarHistory); // ?from=YYYY-MM-DD&to=YYYY-MM-DD
+router.get("/ranking", getRanking); // ?top=N
 
-/**
- * GET /api/repo/ranking
- * Purpose: Get the top 10 repos of all time (based on some aggregation)
- * Optional query parameter: top (number, to get top N repos)
- */
-repoRouter.get("/ranking", getRanking);
-
-export default repoRouter;
+export default router;
