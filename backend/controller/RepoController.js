@@ -48,7 +48,7 @@ export async function getTrending(req, res, next) {
 
       // cache the real date long-term…
       setCache(getTrendCacheKey(latestDate), docs, TTL.DATED);
-      // …and today’s alias with short TTL so it self-expires
+      // …and today's alias with short TTL so it self-expires
       if (date === today) {
         // 1 hour because server is too drunk
         setCache(cacheKey, docs, TTL.HAPPY_HOUR);
@@ -79,16 +79,18 @@ export async function getStarHistory(req, res, next) {
     const { from, to } = req.query;
 
     if ((from && !isValidDate(from)) || (to && !isValidDate(to)))
-      return res.status(400).json({ error: "Bad from/to date" });
+      return res.status(403).json({ error: "Bad from/to date" });
 
     const repo = await Repo.findById(id).lean();
     if (!repo) return res.status(404).json({ error: "Repo not found" });
 
+    // FIX: modify the snapshots to include only the stars
+    // the star history of all time
+    // reference project: star-history on GitHub
     let series = repo.snapshots.map((s) => ({
       date: s.date,
       stars: s.stars,
     }));
-
     if (from) series = series.filter((s) => s.date >= from);
     if (to) series = series.filter((s) => s.date <= to);
 
@@ -110,6 +112,7 @@ export async function getRanking(req, res, next) {
   try {
     let top = parseInt(req.query.top ?? "10", 10);
     if (isNaN(top) || top <= 0) top = 10;
+    // If top is greater than 100, it will be set to 100
     top = Math.min(top, 100);
 
     // Try cache first
@@ -123,12 +126,18 @@ export async function getRanking(req, res, next) {
       {
         $project: {
           name: 1,
-          trend: 1,
-          latestStars: { $last: "$snapshots.stars" },
-        },
+          fullName: 1,
+          description: 1,
+          url: 1,
+          language: 1,
+          topics: 1,
+          "stats.trends": 1,
+          "stats.category": 1,
+          latestStars: { $last: "$snapshots.stars" }
+        }
       },
-      { $sort: { trend: -1 } },
-      { $limit: top },
+      { $sort: { "stats.trends": -1 } },
+      { $limit: top }
     ]);
 
     // Cache the results
