@@ -6,6 +6,7 @@ import {
   getTrendCacheKey,
 } from "../utils/nodeCache.js";
 import { getTodayUTC, isValidDate } from "../utils/time.js";
+import { getRepoStarRecords } from "../utils/starHistory.js";
 
 /**
  * GET /repos/trending
@@ -70,35 +71,34 @@ export async function getTrending(req, res, next) {
 }
 
 /**
- * GET /repos/:id/star-history
- * ?from=YYYY-MM-DD&to=YYYY-MM-DD  (both optional → full range)
+ * GET /repos/:name/:repo/star-history
  */
 export async function getStarHistory(req, res, next) {
   try {
-    const { id } = req.params;
-    const { from, to } = req.query;
+    const { owner, repo } = req.params;
+    const name = `${owner}/${repo}`;
+    //fetch from cache first
+    const cacheKey = `star-history:${name}`;
+    const cached = getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({ isCached: true, data: cached });
+    }
 
-    if ((from && !isValidDate(from)) || (to && !isValidDate(to)))
-      return res.status(403).json({ error: "Bad from/to date" });
+    // getting star history only requires gitub api
+    // but we need to check if the repo is trending before
+    const repoName = await Repo.find({ fullName: name })
+      .select({ _id: 0, fullName: 1 })
+      .lean();
+    console.log("repoName", repoName, "name", name);
+    if (!repoName)
+      return res
+        .status(404)
+        .json({ error: "Repo not found", msg: "Try use 'Star History' " });
 
-    const repo = await Repo.findById(id).lean();
-    if (!repo) return res.status(404).json({ error: "Repo not found" });
-
-    // FIX: modify the snapshots to include only the stars
-    // the star history of all time
-    // reference project: star-history on GitHub
-    let series = repo.snapshots.map((s) => ({
-      date: s.date,
-      stars: s.stars,
-    }));
-    if (from) series = series.filter((s) => s.date >= from);
-    if (to) series = series.filter((s) => s.date <= to);
-
-    // Cache the results
-    setCache(cacheKey, series, TTL.DATED);
-
-    res.set("Cache-Control", "public, max-age=3600");
-    return res.json(series);
+    const data = await getRepoStarRecords(name);
+    console.log("data", data);
+    setCache(cacheKey, data, TTL.SEMAINE);
+    return res.status(200).json({ isCached: false, data: data });
   } catch (err) {
     next(err);
   }
@@ -133,15 +133,15 @@ export async function getRanking(req, res, next) {
           topics: 1,
           "stats.trends": 1,
           "stats.category": 1,
-          latestStars: { $last: "$snapshots.stars" }
-        }
+          latestStars: { $last: "$snapshots.stars" },
+        },
       },
       { $sort: { "stats.trends": -1 } },
-      { $limit: top }
+      { $limit: top },
     ]);
 
     // Cache the results
-    setCache(cacheKey, ranking, TTL.ALL_TIME);
+    setCache(cacheKey, ranking, TTL.WEEK);
     return res.json(ranking);
   } catch (err) {
     next(err);

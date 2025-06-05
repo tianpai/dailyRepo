@@ -17,8 +17,9 @@ export function getTrendCacheKey(date) {
 
 export const TTL = {
   HAPPY_HOUR: 60 * 60, // 1 hour
-  DATED: 24 * 60 * 60, // 1 day
-  ALL_TIME: 7 * 24 * 60 * 60, // 1 week
+  ONE_EARTH_ROTATION: 24 * 60 * 60, // 1 day
+  SEMAINE: 7 * 24 * 60 * 60, // 1 week
+  THIRTY_FLIRTY: 30 * 24 * 60 * 60, // 1 month
 };
 
 export function getCache(key) {
