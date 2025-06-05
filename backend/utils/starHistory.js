@@ -104,7 +104,9 @@ export async function getRepoStarRecords(
     Array.isArray(firstRes.data) &&
     firstRes.data.length === 0
   ) {
+    // TODO: Decide how to handle this case
     throw new Error(`No stars found or repo doesn't exist`);
+    // return [];
   }
 
   // 3) build array of pages to fetch
