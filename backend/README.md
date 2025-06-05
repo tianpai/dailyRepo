@@ -40,8 +40,6 @@ docker run -d \
 
 ### On-going
 
-- [ ] API redesign (branch api-redesign)
-
 ### trending scraping
 
 - [x] design, implement and test API for top trending only
@@ -52,18 +50,13 @@ docker run -d \
   - [x] utils/nodeCahce.js
   - [x] job/RepoScrapeJob.js
 
-### periodic update
-
-- [ ] periodic update keywords and categories
-  - [ ] add a job to update the keywords and categories
-  - [ ] add a job to update the cache with the new keywords and categories
-  - [ ] add a job to update the database with the new keywords and categories
-
 ### Features and APIs
 
 - [ ] Incorporate repo-star project to produce more accurate trending repos
+  - [ ] update trending score every cache cycle
+- [x] API redesign (branch api-redesign)
 - [ ] Filter by Category or tags
-- [ ] Use repo about for description
+  - [ ] a word cloud for tags
 - [ ] allow user to search for a repo that might be trending previously
 
 ### Improvements
