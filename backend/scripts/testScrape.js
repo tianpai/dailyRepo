@@ -19,10 +19,10 @@ async function runTestScrape() {
     const repos = await prepTrendingData();
     console.log(`🔍 Fetched ${repos.length} repos:`);
 
-    repos.forEach((r) => {
+    repos.forEach((r, i) => {
       const stars = Object.values(r.stars)[0];
       const forks = Object.values(r.forks)[0];
-      console.log(`  • [${r.fullName}] stars=${stars}, forks=${forks}`);
+      console.log(` ${i} [${r.fullName}] stars=${stars}, forks=${forks}`);
     });
 
     // 3. Persist

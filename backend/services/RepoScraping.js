@@ -48,6 +48,7 @@ export async function getRepo(repo) {
  * */
 export async function getTrending(url = githubTrending.baseURL) {
   try {
+    console.log(`Fetching trending repositories from: ${url}`);
     const $ = await cheerio.fromURL(url);
     const result_list = Array();
 
