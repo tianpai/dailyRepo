@@ -38,15 +38,12 @@ export async function runScrapeJob() {
 
     // 3. Persist to MongoDB
     await saveTrendingData(repos);
-    repos.forEach((r) => {
-      const stars = Object.values(r.stars)[0];
-      const forks = Object.values(r.forks)[0];
-      console.log(`  • [${r.fullName}] stars=${stars}, forks=${forks}`);
+    repos.forEach((r, i) => {
+      console.log(` ${i} • [${r.fullName}] `);
     });
     console.log(
-      `💾 Saved ${repos.length} repos to database at ${new Date().toISOString()}`,
+      `\n💾 Saved ${repos.length} repos to database at ${new Date().toISOString()}`,
     );
-
 
     process.exitCode = 0;
   } catch (err) {
