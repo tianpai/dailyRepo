@@ -6,7 +6,7 @@ import type {
 } from "@/interface/repository.tsx";
 
 export function useRepoData(endpoint: string) {
-  const base_url = import.meta.env.VITE_DATABASE_URL_STAGING as string;
+  const base_url = import.meta.env.VITE_DATABASE_URL as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
   if (!base_url || !token)
     throw new Error("Missing VITE_DATABASE_URL or VITE_DEV_AUTH in env");
