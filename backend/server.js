@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import repoRoutes from "./routes/RepoRoutes.js";
 import rateLimit from "express-rate-limit";
 import compression from "compression";
@@ -37,6 +38,8 @@ app.use(helmet());
 app.use(compression());
 // Trust Vercel's proxy, ensure rate limiting to work correctly
 app.set("trust proxy", true);
+
+
 app.use(
   cors({
     origin: [
