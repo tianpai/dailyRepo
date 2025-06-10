@@ -3,6 +3,7 @@ node_modules/
 **/plan/
 **/.env
 .env
+.env.staging
 
 .vscode
 .DS_Store
