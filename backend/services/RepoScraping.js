@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const githubToken = process.env.GITHUB_TOKEN;
+if (!githubToken) {
+  throw new Error("GitHub token is missing!");
+}
 
 const githubTrending = {
   baseURL: "https://github.com/trending/",
@@ -46,7 +49,7 @@ export async function getRepo(repo) {
  *   If reject returns an empty array.
  *
  * */
-export async function getTrending(url = githubTrending.baseURL) {
+export async function getTrendingRepoNames(url = githubTrending.baseURL) {
   try {
     console.log(`Fetching trending repositories from: ${url}`);
     const $ = await cheerio.fromURL(url);

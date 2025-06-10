@@ -20,9 +20,7 @@ async function runTestScrape() {
     console.log(`🔍 Fetched ${repos.length} repos:`);
 
     repos.forEach((r, i) => {
-      const stars = Object.values(r.stars)[0];
-      const forks = Object.values(r.forks)[0];
-      console.log(` ${i} [${r.fullName}] stars=${stars}, forks=${forks}`);
+      console.log(` ${i} [${r.fullName}]`);
     });
 
     // 3. Persist

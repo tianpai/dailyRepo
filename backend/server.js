@@ -25,7 +25,11 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-app.use("/api/v1/repos", checkFrontendToken, repoRoutes);
+if (process.argv.includes("--debug")) {
+  app.use("/api/v1/repos", repoRoutes);
+} else {
+  app.use("/api/v1/repos", checkFrontendToken, repoRoutes);
+}
 
 const server = app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
