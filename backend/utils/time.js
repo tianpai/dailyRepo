@@ -40,10 +40,6 @@ export function calculateAgeInDays(createdDate, updatedDate) {
   return Math.floor(ageInDays);
 }
 
-// Example usage:
-const createdDate = "2023-10-01";
-const updatedDate = "2023-10-10";
-console.log(calculateAgeInDays(createdDate, updatedDate)); // Output: 9
 // utils/validateDate.js
 export function isValidDate(str) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
