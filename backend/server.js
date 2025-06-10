@@ -36,7 +36,7 @@ app.use(express.json());
 app.use(helmet());
 app.use(compression());
 // Trust Vercel's proxy, ensure rate limiting to work correctly
-app.set("trust proxy", true);
+app.set("trust proxy", 1);
 
 
 app.use(
