@@ -26,8 +26,8 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://daily-repo-git-master-tianpais-projects.vercel.app",
-      "daily-repo-qxubug6ed-tianpais-projects.vercel.app",
-      "daily-repo.vercel.app",
+      "https://daily-repo-qxubug6ed-tianpais-projects.vercel.app",
+      "https://daily-repo.vercel.app",
     ],
     methods: ["GET"],
     allowedHeaders: ["Content-Type", "Authorization"],
