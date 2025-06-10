@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import repoRoutes from "./routes/RepoRoutes.js";
 import { checkFrontendToken } from "./middleware/checkToken.js";
 
@@ -21,6 +22,19 @@ mongoose
   });
 
 app.use(express.json());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 30 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: "Too many requests, please try again later.",
+});
+
+const limiterDev = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 100, // Limit each IP to 60 requests per windowMs
+  message: "Too many requests, please try again later.",
+});
+
 app.use(
   cors({
     origin: [
@@ -42,7 +56,7 @@ if (process.argv.includes("--debug")) {
   console.log("Debug mode enabled");
   app.use("/api/v1/repos", repoRoutes);
 } else {
-  app.use("/api/v1/repos", checkFrontendToken, repoRoutes);
+  app.use("/api/v1/repos", checkFrontendToken, limiter, repoRoutes);
 }
 
 const server = app.listen(port, () => {
