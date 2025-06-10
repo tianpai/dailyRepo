@@ -23,7 +23,10 @@ mongoose
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://dailyrepo.onrender.com/"],
+    origin: [
+      "http://localhost:5173",
+      "https://daily-repo-git-master-tianpais-projects.vercel.app",
+    ],
     methods: ["GET"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
