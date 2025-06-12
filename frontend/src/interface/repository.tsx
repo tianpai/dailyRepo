@@ -1,5 +1,5 @@
 // the `language` field is just a map from language name → bytes (or whatever unit)
-type LanguageMap = Record<string, number>;
+export type LanguageMap = Record<string, number>;
 
 export interface LanguageTableProps {
   language: LanguageMap; // e.g., { "TypeScript": 642272, "JavaScript": 123456 }
