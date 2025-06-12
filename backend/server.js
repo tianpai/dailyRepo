@@ -35,9 +35,6 @@ mongoose
 app.use(express.json());
 app.use(helmet());
 app.use(compression());
-// Trust Vercel's proxy, ensure rate limiting to work correctly
-app.set("trust proxy", 1);
-
 
 app.use(
   cors({
@@ -60,6 +57,8 @@ if (process.argv.includes("--debug")) {
   console.log("Debug mode enabled");
   app.use("/api/v1/repos", repoRoutes);
 } else {
+  // Trust Vercel's proxy, ensure rate limiting to work correctly
+  app.set("trust proxy", 1);
   app.use(limiter);
   app.use("/api/v1/repos", checkFrontendToken, repoRoutes);
 }
