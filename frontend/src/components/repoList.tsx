@@ -9,6 +9,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useRepoData } from "@/hooks/useRepoData.tsx";
+import { ChartPieDonut } from "@/components/langaugePieChart";
 
 import type {
   StatsProps,
@@ -29,7 +30,12 @@ function formatNumber(num: number): string {
 export function RepoList() {
   const { data, loading, error } = useRepoData("/trending");
 
-  if (loading) return <div className="text-center">Loading…</div>;
+  if (loading)
+    return (
+      <div className="text-center">
+        Loading…(initial load might take 20 seconds)
+      </div>
+    );
   if (error)
     return <div className="text-center text-red-500">Error: {error}</div>;
   if (data.length === 0)
@@ -48,23 +54,32 @@ export function RepoList() {
   );
 }
 
-export function RepoCard({ rank, name, description, url }: RepoCardProps) {
+export function RepoCard({
+  rank,
+  name,
+  description,
+  url,
+  topics,
+  language,
+}: RepoCardProps) {
   return (
     <Card className="flex flex-row items-center mx-10 my-4">
       <CardHeader className="flex flex-shrink-0 flex-row flex-grow-0 w-2/7">
         <p className="text-xl font-extrabold pr-5">{rank}</p>
         <div>
           <CardTitle className="flex flex-col">
-            <p>{name}</p>
+            <a href={url} target="_blank">
+              {name}
+            </a>
           </CardTitle>
           <CardDescription className="line-clamp-2">
-            <p>{url}</p>
+            {topics.slice(0, 5).join(" ")}
           </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="flex-grow w-1/2">{description}</CardContent>
-      <CardFooter className=" justify-end-safe m-0 flex-shrink-0 flex-grow-0 w-3/13">
-        {/* <RepoStats stars={stars} fork={forks} /> */}
+      <CardFooter className="justify-end-safe m-0 flex-shrink-0 flex-grow-0 w-3/13">
+        <ChartPieDonut language={language} />
       </CardFooter>
     </Card>
   );

@@ -32,7 +32,9 @@ export function useRepoData(endpoint: string) {
             name: r.name,
             description: r.description,
             url: r.url,
+            topics: r.topics,
             trendingDate: r.trendingDate,
+            language: r.language,
           };
         });
         setData(mapped);

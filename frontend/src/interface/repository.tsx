@@ -1,5 +1,9 @@
 // the `language` field is just a map from language name → bytes (or whatever unit)
-type LanguageMap = Record<string, number>;
+export type LanguageMap = Record<string, number>;
+
+export interface LanguageTableProps {
+  language: LanguageMap; // e.g., { "TypeScript": 642272, "JavaScript": 123456 }
+}
 
 // Raw data shape exactly as returned by the API
 export interface RawRepoData {
@@ -30,7 +34,9 @@ export interface RepoData {
   name: string;
   description: string;
   url: string;
+  language: LanguageMap;
   trendingDate: string;
+  topics: string[]; // optional, not always present
   // stars: number;
   // forks: number;
 }
