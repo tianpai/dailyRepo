@@ -43,15 +43,31 @@ export function RepoList() {
   const trendingDate = new Date(data[0].trendingDate);
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">
-        {trendingDate.toLocaleDateString()}
-      </h2>
+    <div className="pt-25 pl-10">
+      <RepoCardHeader>
+        <RepoTrendingDate>{trendingDate.toLocaleDateString()}</RepoTrendingDate>
+      </RepoCardHeader>
       {data.map((repo: RepoData, i: number) => (
         <RepoCard key={repo.url} {...repo} rank={i + 1} />
       ))}
     </div>
   );
+}
+
+export function RepoCardHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-2xl font-bold">{children}</h2>
+    </div>
+  );
+}
+
+export function RepoTrendingDate({ children }: { children: React.ReactNode }) {
+  return <h2 className="text-2xl font-bold mb-4">{children} </h2>;
+}
+
+export function RepoTopics({ topics }: { topics: string[] }) {
+  return <div>{topics.slice(0, 5).join(" ")}</div>;
 }
 
 export function RepoCard({
@@ -73,7 +89,7 @@ export function RepoCard({
             </a>
           </CardTitle>
           <CardDescription className="line-clamp-2">
-            {topics.slice(0, 5).join(" ")}
+            <RepoTopics topics={topics}></RepoTopics>
           </CardDescription>
         </div>
       </CardHeader>

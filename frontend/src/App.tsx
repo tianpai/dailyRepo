@@ -1,12 +1,12 @@
 import "./App.css";
+import { Header } from "./components/header.tsx";
 import { RepoList } from "./components/repoList.tsx";
+import { ThemeProvider } from "./components/theme-provider.tsx";
 export default function App() {
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-10 pl-10 pt-5">Repo Trends</h1>
-      <div className="container mx-auto px-4">
-        <RepoList></RepoList>
-      </div>
-    </>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Header></Header>
+      <RepoList></RepoList>
+    </ThemeProvider>
   );
 }
