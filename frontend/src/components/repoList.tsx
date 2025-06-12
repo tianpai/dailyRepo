@@ -78,7 +78,7 @@ export function RepoCard({
         </div>
       </CardHeader>
       <CardContent className="flex-grow w-1/2">{description}</CardContent>
-      <CardFooter className=" justify-end-safe m-0 flex-shrink-0 flex-grow-0 w-3/13">
+      <CardFooter className="justify-end-safe m-0 flex-shrink-0 flex-grow-0 w-3/13">
         <ChartPieDonut language={language} />
       </CardFooter>
     </Card>

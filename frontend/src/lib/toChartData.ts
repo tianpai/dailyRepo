@@ -6,6 +6,20 @@ export type PieDatum = {
   fill: string; // slice color
 };
 
+export function maxLanguageCount(languageRaw: LanguageMap): string {
+  let maxLang = "";
+  let maxCount = -Infinity; // works even if counts can be 0
+
+  for (const [lang, count] of Object.entries(languageRaw)) {
+    if (count > maxCount) {
+      maxCount = count;
+      maxLang = lang;
+    }
+  }
+
+  return maxLang; // "" if the map was empty
+}
+
 /**
  * Transforms a LanguageMap (`{ [lang]: count }`) into an array of
  * objects ready for most chart libraries (e.g. Recharts, Chart.js).
