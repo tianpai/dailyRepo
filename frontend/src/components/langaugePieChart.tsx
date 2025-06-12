@@ -51,18 +51,22 @@ export function ChartPieDonut({ language }: ChartPieDonutProps) {
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[120px]"
+          className="mx-auto aspect-square max-h-[100px]"
         >
-          <PieChart width={120} height={120}>
+          <PieChart width={100} height={100}>
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
+              formatter={(value: number, name: string) => [
+                name + " ",
+                `${value}%`,
+              ]}
             />
             <Pie
               data={chartData}
               dataKey="count"
               nameKey="language"
-              innerRadius={35}
+              innerRadius={30}
               outerRadius={50}
             />
           </PieChart>
