@@ -55,8 +55,11 @@ export function ChartPieDonut({ language }: ChartPieDonutProps) {
   if (isEmpty) {
     return (
       <Card className="flex flex-col items-center justify-center py-8">
-        <CardContent className="flex-1 mx-auto aspect-square max-h-[100px]">
-          <p className="text-muted-foreground">No language data</p>
+        <CardContent
+          className="flex flex-1 mx-auto aspect-square max-h-[100px]
+                        items-center justify-center"
+        >
+          <p className="text-muted-foreground text-center">No language data</p>
         </CardContent>
       </Card>
     );
