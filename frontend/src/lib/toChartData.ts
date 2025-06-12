@@ -2,7 +2,7 @@ import type { LanguageMap } from "@/interface/repository.tsx";
 
 export type PieDatum = {
   language: string; // label
-  count: number; // numeric part
+  count: number; // number in percentage (0–100)
   fill: string; // slice color
 };
 
@@ -48,10 +48,33 @@ export function toChartData(
   language: LanguageMap,
   langColor: colorMap = languageColors,
 ): PieDatum[] {
-  return Object.entries(language).map(([lang, count]) => {
-    const color = langColor[lang] || "#000000"; // Default to black if no color is found
-    return { language: lang, count: count, fill: color };
+  const total = Object.values(language).reduce((sum, n) => sum + n, 0);
+  if (total === 0) return []; // nothing to chart
+
+  // round each percentage
+  const raw: PieDatum[] = Object.entries(language).map(([lang, cnt]) => {
+    const pct = Math.round((cnt / total) * 100); // no decimals
+    return {
+      language: lang,
+      count: pct,
+      fill: langColor[lang] ?? "#000000",
+    };
   });
+
+  // make sure they sum to exactly 100
+  const sum = raw.reduce((s, d) => s + d.count, 0);
+  const diff = 100 - sum; // can be -1, 0, or +1 in most cases
+  if (diff !== 0 && raw.length) {
+    // bump the slice with the largest percentage (could also pick the largest remainder)
+    const idx = raw.reduce(
+      (best, d, i) => (d.count > raw[best].count ? i : best),
+      0,
+    );
+    raw[idx].count += diff; // adjust by ±1 (or whatever diff is)
+  }
+  const check = Object.values(raw).reduce((sum, lang) => sum + lang.count, 0);
+  console.assert(check === 100, "Total percentage must equal 100");
+  return raw;
 }
 
 export type colorMap = Record<string, string>;
