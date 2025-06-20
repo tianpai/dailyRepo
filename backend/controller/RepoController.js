@@ -90,7 +90,7 @@ export async function getStarHistory(req, res, next) {
       .select({ _id: 0, fullName: 1 })
       .lean();
     console.log("repoName", repoName, "name", name);
-    if (!repoName)
+    if (!repoName.length)
       return res
         .status(404)
         .json({ error: "Repo not found", msg: "Try use 'Star History' " });
