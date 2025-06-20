@@ -32,6 +32,7 @@ export interface ApiResponse {
 // Trimmed shape for UI. stars and forks are extracted numbers.
 export interface RepoData {
   name: string;
+  owner: string;
   description: string;
   url: string;
   language: LanguageMap;

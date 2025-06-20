@@ -15,5 +15,19 @@ const RepoSchema = new mongoose.Schema({
   trendingDate: String,
 });
 
+const StarHistorySchema = new mongoose.Schema({
+  repoId: { type: Schema.Types.ObjectId, ref: "Repo", required: true },
+  saveDate: { type: Date, default: Date.now },
+  history: [
+    {
+      date: { type: String, required: true },
+      count: { type: Number, required: true, min: 0 },
+    },
+  ],
+});
+StarHistorySchema.index({ repoId: 1, saveDate: -1 });
+StarHistorySchema.index({ "history.date": 1 });
+
 const Repo = mongoose.model("Repo", RepoSchema);
-export default Repo;
+const StarHistory = mongoose.model("StarHistory", StarHistorySchema);
+export { Repo, StarHistory };

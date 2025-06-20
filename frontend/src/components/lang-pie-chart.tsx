@@ -21,7 +21,7 @@ import {
   type PieDatum,
   languageColors,
   maxLanguageCount,
-} from "@/lib/toChartData";
+} from "@/lib/pie-chart-data";
 
 interface ChartPieDonutProps {
   language: LanguageMap;
