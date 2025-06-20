@@ -1,4 +1,4 @@
-import Repo from "../models/Repo.js";
+import { Repo, StarHistory } from "../models/Repo.js";
 import {
   getCache,
   setCache,
@@ -77,26 +77,50 @@ export async function getStarHistory(req, res, next) {
   try {
     const { owner, repo } = req.params;
     const name = `${owner}/${repo}`;
-    //fetch from cache first
+
+    // Check cache first
     const cacheKey = `star-history:${name}`;
     const cached = getCache(cacheKey);
     if (cached) {
       return res.status(200).json({ isCached: true, data: cached });
     }
 
-    // getting star history only requires gitub api
-    // but we need to check if the repo is trending before
-    const repoName = await Repo.find({ fullName: name })
-      .select({ _id: 0, fullName: 1 })
-      .lean();
-    console.log("repoName", repoName, "name", name);
-    if (!repoName.length)
-      return res
-        .status(404)
-        .json({ error: "Repo not found", msg: "Try use 'Star History' " });
+    // Check database for existing star history
+    const repoDoc = await Repo.findOne({ fullName: name }).select("_id").lean();
+    if (!repoDoc) {
+      return res.status(404).json({
+        error: "Repo not found",
+        msg: "Try use 'Star History'",
+      });
+    }
 
+    // Check if we have recent star history data
+    const existingHistory = await StarHistory.findOne({
+      repoId: repoDoc._id,
+    }).sort({ saveDate: -1 });
+
+    // If we have recent data (within last week), return it
+    if (
+      existingHistory &&
+      new Date() - existingHistory.saveDate < 7 * 24 * 60 * 60 * 1000
+    ) {
+      setCache(cacheKey, existingHistory.history, TTL.SEMAINE);
+      return res.status(200).json({
+        isCached: false,
+        fromDB: true,
+        data: existingHistory.history,
+      });
+    }
+
+    // Fetch from GitHub API
     const data = await getRepoStarRecords(name);
-    console.log("data", data);
+
+    // Save to StarHistory collection
+    await StarHistory.create({
+      repoId: repoDoc._id,
+      history: data,
+    });
+
     setCache(cacheKey, data, TTL.SEMAINE);
     return res.status(200).json({ isCached: false, data: data });
   } catch (err) {
