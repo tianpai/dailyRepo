@@ -8,8 +8,8 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { useRepoData } from "@/hooks/useRepoData.tsx";
-import { ChartPieDonut } from "@/components/langaugePieChart";
+import { useRepoData } from "@/hooks/repo-data.tsx";
+import { ChartPieDonut } from "@/components/lang-pie-chart.tsx";
 
 import type {
   StatsProps,
@@ -29,7 +29,6 @@ function formatNumber(num: number): string {
 
 export function RepoList() {
   const { data, loading, error } = useRepoData("/trending");
-
   if (loading)
     return (
       <div className="text-center">
@@ -41,7 +40,6 @@ export function RepoList() {
   if (data.length === 0)
     return <div className="text-center">No repositories found.</div>;
   const trendingDate = new Date(data[0].trendingDate);
-
   return (
     <div className="pt-25 pl-10">
       <RepoCardHeader>
@@ -57,13 +55,13 @@ export function RepoList() {
 export function RepoCardHeader({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <h2 className="text-2xl font-bold">{children}</h2>
+      <h1 className="text-2xl font-bold">{children}</h1>
     </div>
   );
 }
 
 export function RepoTrendingDate({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-2xl font-bold mb-4">{children} </h2>;
+  return <p className="text-2xl font-bold mb-4">{children} </p>;
 }
 
 export function RepoTopics({ topics }: { topics: string[] }) {
@@ -72,6 +70,7 @@ export function RepoTopics({ topics }: { topics: string[] }) {
 
 export function RepoCard({
   rank,
+  owner,
   name,
   description,
   url,
@@ -85,7 +84,7 @@ export function RepoCard({
         <div>
           <CardTitle className="flex flex-col">
             <a href={url} target="_blank">
-              {name}
+              {owner + "/" + name}
             </a>
           </CardTitle>
           <CardDescription className="line-clamp-2">
