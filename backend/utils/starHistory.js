@@ -11,7 +11,7 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
-const DEFAULT_PER_PAGE = 30;
+const DEFAULT_PER_PAGE = 100;
 
 /**
  * returns an array of integers from `from` to `to`, inclusive.
@@ -51,6 +51,7 @@ export async function getRepoStargazers(repo, token, page) {
     headers: {
       // this header is required to get starred_at timestamps
       Accept: "application/vnd.github.v3.star+json",
+      "X-GitHub-Api-Version": "2022-11-28",
       ...(token ? { Authorization: `token ${token}` } : {}),
     },
   });
@@ -85,7 +86,7 @@ export async function getRepoStargazersCount(repo, token) {
 export async function getRepoStarRecords(
   repo,
   token = process.env.GITHUB_TOKEN,
-  maxRequestAmount = 30,
+  maxRequestAmount = 60,
 ) {
   // 1) initial request to get Link header
   const firstRes = await getRepoStargazers(repo, token, 1);
@@ -174,7 +175,7 @@ export async function getRepoLogoUrl(repo, token) {
   const { data } = await axios.get(`https://api.github.com/users/${owner}`, {
     headers: {
       Accept: "application/vnd.github.v3.star+json",
-      ...(token ? { Authorization: `token ${token}` } : {}),
+      ...(token ? { Authorization: `bearer ${token}` } : {}),
     },
   });
   return data.avatar_url;

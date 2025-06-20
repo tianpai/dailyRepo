@@ -30,6 +30,7 @@ export function useRepoData(endpoint: string) {
         const mapped: RepoData[] = json.data.map((r: RawRepoData) => {
           return {
             name: r.name,
+            owner: r.owner,
             description: r.description,
             url: r.url,
             topics: r.topics,
