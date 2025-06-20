@@ -8,6 +8,8 @@ import {
 import { getTodayUTC, isValidDate } from "../utils/time.js";
 import { getRepoStarRecords } from "../utils/starHistory.js";
 
+const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
 /**
  * GET /repos/trending
  * ?date=YYYY-MM-DD  (optional; empty → today)
@@ -99,10 +101,10 @@ export async function getStarHistory(req, res, next) {
       repoId: repoDoc._id,
     }).sort({ saveDate: -1 });
 
-    // If we have recent data (within last week), return it
+    // If we have recent data (within 1 month), return it
     if (
       existingHistory &&
-      new Date() - existingHistory.saveDate < 7 * 24 * 60 * 60 * 1000
+      new Date() - existingHistory.saveDate < ONE_MONTH_MS
     ) {
       setCache(cacheKey, existingHistory.history, TTL.SEMAINE);
       return res.status(200).json({
