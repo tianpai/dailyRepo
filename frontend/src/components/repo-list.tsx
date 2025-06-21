@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { useRepoData } from "@/hooks/repo-data.tsx";
+import { useRepoDataContext } from "@/context/repo-data-provider";
 import { ChartPieDonut } from "@/components/lang-pie-chart.tsx";
 
 import type {
@@ -28,7 +28,7 @@ function formatNumber(num: number): string {
 }
 
 export function RepoList() {
-  const { data, loading, error } = useRepoData("/trending");
+  const { data, loading, error } = useRepoDataContext();
   if (loading)
     return (
       <div className="text-center">
@@ -41,7 +41,7 @@ export function RepoList() {
     return <div className="text-center">No repositories found.</div>;
   const trendingDate = new Date(data[0].trendingDate);
   return (
-    <div className="pt-25 pl-10">
+    <div className="pl-10">
       <RepoCardHeader>
         <RepoTrendingDate>{trendingDate.toLocaleDateString()}</RepoTrendingDate>
       </RepoCardHeader>
