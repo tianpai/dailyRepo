@@ -1,3 +1,18 @@
+export interface ApiResponse<T> {
+  isCached: boolean;
+  date: string; // "2025-04-30" date of trending
+  data: T;
+}
+
+export interface starDataPoint {
+  date: string;
+  count: number;
+}
+export type RawStarHistoryApiResponse = ApiResponse<starDataPoint[]>;
+export type RawRepoApiResponse = ApiResponse<RawRepoData[]>;
+
+// ================ UI PROPS ========================
+
 // the `language` field is just a map from language name → bytes (or whatever unit)
 export type LanguageMap = Record<string, number>;
 
@@ -23,13 +38,7 @@ export interface RawRepoData {
   trendingDate: string; // e.g. "2025-06-09"
 }
 
-export interface ApiResponse {
-  isCached: boolean;
-  date: string; // "2025-04-30" date of trending
-  data: RawRepoData[];
-}
-
-// Trimmed shape for UI. stars and forks are extracted numbers.
+// ================ UI PROPS ========================
 export interface RepoData {
   name: string;
   owner: string;
@@ -38,8 +47,6 @@ export interface RepoData {
   language: LanguageMap;
   trendingDate: string;
   topics: string[]; // optional, not always present
-  // stars: number;
-  // forks: number;
 }
 
 export interface StatsProps {
