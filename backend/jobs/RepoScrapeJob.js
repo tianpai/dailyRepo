@@ -1,6 +1,6 @@
 import { getRepo, getTrendingRepoNames } from "../services/RepoScraping.js";
 import { getTodayUTC, getUTCDate, calculateAgeInDays } from "../utils/time.js";
-import Repo from "../models/Repo.js";
+import { Repo } from "../models/Repo.js";
 
 export default async function RepoScrapeJobRunner() {
   await saveTrendingData(await prepTrendingData());
