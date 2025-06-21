@@ -78,17 +78,21 @@ export async function getTrending(req, res, next) {
 export async function getStarHistory(req, res, next) {
   try {
     const { owner, repo } = req.params;
-    const name = `${owner}/${repo}`;
+    const fname = `${owner}/${repo}`;
 
     // Check cache first
-    const cacheKey = `star-history:${name}`;
+    const cacheKey = `star-history:${fname}`;
     const cached = getCache(cacheKey);
     if (cached) {
-      return res.status(200).json({ isCached: true, data: cached });
+      return res
+        .status(200)
+        .json({ isCached: true, date: getTodayUTC(), data: cached });
     }
 
     // Check database for existing star history
-    const repoDoc = await Repo.findOne({ fullName: name }).select("_id").lean();
+    const repoDoc = await Repo.findOne({ fullName: fname })
+      .select("_id")
+      .lean();
     if (!repoDoc) {
       return res.status(404).json({
         error: "Repo not found",
@@ -109,13 +113,13 @@ export async function getStarHistory(req, res, next) {
       setCache(cacheKey, existingHistory.history, TTL.SEMAINE);
       return res.status(200).json({
         isCached: false,
-        fromDB: true,
+        date: getTodayUTC(),
         data: existingHistory.history,
       });
     }
 
     // Fetch from GitHub API
-    const data = await getRepoStarRecords(name);
+    const data = await getRepoStarRecords(fname);
 
     // Save to StarHistory collection
     await StarHistory.create({
@@ -123,7 +127,7 @@ export async function getStarHistory(req, res, next) {
       history: data,
     });
 
-    setCache(cacheKey, data, TTL.SEMAINE);
+    setCache(cacheKey, data, TTL.THIRTY_FLIRTY);
     return res.status(200).json({ isCached: false, data: data });
   } catch (err) {
     next(err);
