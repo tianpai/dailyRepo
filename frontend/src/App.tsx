@@ -6,7 +6,7 @@ import {
   RepoDataProvider,
   useRepoDataContext,
 } from "./context/repo-data-provider.tsx";
-import { RepoStarGraph } from "./components/repo-star-graph.tsx";
+// import { RepoStarGraph } from "./components/repo-star-graph.tsx";
 
 export default function App() {
   return (
