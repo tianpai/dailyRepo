@@ -27,7 +27,7 @@ function RepoDataConsumer() {
   return (
     <>
       <div className="pt-25"></div>
-      <RepoStarGraph></RepoStarGraph>
+      {/* <RepoStarGraph></RepoStarGraph> */}
       <RepoList></RepoList>
     </>
   );
