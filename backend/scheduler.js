@@ -1,8 +1,11 @@
 import cron from "node-cron";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { prepTrendingData, saveTrendingData } from "./jobs/RepoScrapeJob.js";
-
+import {
+  prepTrendingData,
+  saveTrendingData,
+  saveStarHistoryBatch,
+} from "./jobs/RepoScrapeJob.js";
 dotenv.config();
 
 const MONGO_URI = process.env.MONGO;
@@ -43,6 +46,14 @@ export async function runScrapeJob() {
     });
     console.log(
       `\n💾 Saved ${repos.length} repos to database at ${new Date().toISOString()}`,
+    );
+    const repoNames = repos.map((r) => r.fullName);
+    console.log(
+      `⭐ Starting star history collection for ${repoNames.length} repos...`,
+    );
+    const starHistoryResult = await saveStarHistoryBatch(repoNames);
+    console.log(
+      `⭐ Star history completed: ${starHistoryResult.successful} successful, ${starHistoryResult.failed} failed, ${starHistoryResult.skipped} skipped`,
     );
 
     process.exitCode = 0;

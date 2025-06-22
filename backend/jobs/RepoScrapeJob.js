@@ -1,6 +1,7 @@
 import { getRepo, getTrendingRepoNames } from "../services/RepoScraping.js";
 import { getTodayUTC, getUTCDate, calculateAgeInDays } from "../utils/time.js";
-import { Repo } from "../models/Repo.js";
+import { Repo, StarHistory } from "../models/Repo.js";
+import { getRepoStarRecords } from "../utils/starHistory.js";
 
 export default async function RepoScrapeJobRunner() {
   await saveTrendingData(await prepTrendingData());
@@ -46,6 +47,89 @@ export async function saveTrendingData(repos) {
   }));
 
   await Repo.bulkWrite(ops);
+}
+
+export async function saveStarHistoryBatch(repoNames) {
+  if (!repoNames || repoNames.length === 0) {
+    console.log("No repos to process for star history");
+    return { successful: 0, failed: 0, skipped: 0 };
+  }
+
+  console.log(`Processing star history for ${repoNames.length} repos...`);
+
+  // Find all existing repos in one query
+  const existingRepos = await Repo.find({
+    fullName: { $in: repoNames },
+  })
+    .select("_id fullName")
+    .lean();
+
+  // Create a map for quick lookup
+  const repoMap = new Map(
+    existingRepos.map((repo) => [repo.fullName, repo._id]),
+  );
+
+  // Filter out repos that don't exist in DB
+  const validRepoNames = repoNames.filter((name) => repoMap.has(name));
+  const missingRepos = repoNames.filter((name) => !repoMap.has(name));
+
+  if (missingRepos.length > 0) {
+    console.warn(
+      `Skipping ${missingRepos.length} repos not found in DB:`,
+      missingRepos,
+    );
+  }
+
+  // Fetch star history for all valid repos in parallel
+  const results = await Promise.allSettled(
+    validRepoNames.map(async (repoName) => {
+      try {
+        const data = await getRepoStarRecords(repoName);
+        console.log(`${repoName}: ${data?.length || 0} data points fetched`);
+
+        return {
+          repoId: repoMap.get(repoName),
+          repoName,
+          history: data,
+        };
+      } catch (error) {
+        console.error(`Error fetching star history for ${repoName}:`, error);
+        throw error;
+      }
+    }),
+  );
+
+  // Save successful results to DB
+  const successfulResults = results
+    .filter((result) => result.status === "fulfilled")
+    .map((result) => result.value);
+
+  if (successfulResults.length > 0) {
+    await StarHistory.insertMany(
+      successfulResults.map(({ repoId, history }) => ({
+        repoId,
+        history,
+      })),
+    );
+    console.log(
+      `Successfully saved star history for ${successfulResults.length} repos`,
+    );
+  }
+
+  // Log failures
+  const failures = results.filter((result) => result.status === "rejected");
+  if (failures.length > 0) {
+    console.error(
+      `Failed to process ${failures.length} repos:`,
+      failures.map((f) => f.reason.message),
+    );
+  }
+
+  return {
+    successful: successfulResults.length,
+    failed: failures.length,
+    skipped: missingRepos.length,
+  };
 }
 
 /* ===========================================================================
