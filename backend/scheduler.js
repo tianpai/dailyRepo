@@ -30,16 +30,14 @@ export async function runScrapeJob() {
   console.log(`[${start}] => Starting scrape job`);
 
   try {
-    // 1. Connect to DB
     await ensureMongoConnected();
-
-    // 2. Fetch & transform data
+    // Fetch & transform data
     const repos = await prepTrendingData();
     console.log(
       `🔍 Prepared ${repos.length} repos at ${new Date().toISOString()}`,
     );
 
-    // 3. Persist to MongoDB
+    // Persist to MongoDB
     await saveTrendingData(repos);
     repos.forEach((r, i) => {
       console.log(` ${i} • [${r.fullName}] `);
@@ -47,6 +45,11 @@ export async function runScrapeJob() {
     console.log(
       `\n💾 Saved ${repos.length} repos to database at ${new Date().toISOString()}`,
     );
+
+    // one second delay to avoid rate limits
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // fetch and save star history for each repo
     const repoNames = repos.map((r) => r.fullName);
     console.log(
       `⭐ Starting star history collection for ${repoNames.length} repos...`,

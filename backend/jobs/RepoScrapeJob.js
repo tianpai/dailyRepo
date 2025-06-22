@@ -80,24 +80,58 @@ export async function saveStarHistoryBatch(repoNames) {
     );
   }
 
-  // Fetch star history for all valid repos in parallel
-  const results = await Promise.allSettled(
-    validRepoNames.map(async (repoName) => {
-      try {
-        const data = await getRepoStarRecords(repoName);
-        console.log(`${repoName}: ${data?.length || 0} data points fetched`);
+  // // Fetch star history for all valid repos in parallel
+  // const results = await Promise.allSettled(
+  //   validRepoNames.map(async (repoName) => {
+  //     try {
+  //       const data = await getRepoStarRecords(repoName);
+  //       console.log(`${repoName}: ${data?.length || 0} data points fetched`);
+  //
+  //       return {
+  //         repoId: repoMap.get(repoName),
+  //         repoName,
+  //         history: data,
+  //       };
+  //     } catch (error) {
+  //       console.error(`Error fetching star history for ${repoName}:`, error);
+  //       throw error;
+  //     }
+  //   }),
+  // );
 
-        return {
+  // fetch with delay to avoid rate limits
+  const results = [];
+  for (let i = 0; i < validRepoNames.length; i++) {
+    const repoName = validRepoNames[i];
+    try {
+      console.log(
+        `[${i + 1}/${validRepoNames.length}] Processing ${repoName}...`,
+      );
+      const data = await getRepoStarRecords(repoName);
+      console.log(`${repoName}: ${data?.length || 0} data points fetched`);
+
+      results.push({
+        status: "fulfilled",
+        value: {
           repoId: repoMap.get(repoName),
           repoName,
           history: data,
-        };
-      } catch (error) {
-        console.error(`Error fetching star history for ${repoName}:`, error);
-        throw error;
-      }
-    }),
-  );
+        },
+      });
+    } catch (error) {
+      console.error(`Error fetching star history for ${repoName}:`, error);
+      results.push({
+        status: "rejected",
+        reason: error,
+      });
+    }
+
+    // Add 3-second delay between repos (except for the last one)
+    if (i < validRepoNames.length - 1) {
+      console.log(`Waiting 3 seconds before processing next repo...`);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+  }
 
   // Save successful results to DB
   const successfulResults = results
