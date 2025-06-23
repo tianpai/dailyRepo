@@ -73,6 +73,67 @@ export async function getTrending(req, res, next) {
 }
 
 /**
+ * GET /repos/star-history
+ */
+export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
+  try {
+    // Get the latest trending date
+    const [{ latestDate } = {}] = await Repo.aggregate([
+      { $match: { trendingDate: { $exists: true, $ne: null } } },
+      { $sort: { trendingDate: -1 } },
+      { $limit: 1 },
+      { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
+    ]);
+
+    // Check cache first
+    const cacheKey = `star-history-trending:${latestDate}`;
+    const cached = getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        isCached: true,
+        date: latestDate,
+        data: cached,
+      });
+    }
+
+    // Get all repo IDs where trendingDate equals latestDate
+    const trendingRepos = await Repo.find({ trendingDate: latestDate })
+      .select("_id")
+      .lean();
+
+    const repoIds = trendingRepos.map((repo) => repo._id);
+
+    // Find star history records for these repos
+    const starHistoryRecords = await StarHistory.find({
+      repoId: { $in: repoIds },
+    })
+      .populate("repoId", "fullName name")
+      .lean();
+
+    // Group star history data by repo fullName
+    const groupedStarHistory = {};
+    starHistoryRecords.forEach((record) => {
+      const repoName = record.repoId.fullName || record.repoId.name;
+      groupedStarHistory[repoName] = record.history.map((historyPoint) => ({
+        date: historyPoint.date,
+        count: historyPoint.count,
+      }));
+    });
+
+    // Cache the results
+    setCache(cacheKey, groupedStarHistory, TTL.DATED);
+
+    return res.status(200).json({
+      isCached: false,
+      date: latestDate,
+      data: groupedStarHistory,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * GET /repos/:name/:repo/star-history
  */
 export async function getStarHistory(req, res, next) {
