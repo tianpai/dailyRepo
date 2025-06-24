@@ -8,7 +8,16 @@ export interface starDataPoint {
   date: string;
   count: number;
 }
-export type RawStarHistoryApiResponse = ApiResponse<starDataPoint[]>;
+
+// Star history data is a map of repo names to arrays of star data points
+export type StarHistoryData = Record<string, starDataPoint[]>;
+export type RawStarHistoryApiResponse = ApiResponse<StarHistoryData>;
+
+// Normalized day-based data point
+export interface NormalizedDayData {
+  day: number;
+  [repoName: string]: number; // repo names as keys with star counts as values
+}
 export type RawRepoApiResponse = ApiResponse<RawRepoData[]>;
 
 // ================ UI PROPS ========================
@@ -48,6 +57,10 @@ export interface RepoData {
   trendingDate: string;
   topics: string[]; // optional, not always present
 }
+
+// export interface GraphData {
+//
+// }
 
 export interface StatsProps {
   stars: number;
