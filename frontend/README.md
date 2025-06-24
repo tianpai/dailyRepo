@@ -1,45 +1,73 @@
-# 📦 DAILY REPO
+# 📦 DAILY REPO (Frontend)
 
-1. If a repo has no language, do not display at all. Likely to be a article
-   in natural language
+A modern, responsive frontend for DailyRepo, visualizing GitHub repository
+trends and statistics with interactive charts and a clean UI.
+
+## ✨ Features
+
+-   View trending repositories and their star history
+-   Interactive charts (pie, line, etc.)
+-   Dark/light mode toggle
+-   Responsive design
+-   Built with React, TypeScript, Vite, and Tailwind CSS
+
+## 🛠️ Tech Stack
+
+-   **React 19** + **TypeScript**
+-   **Vite** (build tool)
+-   **Tailwind CSS** (utility-first styling)
+-   **Chart.js** & **Recharts** (data visualization)
+-   **Radix UI** (accessible UI components)
+-   **React Query** (data fetching/caching)
 
 ## 🏃‍♂️ Quick Start
 
-1. Ensure you have [node.js](https://nodejs.org/en/) installed (v18+ or v20+).
-2. `npm install`
-3. `npm run dev`
+1. Ensure you have [Node.js](https://nodejs.org/en/) installed (v18+ or <= v20)
+2. Install dependencies:
+    ```sh
+    npm install
+    ```
+3. Start the development server:
+    ```sh
+    npm run dev
+    ```
+4. Visit [http://localhost:5173](http://localhost:5173) in your browser.
 
-## 📋 Todo
+## 📦 Available Scripts
 
-- [x] display repo basic data
-  - [x] name, GitHub link, start, fork, watches.
-- [x] display a list of latest trending repos
-- [ ] display repo language composition in a pie chart
-- [ ] animation when hovering over repo
-- [ ] Toggle light/dark mode
-- [ ] display repo tags and topics at random (max 5)
-- [ ] display a graph of the latest trending repos
-- [ ] Day picker to select a date
-  - [ ] one graph multiple repo star data
-- [ ] search for a repo
-- [ ] ~~repo logo~~
-- [ ] display monthly trending top 10 and hottest topic
-- [ ] background changes to the source code based on the mouse hover
+-   `npm run dev` — Start development server
+-   `npm run build` — Build for production
+-   `npm run preview` — Preview production build
+-   `npm run lint` — Lint codebase
 
-## Set up
+## 📁 Project Structure
 
-- [x] initial setup (installation)
-  - [x] Vite + React + TypeScript
-  - [x] Tailwind CSS
-  - [ ] React Router
-  - [ ] React Query
+-   `src/` — Main source code
+    -   `components/` — UI and feature components
+    -   `context/` — React context providers
+    -   `hooks/` — Custom React hooks
+    -   `lib/` — Data utilities and chart logic
+    -   `interface/` — TypeScript interfaces
+
+## ⚙️ Customization
+
+-   Update theme and UI in `src/components/`
+-   Adjust chart logic in `src/lib/`
+-   API endpoints configured in context/hooks
+
+## 🤝 Contributing
+
+Pull requests and issues are welcome! Please open an issue to discuss your idea
+or bug before submitting a PR.
+
+## 📄 License
+
+MIT
+
+## 📬 Contact
+
+For questions or support, open an issue or contact the maintainer.
 
 ---
 
-## Known Issues
-
-N/A
-
----
-
-_last updated:_ Thu 5 Jun 2025 11:04:16 EDT
+_last updated:_ Tue 24 Jun 2025
