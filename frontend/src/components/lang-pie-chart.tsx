@@ -8,13 +8,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { type LanguageMap } from "@/interface/repository";
 import {
   toChartData,
@@ -67,15 +61,12 @@ export function ChartPieDonut({ language }: ChartPieDonutProps) {
 
   return (
     <Card className="flex flex-col">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>Languages</CardTitle>
-      </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[100px]"
+          className="mx-auto aspect-square max-h-[100px] md:max-h-[200px] lg:max-h-[300px]"
         >
-          <PieChart width={80} height={80}>
+          <PieChart>
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
