@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { useRepoDataContext } from "@/context/repo-data-provider";
 import { ChartPieDonut } from "@/components/lang-pie-chart.tsx";
+import { RepoStarGraph } from "@/components/repo-star-graph.tsx";
 
 import type {
   StatsProps,
@@ -41,10 +42,9 @@ export function RepoList() {
     return <div className="text-center">No repositories found.</div>;
   const trendingDate = new Date(data[0].trendingDate);
   return (
-    <div className="pl-10">
-      <RepoCardHeader>
-        <RepoTrendingDate>{trendingDate.toLocaleDateString()}</RepoTrendingDate>
-      </RepoCardHeader>
+    <div className="">
+      <RepoTrendingDate>{trendingDate.toLocaleDateString()}</RepoTrendingDate>
+      <RepoStarGraph></RepoStarGraph>
       {data.map((repo: RepoData, i: number) => (
         <RepoCard key={repo.url} {...repo} rank={i + 1} />
       ))}
@@ -52,6 +52,39 @@ export function RepoList() {
   );
 }
 
+export function RepoCard({
+  rank,
+  owner,
+  name,
+  description,
+  url,
+  topics,
+  language,
+}: RepoCardProps) {
+  return (
+    <Card className="flex flex-col md:flex-row items-center mt-4">
+      <CardHeader className="flex flex-shrink-0 flex-row flex-grow-0 w-full md:w-2/7">
+        <p className="text-xl font-extrabold pr-5">{rank}</p>
+        <div>
+          <CardTitle className="flex flex-col">
+            <RepoName owner={owner} name={name} url={url} />
+          </CardTitle>
+          <CardDescription className="line-clamp-2">
+            <RepoTopics topics={topics}></RepoTopics>
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-grow w-full md:w-1/2">
+        {description}
+      </CardContent>
+      <CardFooter className="justify-end-safe m-0 flex-shrink-0 flex-grow-0 w-full md:w-3/13 flex items-center">
+        <div className="w-full md:w-auto">
+          <ChartPieDonut language={language} />
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
 export function RepoCardHeader({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between mb-4">
@@ -68,35 +101,19 @@ export function RepoTopics({ topics }: { topics: string[] }) {
   return <div>{topics.slice(0, 5).join(" ")}</div>;
 }
 
-export function RepoCard({
-  rank,
+export function RepoName({
   owner,
   name,
-  description,
   url,
-  topics,
-  language,
-}: RepoCardProps) {
+}: {
+  owner: string;
+  name: string;
+  url: string;
+}) {
   return (
-    <Card className="flex flex-row items-center mx-10 my-4">
-      <CardHeader className="flex flex-shrink-0 flex-row flex-grow-0 w-2/7">
-        <p className="text-xl font-extrabold pr-5">{rank}</p>
-        <div>
-          <CardTitle className="flex flex-col">
-            <a href={url} target="_blank">
-              {owner + "/" + name}
-            </a>
-          </CardTitle>
-          <CardDescription className="line-clamp-2">
-            <RepoTopics topics={topics}></RepoTopics>
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-grow w-1/2">{description}</CardContent>
-      <CardFooter className="justify-end-safe m-0 flex-shrink-0 flex-grow-0 w-3/13">
-        <ChartPieDonut language={language} />
-      </CardFooter>
-    </Card>
+    <a href={url} rel="noopener noreferrer" target="_blank">
+      {owner + "/" + name}
+    </a>
   );
 }
 

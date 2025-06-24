@@ -6,7 +6,6 @@ import {
   RepoDataProvider,
   useRepoDataContext,
 } from "./context/repo-data-provider.tsx";
-import { RepoStarGraph } from "./components/repo-star-graph.tsx";
 
 export default function App() {
   return (
@@ -26,9 +25,9 @@ function RepoDataConsumer() {
 
   return (
     <>
-      <div className="pt-25"></div>
-      <RepoStarGraph></RepoStarGraph>
-      <RepoList></RepoList>
+      <div className="pt-25 px-4">
+        <RepoList></RepoList>
+      </div>
     </>
   );
 }
