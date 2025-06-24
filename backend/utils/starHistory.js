@@ -86,7 +86,7 @@ export async function getRepoStargazersCount(repo, token) {
 export async function getRepoStarRecords(
   repo,
   token = process.env.GITHUB_TOKEN,
-  maxRequestAmount = 40,
+  maxRequestAmount = 60,
 ) {
   // 1) initial request to get Link header
   const firstRes = await getRepoStargazers(repo, token, 1);
