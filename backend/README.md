@@ -1,25 +1,33 @@
 # 📦 DailyRepo
 
-## 🗃️ Categories
+## Overview
 
-| Categories   | Description                                |
-| ------------ | ------------------------------------------ |
-| linux-tool   | Native Linux utilities, sysadmin tools     |
-| cli          | Command-line apps                          |
-| productivity | Workflow, time tracking, note-taking tools |
-| web-dev      | Frontend/backend/devtools for web          |
-| ai-ml        | AI/ML libraries and tools                  |
-| trending     | GitHub trending (general, no strict type)  |
-| security     | Hacking, scanning, auditing, pentesting    |
-| misc         | Unclassified or niche                      |
+DailyRepo backend powers the data collection, processing, and API services for
+the DailyRepo project. It scrapes repository data, manages storage, and exposes
+endpoints for the frontend and other consumers.
 
-User can choose one of the above categories to filter the repositories. The
-default category is `trending`. If the user does not choose a category, the app
-will show the trending repositories by default.
+## Getting Started (Local Development)
 
-Each category contains ONE GitHub repository.
+1. Clone the repository and navigate to the `backend` folder:
+    ```sh
+    git clone <repo-url>
+    cd backend
+    ```
+2. Install dependencies:
+    ```sh
+    npm install
+    ```
+3. Create a `.env` file (see variables below).
+4. Start the server:
+    ```sh
+    node server.js
+    ```
+    Or for development with auto-reload (if nodemon is installed):
+    ```sh
+    npx nodemon server.js
+    ```
 
-## Docker
+## Docker setup for DailyRepo Backend
 
 ```dockerfile
 # build container image
@@ -36,43 +44,43 @@ docker run -d \
   dailyrepo_dev_local_v1
 ```
 
-## 📋 TODO
+### `.env` variables:
 
-### On-going
+```env
+GITHUB_TOKEN
+PORT
+MONGO
+API_TOKEN
+WHITELIST_IP
+```
 
-### trending scraping
+## API Documentation
 
-- [x] design, implement and test API for top trending only
-- [x] scheduler.js will be the entry for scheduled jobs
-  - Scrapping is decoupled from REST API and runs as a separate node process
-- [x] implement and test caching (node-cache)
-      switch from `node-cache` to _Redis_ if horizontal scale is needed
-  - [x] utils/nodeCahce.js
-  - [x] job/RepoScrapeJob.js
+-   **GET /api/repos** — List repositories
+-   **POST /api/repos** — Add a repository
+-   **GET /api/repos/:id** — Get repository details
 
-### Features and APIs
+## Development & Contribution
 
-- [ ] Incorporate repo-star project to produce more accurate trending repos
-  - [ ] update trending score every cache cycle
-- [x] API redesign (branch api-redesign)
-- [ ] Filter by Category or tags
-  - [ ] a word cloud for tags
-- [ ] allow user to search for a repo that might be trending previously
+-   Fork and clone the repo
+-   Create feature branches for changes
+-   Use clear commit messages
+-   Open a pull request for review
 
-### Improvements
+## Troubleshooting
 
-- [ ] tracking & cookies
-  - [ ] track most clicked category
-  - [ ] track most clicked repo
-  - [ ] add visit count to the database
-  - [ ] add their IP address to the database and their devices
-  - [ ] archive tracking info per IP in 90 days
+-   Ensure all `.env` variables are set
+-   Check MongoDB and network connectivity
+-   For Docker issues, try rebuilding with `--no-cache`
 
-### Deployment (dev phase)
+## License
 
-- [x] schedule job on GitHub Actions
-  - [x] use MongoDB Atlas Admin API to add runner's IP address to the white-list
-- [x] server.js encapsulates in Docker container
-  - [x] multi-stage Dockerfile to reduce image size
-  - [x] Only install production only dependencies
-  - [x] Create non-root user in Dockerfile
+MIT
+
+## Contact
+
+For questions or support, open an issue or contact the maintainer.
+
+## 🔗 Related
+
+repo: star-history
