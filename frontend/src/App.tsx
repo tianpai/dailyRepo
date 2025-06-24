@@ -6,6 +6,7 @@ import {
   RepoDataProvider,
   useRepoDataContext,
 } from "./context/repo-data-provider.tsx";
+import { LoadingSkeleton } from "./components/skeleton.tsx";
 
 export default function App() {
   return (
@@ -21,13 +22,13 @@ export default function App() {
 function RepoDataConsumer() {
   const { loading } = useRepoDataContext();
 
-  if (loading) return <div>Initial loading can takes up to 30s</div>;
+  if (loading) {
+    return <LoadingSkeleton />;
+  }
 
   return (
-    <>
-      <div className="pt-25 px-4">
-        <RepoList></RepoList>
-      </div>
-    </>
+    <div className="pt-25 px-4">
+      <RepoList></RepoList>
+    </div>
   );
 }
