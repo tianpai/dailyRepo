@@ -1,23 +1,125 @@
-/**
- * TODO:
- * 1. Add a graph showing the number of stars over time for all repos trending
- *    that date
- *    - [ ] a list of repos trending that date
- *    - [ ] fetch star history for each repo
- *    - [ ] display every single data point
- *    - [ ] use least squares regression to show a trend line
- */
-import { useRepoDataContext } from "@/context/repo-data-provider";
-import { useStarHistory } from "@/hooks/repo-data";
+"use client";
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { useTrendingStarHistory } from "@/hooks/repo-data";
+import { convertToNormalizedDays } from "@/lib/star-history-data";
 
 export function RepoStarGraph() {
-  const { data: repoData } = useRepoDataContext();
-  const names = repoData.map((repo) => repo.owner + "/" + repo.name) || [];
-  const { data: starHistory, loading, error } = useStarHistory(names[0]);
-
+  const { data: starHistoryData, loading, error } = useTrendingStarHistory();
   if (loading) return <div>Loading star history...</div>;
-  if (error)
-    return <div className="text-red-500">Error: fetching star history</div>;
+  if (error) return <div className="text-red-500">Error: {error}</div>;
 
-  return <div className="text-2xl">{starHistory.toString()}</div>;
+  // Convert the star history data to normalized format
+  const mockApiResponse = {
+    isCached: false,
+    date: new Date().toISOString().split("T")[0],
+    data: starHistoryData,
+  };
+
+  // Get repository names (short names without owner prefix)
+  const normalizedData = convertToNormalizedDays(mockApiResponse);
+  const repoNames = Object.keys(starHistoryData).map(
+    (fullName) => fullName.split("/")[1],
+  );
+  const colorKeys = Object.keys(REPO_COLORS);
+
+  // Create dynamic chart config
+  const chartConfig: ChartConfig = {};
+  repoNames.forEach((repoName, index) => {
+    const colorKey = colorKeys[index % colorKeys.length];
+    chartConfig[repoName] = {
+      label: repoName,
+      color: REPO_COLORS[colorKey as keyof typeof REPO_COLORS],
+    };
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Repository Star History</CardTitle>
+        <CardDescription>
+          Star growth over time (normalized to days from earliest repo creation)
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig}>
+          <LineChart
+            accessibilityLayer
+            data={normalizedData}
+            margin={{
+              left: 12,
+              right: 12,
+            }}
+          >
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="day"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => `Day ${value}`}
+            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            {repoNames.map((repoName) => (
+              <Line
+                key={repoName}
+                dataKey={repoName}
+                type="monotone"
+                stroke={chartConfig[repoName]?.color}
+                strokeWidth={4}
+                dot={false}
+                connectNulls={false}
+              />
+            ))}
+          </LineChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
 }
+
+// 30 predefined colors for different repositories
+const REPO_COLORS = {
+  color1: "#FF6B6B",
+  color2: "#4ECDC4",
+  color3: "#45B7D1",
+  color4: "#96CEB4",
+  color5: "#FFEAA7",
+  color6: "#DDA0DD",
+  color7: "#98D8C8",
+  color8: "#F7DC6F",
+  color9: "#BB8FCE",
+  color10: "#85C1E9",
+  color11: "#F8C471",
+  color12: "#82E0AA",
+  color13: "#F1948A",
+  color14: "#85C1E9",
+  color15: "#F8D7DA",
+  color16: "#D5DBDB",
+  color17: "#A3E4D7",
+  color18: "#D7BDE2",
+  color19: "#A9DFBF",
+  color20: "#F9E79F",
+  color21: "#AED6F1",
+  color22: "#F5B7B1",
+  color23: "#A2D9CE",
+  color24: "#E8DAEF",
+  color25: "#FADBD8",
+  color26: "#D0ECE7",
+  color27: "#FCF3CF",
+  color28: "#EBDEF0",
+  color29: "#D6EAF8",
+  color30: "#EDBB99",
+};

@@ -125,7 +125,13 @@ export function useStarHistory(fullname: string) {
 
         // Parse JSON response and extract star history data
         const json = (await res.json()) as RawStarHistoryApiResponse;
-        setData(json.data);
+        // json.data is Record<string, starDataPoint[]>, we need to get the specific repo data
+        const repoData = json.data[fullname];
+        if (repoData) {
+          setData(repoData);
+        } else {
+          setError(`No star history found for ${fullname}`);
+        }
       } catch (err) {
         // Handle and store error messages
         setError(err instanceof Error ? err.message : "Unknown error");

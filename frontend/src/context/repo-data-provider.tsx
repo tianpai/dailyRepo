@@ -17,6 +17,7 @@ export const RepoDataProvider = ({
   children: React.ReactNode;
 }) => {
   const { data, loading, error } = useRepoData("/trending");
+  //TODO: add star history
 
   return (
     <RepoDataContext.Provider value={{ data, loading, error }}>
