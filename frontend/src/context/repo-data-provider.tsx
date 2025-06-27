@@ -18,12 +18,15 @@ export const RepoDataProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
+    undefined,
+  );
   const { data, loading, error } = useRepoData("/trending", selectedDate);
-  //TODO: add star history
 
   return (
-    <RepoDataContext.Provider value={{ data, loading, error, selectedDate, setSelectedDate }}>
+    <RepoDataContext.Provider
+      value={{ data, loading, error, selectedDate, setSelectedDate }}
+    >
       {children}
     </RepoDataContext.Provider>
   );
