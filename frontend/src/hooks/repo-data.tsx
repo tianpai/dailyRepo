@@ -168,6 +168,7 @@ export function useTrendingStarHistory(selectedDate?: Date) {
 
   // State management for grouped star history data (repo name -> star history array)
   const [data, setData] = useState<Record<string, starDataPoint[]>>({});
+  const [actualDate, setActualDate] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
@@ -193,6 +194,7 @@ export function useTrendingStarHistory(selectedDate?: Date) {
           Record<string, starDataPoint[]>
         >;
         setData(json.data); // Format: { "repo/name": [...starDataPoints] }
+        setActualDate(json.date); // Store the actual date from API response
       } catch (err) {
         // Handle and store error messages
         setError(err instanceof Error ? err.message : "Unknown error");
@@ -204,5 +206,5 @@ export function useTrendingStarHistory(selectedDate?: Date) {
     fetchData();
   }, [star_history_url, token]); // Re-run when URL, token, or date changes
 
-  return { data, loading, error };
+  return { data, actualDate, loading, error };
 }

@@ -19,19 +19,28 @@ import { useRepoDataContext } from "@/context/repo-data-provider";
 
 export function RepoStarGraph() {
   const { selectedDate } = useRepoDataContext();
-  const { data: starHistoryData, loading, error } = useTrendingStarHistory(selectedDate);
+  const { data: starHistoryData, actualDate, loading, error } = useTrendingStarHistory(selectedDate);
   if (loading) return <div>Loading star history...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
+  
+  // Handle empty data case
+  if (!starHistoryData || Object.keys(starHistoryData).length === 0) {
+    return (
+      <div className="text-center text-gray-500 p-4">
+        No star history data available for the selected date.
+      </div>
+    );
+  }
 
-  // Convert the star history data to normalized format
-  const mockApiResponse = {
+  // Convert the star history data to normalized format using actual API date
+  const apiResponse = {
     isCached: false,
-    date: new Date().toISOString().split("T")[0],
+    date: actualDate || new Date().toISOString().split("T")[0],
     data: starHistoryData,
   };
 
   // Get repository names (short names without owner prefix)
-  const normalizedData = convertToNormalizedDays(mockApiResponse);
+  const normalizedData = convertToNormalizedDays(apiResponse);
   const repoNames = Object.keys(starHistoryData).map(
     (fullName) => fullName.split("/")[1],
   );
