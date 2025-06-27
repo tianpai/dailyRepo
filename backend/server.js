@@ -7,6 +7,7 @@ import repoRoutes from "./routes/RepoRoutes.js";
 import compression from "compression";
 import helmet from "helmet";
 import { checkFrontendToken } from "./middleware/checkToken.js";
+import { logVisitor } from "./middleware/visitorLogger.js";
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ mongoose
 app.use(express.json());
 app.use(helmet());
 app.use(compression());
+app.use(logVisitor);
 
 app.use(
   cors({
