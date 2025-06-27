@@ -7,6 +7,8 @@ type RepoDataContextType = {
   data: RepoData[] | [];
   loading: boolean;
   error: string | "";
+  selectedDate: Date | undefined;
+  setSelectedDate: (date: Date | undefined) => void;
 };
 
 const RepoDataContext = createContext<RepoDataContextType | null>(null);
@@ -16,11 +18,12 @@ export const RepoDataProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { data, loading, error } = useRepoData("/trending");
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+  const { data, loading, error } = useRepoData("/trending", selectedDate);
   //TODO: add star history
 
   return (
-    <RepoDataContext.Provider value={{ data, loading, error }}>
+    <RepoDataContext.Provider value={{ data, loading, error, selectedDate, setSelectedDate }}>
       {children}
     </RepoDataContext.Provider>
   );
