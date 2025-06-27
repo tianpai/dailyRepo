@@ -1,4 +1,5 @@
 "use client";
+import { LuChartArea } from "react-icons/lu";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import {
   Card,
@@ -19,15 +20,21 @@ import { useRepoDataContext } from "@/context/repo-data-provider";
 
 export function RepoStarGraph() {
   const { selectedDate } = useRepoDataContext();
-  const { data: starHistoryData, actualDate, loading, error } = useTrendingStarHistory(selectedDate);
+  const {
+    data: starHistoryData,
+    actualDate,
+    loading,
+    error,
+  } = useTrendingStarHistory(selectedDate);
   if (loading) return <div>Loading star history...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
-  
+
   // Handle empty data case
   if (!starHistoryData || Object.keys(starHistoryData).length === 0) {
     return (
       <div className="text-center text-gray-500 p-4">
-        No star history data available for the selected date.
+        <LuChartArea></LuChartArea>No star history data available for the
+        selected date.
       </div>
     );
   }
@@ -59,6 +66,7 @@ export function RepoStarGraph() {
   return (
     <Card>
       <CardHeader>
+        <LuChartArea className="size-7" />
         <CardTitle>Repository Star History</CardTitle>
         <CardDescription>
           Star growth over time (normalized to days from earliest repo creation)
