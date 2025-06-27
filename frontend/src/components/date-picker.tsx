@@ -33,7 +33,7 @@ export function RepoDatePicker() {
   };
 
   return (
-    <div className="max-w-2/9 mb-4 flex items-center gap-1 p-2 sm:p-4">
+    <div className="max-w-full mb-4 flex items-center gap-1 p-2 sm:p-4">
       <Button
         variant="outline"
         size="icon"

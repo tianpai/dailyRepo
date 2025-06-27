@@ -42,7 +42,7 @@ export function RepoList() {
   if (data.length === 0)
     return <div className="text-center">No repositories found.</div>;
   return (
-    <div className="">
+    <div>
       <RepoDatePicker></RepoDatePicker>
       <RepoStarGraph></RepoStarGraph>
       {data.map((repo: RepoData, i: number) => (

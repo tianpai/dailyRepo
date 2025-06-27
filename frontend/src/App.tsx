@@ -1,19 +1,34 @@
 import "./App.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Header } from "./components/header.tsx";
 import { RepoList } from "./components/repo-list.tsx";
+import About from "./components/about.tsx";
 import { ThemeProvider } from "./components/theme-provider.tsx";
 import {
   RepoDataProvider,
   useRepoDataContext,
 } from "./context/repo-data-provider.tsx";
 import { LoadingSkeleton } from "./components/skeleton.tsx";
+import { PageContainer } from "./components/page-container.tsx";
 
 export default function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Header></Header>
       <RepoDataProvider>
-        <RepoDataConsumer />
+        <Router>
+          <Header></Header>
+          <Routes>
+            <Route path="/" element={<RepoDataConsumer />} />
+            <Route
+              path="/about"
+              element={
+                <PageContainer>
+                  <About />
+                </PageContainer>
+              }
+            />
+          </Routes>
+        </Router>
       </RepoDataProvider>
     </ThemeProvider>
   );
@@ -27,8 +42,8 @@ function RepoDataConsumer() {
   }
 
   return (
-    <div className="pt-25 px-4">
+    <PageContainer>
       <RepoList></RepoList>
-    </div>
+    </PageContainer>
   );
 }
