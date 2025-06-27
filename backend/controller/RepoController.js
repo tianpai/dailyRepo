@@ -74,32 +74,52 @@ export async function getTrending(req, res, next) {
 
 /**
  * GET /repos/star-history
+ * ?date=YYYY-MM-DD  (optional; empty → latest date)
  */
 export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
   try {
-    // Get the latest trending date
-    const [{ latestDate } = {}] = await Repo.aggregate([
-      { $match: { trendingDate: { $exists: true, $ne: null } } },
-      { $sort: { trendingDate: -1 } },
-      { $limit: 1 },
-      { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
-    ]);
+    const today = getTodayUTC();
+    const date = req.query.date || today;
+
+    if (!isValidDate(date)) {
+      return res
+        .status(400)
+        .json({ error: `Bad date: "${date}" (expected YYYY-MM-DD ≥ 2024)` });
+    }
 
     // Check cache first
-    const cacheKey = `star-history-trending:${latestDate}`;
+    const cacheKey = `star-history-trending:${date}`;
     const cached = getCache(cacheKey);
     if (cached) {
       return res.status(200).json({
         isCached: true,
-        date: latestDate,
+        date: date,
         data: cached,
       });
     }
 
-    // Get all repo IDs where trendingDate equals latestDate
-    const trendingRepos = await Repo.find({ trendingDate: latestDate })
+    // Try exact match first
+    let trendingRepos = await Repo.find({ trendingDate: date })
       .select("_id")
       .lean();
+
+    let actualDate = date;
+
+    // If no repos found for exact date, fallback to latest date
+    if (!trendingRepos.length) {
+      const [{ latestDate } = {}] = await Repo.aggregate([
+        { $match: { trendingDate: { $exists: true, $ne: null } } },
+        { $sort: { trendingDate: -1 } },
+        { $limit: 1 },
+        { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
+      ]);
+
+      trendingRepos = await Repo.find({ trendingDate: latestDate })
+        .select("_id")
+        .lean();
+      
+      actualDate = latestDate;
+    }
 
     const repoIds = trendingRepos.map((repo) => repo._id);
 
@@ -120,12 +140,18 @@ export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
       }));
     });
 
-    // Cache the results
-    setCache(cacheKey, groupedStarHistory, TTL.DATED);
+    // Cache the results with proper date-based cache key
+    const actualCacheKey = `star-history-trending:${actualDate}`;
+    setCache(actualCacheKey, groupedStarHistory, TTL.DATED);
+    
+    // If we used fallback date, also cache with requested date key for short time
+    if (actualDate !== date) {
+      setCache(cacheKey, groupedStarHistory, TTL.HAPPY_HOUR);
+    }
 
     return res.status(200).json({
       isCached: false,
-      date: latestDate,
+      date: actualDate,
       data: groupedStarHistory,
     });
   } catch (err) {
