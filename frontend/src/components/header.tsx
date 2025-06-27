@@ -1,5 +1,6 @@
 import { ModeToggle } from "./mode-toggle";
 import { type ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 export function HeaderContainer({ children }: { children: ReactNode }) {
   return (
@@ -24,9 +25,21 @@ export function HeaderActions({ children }: { children: ReactNode }) {
 export function Header() {
   return (
     <HeaderContainer>
-      <HeaderTitle>Daily Repo</HeaderTitle>
+      <HeaderTitle>
+        <Link to="/" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+          Daily Repo
+        </Link>
+      </HeaderTitle>
       <HeaderActions>
-        <ModeToggle />
+        <div className="flex items-center space-x-4">
+          <Link 
+            to="/about" 
+            className="text-sm font-medium hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            About
+          </Link>
+          <ModeToggle />
+        </div>
       </HeaderActions>
     </HeaderContainer>
   );
