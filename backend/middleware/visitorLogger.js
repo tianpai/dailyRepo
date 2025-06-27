@@ -2,6 +2,28 @@ import VisitorLog from "../models/VisitorLog.js";
 
 export const logVisitor = async (req, res, next) => {
   try {
+    // Skip logging for health checks and other internal requests
+    const shouldSkipLogging = (req) => {
+      const userAgent = req.headers['user-agent'] || '';
+      const path = req.path;
+      
+      // Skip Render health checks
+      if (userAgent.includes('Render/') && path === '/health') {
+        return true;
+      }
+      
+      // Skip other health check paths
+      if (path === '/health') {
+        return true;
+      }
+      
+      return false;
+    };
+
+    if (shouldSkipLogging(req)) {
+      return next();
+    }
+
     // Extract real IP address (handles proxies and load balancers)
     const getClientIP = (req) => {
       return (
