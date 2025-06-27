@@ -11,6 +11,7 @@ import {
 import { useRepoDataContext } from "@/context/repo-data-provider";
 import { ChartPieDonut } from "@/components/lang-pie-chart.tsx";
 import { RepoStarGraph } from "@/components/repo-star-graph.tsx";
+import { RepoDatePicker } from "@/components/date-picker.tsx";
 
 import type {
   StatsProps,
@@ -40,10 +41,9 @@ export function RepoList() {
     return <div className="text-center text-red-500">Error: {error}</div>;
   if (data.length === 0)
     return <div className="text-center">No repositories found.</div>;
-  const trendingDate = new Date(data[0].trendingDate);
   return (
     <div className="">
-      <RepoTrendingDate>{trendingDate.toLocaleDateString()}</RepoTrendingDate>
+      <RepoDatePicker></RepoDatePicker>
       <RepoStarGraph></RepoStarGraph>
       {data.map((repo: RepoData, i: number) => (
         <RepoCard key={repo.url} {...repo} rank={i + 1} />

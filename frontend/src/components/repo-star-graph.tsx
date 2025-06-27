@@ -15,9 +15,11 @@ import {
 } from "@/components/ui/chart";
 import { useTrendingStarHistory } from "@/hooks/repo-data";
 import { convertToNormalizedDays } from "@/lib/star-history-data";
+import { useRepoDataContext } from "@/context/repo-data-provider";
 
 export function RepoStarGraph() {
-  const { data: starHistoryData, loading, error } = useTrendingStarHistory();
+  const { selectedDate } = useRepoDataContext();
+  const { data: starHistoryData, loading, error } = useTrendingStarHistory(selectedDate);
   if (loading) return <div>Loading star history...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
 

@@ -29,7 +29,7 @@ import type {
  * const { data, loading, error } = useRepoData('/trending');
  * const { data, loading, error } = useRepoData('/ranking?top=50');
  */
-export function useRepoData(endpoint: string) {
+export function useRepoData(endpoint: string, selectedDate?: Date) {
   // Get environment variables for API base URL and authentication token
   const base_url = import.meta.env.VITE_DATABASE_URL as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
@@ -40,8 +40,9 @@ export function useRepoData(endpoint: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  // Construct the full API URL
-  const trending_url = `${base_url}${endpoint}`;
+  // Construct the full API URL with optional date parameter
+  const dateParam = selectedDate ? `?date=${selectedDate.toISOString().split('T')[0]}` : '';
+  const trending_url = `${base_url}${endpoint}${dateParam}`;
 
   useEffect(() => {
     /**
@@ -82,7 +83,7 @@ export function useRepoData(endpoint: string) {
       }
     };
     fetchData();
-  }, [trending_url, token]); // Re-run when URL or token changes
+  }, [trending_url, token]); // Re-run when URL, token, or date changes
 
   return { data, loading, error };
 }
@@ -141,7 +142,7 @@ export function useStarHistory(fullname: string) {
       }
     };
     fetchData();
-  }, [starhiotory_url, token]); // Re-run when URL or token changes
+  }, [starhiotory_url, token, fullname]); // Re-run when URL, token, or fullname changes
 
   return { data, loading, error };
 }
@@ -159,7 +160,7 @@ export function useStarHistory(fullname: string) {
  * //   "microsoft/vscode": [{ date: "2024-01-01", count: 160000 }, ...]
  * // }
  */
-export function useTrendingStarHistory() {
+export function useTrendingStarHistory(selectedDate?: Date) {
   // Get environment variables for API base URL and authentication token
   const base_url = import.meta.env.VITE_DATABASE_URL as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
@@ -170,8 +171,9 @@ export function useTrendingStarHistory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  // Construct API URL for trending repositories star history
-  const star_history_url = `${base_url}/star-history`;
+  // Construct API URL for trending repositories star history with optional date parameter
+  const dateParam = selectedDate ? `?date=${selectedDate.toISOString().split('T')[0]}` : '';
+  const star_history_url = `${base_url}/star-history${dateParam}`;
 
   useEffect(() => {
     /**
@@ -200,7 +202,7 @@ export function useTrendingStarHistory() {
       }
     };
     fetchData();
-  }, [star_history_url, token]); // Re-run when URL or token changes
+  }, [star_history_url, token]); // Re-run when URL, token, or date changes
 
   return { data, loading, error };
 }
