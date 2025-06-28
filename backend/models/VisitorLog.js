@@ -4,24 +4,24 @@ const VisitorLogSchema = new mongoose.Schema({
   timestamp: {
     type: Date,
     default: Date.now,
-    required: true
+    required: true,
   },
   ip: {
     type: String,
-    required: true
+    required: true,
   },
   userAgent: {
     type: String,
-    required: true
+    required: true,
   },
   path: {
     type: String,
-    required: true
+    required: true,
   },
   method: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 });
 
 // Index for efficient querying by date and IP

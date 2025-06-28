@@ -1,5 +1,10 @@
+/** @fileoverview
+ * scrape GitHub DOM and keep useful information
+ *
+ * No API calls, just DOM scraping
+ */
+
 import * as cheerio from "cheerio";
-import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -14,29 +19,22 @@ const githubTrending = {
   since: ["monthly", "daily", "weekly"],
 };
 
-/**
- * Retrieves the repository information from a given repository.
- *
- * @param {string} repo
- *  - The link to the repository.
- * @returns {Promise<Object>}
- *  - A json object containing the repository information.
- * @example await getRepo("/vanna-ai/vanna");
- */
-export async function getRepo(repo) {
-  try {
-    const res = await axios.get(`https://api.github.com/repos${repo}`, {
-      headers: {
-        Authorization: `Bearer ${githubToken}`,
-        Accept: "application/vnd.github.v3.raw",
-      },
-    });
-    return res.data;
-  } catch (error) {
-    console.error("Error fetching repository information:", error);
-    return null;
-  }
-}
+// by languages
+// https://github.com/trending/python?since=daily
+// https://github.com/trending/c?since=daily
+// https://github.com/trending/javascript?since=daily
+// https://github.com/trending/typescript?since=daily
+// https://github.com/trending/rust?since=daily
+// https://github.com/trending/go?since=daily
+// https://github.com/trending/java?since=daily
+// https://github.com/trending/c++?since=daily
+
+// by developers and their popular projects
+// https://github.com/trending/developers/typescript?since=daily
+// https://github.com/trending/developers/javascript?since=daily
+// https://github.com/trending/developers/rust?since=daily
+// https://github.com/trending/developers/go?since=daily
+// https://github.com/trending/developers/python?since=daily
 
 /**
  * Retrieves the trending repositories from GitHub.
@@ -64,19 +62,4 @@ export async function getTrendingRepoNames(url = githubTrending.baseURL) {
     console.error("Error fetching repository links:", error);
     return [];
   }
-}
-
-/**
- * Retrieves the README file from a given repository.
- * @param {string} repoLink - The link to the repository.
- * */
-export async function getReadme(repo) {
-  const res = await axios.get(`https://api.github.com/repos${repo}/readme`, {
-    headers: {
-      Authorization: `Bearer ${githubToken}`,
-      Accept: "application/vnd.github.v3.raw",
-    },
-  });
-  const readme = res.data;
-  return readme;
 }
