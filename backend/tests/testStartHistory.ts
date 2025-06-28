@@ -1,5 +1,5 @@
 // example.js
-import { getRepoStarRecords } from "../utils/starHistory.js";
+import { getRepoStarRecords } from "../services/fetching-star-history.js";
 import dotenv from "dotenv";
 
 dotenv.config();

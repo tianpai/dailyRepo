@@ -4,6 +4,8 @@ import { Repo, StarHistory } from "../model/Repo.js";
 import { getRepoStarRecords } from "./fetching-star-history.js";
 import axios from "axios";
 
+const githubToken = process.env.GITHUB_TOKEN;
+
 export default async function RepoScrapeJobRunner() {
   await saveTrendingData(await prepTrendingData());
 }

@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { IRepo, IStarHistory } from "../types/database.js";
 
 const RepoSchema = new mongoose.Schema({
   fullName: String,
@@ -28,6 +29,6 @@ const StarHistorySchema = new mongoose.Schema({
 StarHistorySchema.index({ repoId: 1, saveDate: -1 });
 StarHistorySchema.index({ "history.date": 1 });
 
-const Repo = mongoose.model("Repo", RepoSchema);
-const StarHistory = mongoose.model("StarHistory", StarHistorySchema);
+const Repo = mongoose.model<IRepo>("Repo", RepoSchema);
+const StarHistory = mongoose.model<IStarHistory>("StarHistory", StarHistorySchema);
 export { Repo, StarHistory };
