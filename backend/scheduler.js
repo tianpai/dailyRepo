@@ -5,7 +5,7 @@ import {
   prepTrendingData,
   saveTrendingData,
   saveStarHistoryBatch,
-} from "./jobs/RepoScrapeJob.js";
+} from "./services/repo-data.js";
 dotenv.config();
 
 const MONGO_URI = process.env.MONGO;

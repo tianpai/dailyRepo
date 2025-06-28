@@ -1,7 +1,7 @@
-import { getTrendingRepoNames } from "../services/repo-scraping.js";
+import { getTrendingRepoNames } from "./repo-scraping.js";
 import { getTodayUTC, getUTCDate, calculateAgeInDays } from "../utils/time.js";
-import { Repo, StarHistory } from "../models/Repo.js";
-import { getRepoStarRecords } from "../utils/starHistory.js";
+import { Repo, StarHistory } from "../model/Repo.js";
+import { getRepoStarRecords } from "./fetching-star-history.js";
 import axios from "axios";
 
 export default async function RepoScrapeJobRunner() {

@@ -5,7 +5,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-import { prepTrendingData, saveTrendingData } from "../jobs/RepoScrapeJob.js";
+import { prepTrendingData, saveTrendingData } from "../services/repo-data.js";
 
 dotenv.config();
 

@@ -1,12 +1,7 @@
-import { Repo, StarHistory } from "../models/Repo.js";
-import {
-  getCache,
-  setCache,
-  TTL,
-  getTrendCacheKey,
-} from "../utils/nodeCache.js";
+import { Repo, StarHistory } from "../model/Repo.js";
+import { getCache, setCache, TTL, getTrendCacheKey } from "../utils/caching.js";
 import { getTodayUTC, isValidDate } from "../utils/time.js";
-import { getRepoStarRecords } from "../utils/starHistory.js";
+import { getRepoStarRecords } from "../services/fetching-star-history.js";
 
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -117,7 +112,7 @@ export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
       trendingRepos = await Repo.find({ trendingDate: latestDate })
         .select("_id")
         .lean();
-      
+
       actualDate = latestDate;
     }
 
@@ -143,7 +138,7 @@ export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
     // Cache the results with proper date-based cache key
     const actualCacheKey = `star-history-trending:${actualDate}`;
     setCache(actualCacheKey, groupedStarHistory, TTL.DATED);
-    
+
     // If we used fallback date, also cache with requested date key for short time
     if (actualDate !== date) {
       setCache(cacheKey, groupedStarHistory, TTL.HAPPY_HOUR);

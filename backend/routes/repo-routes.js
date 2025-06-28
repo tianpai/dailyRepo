@@ -4,7 +4,7 @@ import {
   getStarHistory,
   getRanking,
   getStarHistoryAllDataPointTrendingData,
-} from "../controller/RepoController.js";
+} from "../controller/repo-controller.js";
 
 const repoRouter = Router();
 
