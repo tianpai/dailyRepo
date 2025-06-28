@@ -8,6 +8,6 @@ Dockerfile
 *.log
 npm-debug.log
 README.md
-scripts/
-jobs/
+tests/
+scrapped-data-prep/
 scheduler.js

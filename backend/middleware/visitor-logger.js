@@ -1,4 +1,4 @@
-import VisitorLog from "../models/VisitorLog.js";
+import VisitorLog from "../model/VisitorLog.js";
 
 export const logVisitor = async (req, res, next) => {
   try {

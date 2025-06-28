@@ -1,8 +1,8 @@
 import axios from "axios";
-import { Repo } from "../models/Repo.js";
+import { Repo } from "../model/Repo.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { getRepoStarRecords } from "../utils/starHistory.js";
+import { getRepoStarRecords } from "./fetching-star-history.js";
 dotenv.config();
 
 const testRepo = "ourongxing/newsnow";
