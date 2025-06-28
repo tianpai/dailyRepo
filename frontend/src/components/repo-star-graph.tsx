@@ -26,15 +26,20 @@ export function RepoStarGraph() {
     loading,
     error,
   } = useTrendingStarHistory(selectedDate);
-  if (loading) return <div>Loading star history...</div>;
+  if (loading)
+    return (
+      <div>
+        <h1>Loading star history...</h1>
+      </div>
+    );
   if (error) return <div className="text-red-500">Error: {error}</div>;
 
   // Handle empty data case
   if (!starHistoryData || Object.keys(starHistoryData).length === 0) {
     return (
       <div className="text-center text-gray-500 p-4">
-        <LuChartArea></LuChartArea>No star history data available for the
-        selected date.
+        <LuChartArea></LuChartArea>
+        <h2>No star history data available for the selected date.</h2>
       </div>
     );
   }
@@ -67,7 +72,9 @@ export function RepoStarGraph() {
     <Card>
       <CardHeader>
         <LuChartArea className="size-7" />
-        <CardTitle>Repository Star History</CardTitle>
+        <CardTitle>
+          <h2>Repository star history</h2>
+        </CardTitle>
         <CardDescription>
           Star growth over time (normalized to days from earliest repo creation)
         </CardDescription>

@@ -14,7 +14,7 @@ function About(): React.JSX.Element {
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center mb-8">
-            About DailyRepo
+            <h1>About DailyRepo</h1>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">

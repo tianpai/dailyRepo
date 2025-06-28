@@ -26,15 +26,18 @@ export function Header() {
   return (
     <HeaderContainer>
       <HeaderTitle>
-        <Link to="/" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-          Daily Repo
+        <Link
+          to="/"
+          className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          dAiLy Repo
         </Link>
       </HeaderTitle>
       <HeaderActions>
         <div className="flex items-center space-x-4">
-          <Link 
-            to="/about" 
-            className="text-sm font-medium hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          <Link
+            to="/about"
+            className="major-mono text-sm font-medium hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             About
           </Link>
