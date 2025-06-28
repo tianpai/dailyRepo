@@ -11,7 +11,7 @@ export function PageContainer({
 }: PageContainerProps) {
   return (
     <div className={`px-4 sm:px-6 lg:px-8 pt-25 ${className}`}>
-      <div className="max-w-3xl mx-auto">{children}</div>
+      <div className="max-w-4xl mx-auto">{children}</div>
     </div>
   );
 }
