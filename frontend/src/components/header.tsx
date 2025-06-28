@@ -12,7 +12,7 @@ export function HeaderContainer({ children }: { children: ReactNode }) {
 // Similarly for other components
 export function HeaderTitle({ children }: { children: ReactNode }) {
   return (
-    <h1 className="scroll-m-20 p-5 text-4xl font-extrabold tracking-tight text-balance">
+    <h1 className="scroll-m-20 p-5 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-balance">
       {children}
     </h1>
   );
