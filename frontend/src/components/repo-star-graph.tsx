@@ -97,7 +97,7 @@ export function RepoStarGraph() {
                 dataKey={repoName}
                 type="monotone"
                 stroke={chartConfig[repoName]?.color}
-                strokeWidth={4}
+                strokeWidth={2}
                 dot={false}
                 connectNulls={false}
               />
