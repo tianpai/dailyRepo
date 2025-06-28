@@ -93,26 +93,28 @@ intuitive UI.
 
 ### Near-Term
 
+- [ ] Expand repository details view (description, license, last updated)
+- [ ] Expand scrapping range to include language-specific repositories and developers
 - [ ] Finalize category filtering in UI (backend categorization system is ready)
 - [ ] Implement repository topics and tag cloud for richer filtering
 - [ ] Add hover animations and visual enhancements
-- [ ] Day picker for historical data selection
+- [x] Day picker for historical data selection
 - [ ] Repository search functionality
-- [ ] Integrate React Router & React Query for improved SPA navigation
+- [ ] Monthly trending top 10 and hottest topics
+- [ ] Exportable reports and visualizations (PDF/CSV) of trending graphs
 
 ### Mid-Term
 
-- [ ] Monthly trending top 10 and hottest topics
 - [ ] Dynamic background changes based on mouse hover
-- [ ] Build account system: user registration, favorites, and personalized comparisons
+- [ ] Integrate React Router & TanStack React Query for improved SPA navigation
 - [ ] Enhance caching layer: swap in Redis and add TTL tuning
-- [ ] Exportable reports and visualizations (PDF/CSV) of trending graphs
-- [ ] Real-time update mode via WebSockets or SSE
 - [ ] Comprehensive end-to-end and load testing
+- [ ] Build account system: user registration, favorites, and personalized comparisons
 - [ ] CI/CD pipeline with linting, testing, and vulnerability scanning
 
 ### Long-Term
 
+- [ ] Build better animations and visualizations for repository cards and graphs
 - [ ] Machine-learning–driven recommendations: suggest repos based on user behavior
 - [ ] Plugin system: allow community contributions of new scraping modules
 - [ ] Mobile-optimized PWA with offline caching
@@ -120,4 +122,4 @@ intuitive UI.
 
 ---
 
-_Last updated: 2025-06-24_
+_Last updated: 2025-06-28_
