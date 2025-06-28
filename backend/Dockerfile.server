@@ -1,37 +1,47 @@
 # ========================================================================
-# STAGE 1: DEPENDENCY INSTALLATION (Builder stage)
+# STAGE 1: BUILD STAGE (TypeScript compilation)
 # ========================================================================
 
-# Use lightweight Node.js 18 Alpine base image (5x smaller than regular Node)
-FROM node:18-alpine AS builder
+# Use lightweight Node.js 20 Alpine base image (5x smaller than regular Node)
+FROM node:20-alpine AS builder
 
 # Set working directory inside container (creates if not exists)
 WORKDIR /usr/src/app
 
-# Copy ONLY package.json and package-lock.json FIRST (optimizes Docker cache)
+# Copy ONLY package.json, package-lock.json, and tsconfig.json FIRST (optimizes Docker cache)
 # This allows reusing dependency layers when only code changes
 COPY package*.json ./
+COPY tsconfig.json ./
 
-# Install PRODUCTION dependencies ONLY (no devDependencies)
-# --omit=dev: Skips dev dependencies (saves space and reduces vulnerabilities)
+# Install ALL dependencies (including devDependencies for TypeScript build)
 # ci: Clean-install from lockfile (faster and more reliable than npm install)
-RUN npm ci --omit=dev
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build TypeScript to JavaScript
+RUN npm run build
 
 # ========================================================================
 # STAGE 2: RUNTIME IMAGE (Final production image)
 # ========================================================================
 
 # Start fresh with same base image
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Set same working directory for consistency
 WORKDIR /usr/src/app
 
-# Copy ONLY production dependencies from builder stage (not devDependencies)
-COPY --from=builder /usr/src/app/node_modules ./node_modules
+# Install ONLY production dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Copy ALL application code (filtered by .dockerignore)
-COPY . .
+# Copy compiled JavaScript from builder stage
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Copy any other necessary files (package.json for runtime)
+COPY --from=builder /usr/src/app/package*.json ./
 
 # ====================== SECURITY HARDENING ==============================
 # Create non-root user (express-user) and set permissions
@@ -58,5 +68,5 @@ HEALTHCHECK --interval=30s --timeout=3s \
 
 # ====================== START COMMAND ===================================
 # Launch Express server (using node directly - no dev tools)
-# Entry point is your server.js file
-CMD ["node", "server.js"]  
+# Entry point is compiled server.js file in dist directory
+CMD ["node", "dist/server.js"]  
