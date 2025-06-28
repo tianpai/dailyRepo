@@ -1,7 +1,8 @@
-import { getRepo, getTrendingRepoNames } from "../services/RepoScraping.js";
+import { getTrendingRepoNames } from "../services/repo-scraping.js";
 import { getTodayUTC, getUTCDate, calculateAgeInDays } from "../utils/time.js";
 import { Repo, StarHistory } from "../models/Repo.js";
 import { getRepoStarRecords } from "../utils/starHistory.js";
+import axios from "axios";
 
 export default async function RepoScrapeJobRunner() {
   await saveTrendingData(await prepTrendingData());
@@ -79,25 +80,6 @@ export async function saveStarHistoryBatch(repoNames) {
       missingRepos,
     );
   }
-
-  // // Fetch star history for all valid repos in parallel
-  // const results = await Promise.allSettled(
-  //   validRepoNames.map(async (repoName) => {
-  //     try {
-  //       const data = await getRepoStarRecords(repoName);
-  //       console.log(`${repoName}: ${data?.length || 0} data points fetched`);
-  //
-  //       return {
-  //         repoId: repoMap.get(repoName),
-  //         repoName,
-  //         history: data,
-  //       };
-  //     } catch (error) {
-  //       console.error(`Error fetching star history for ${repoName}:`, error);
-  //       throw error;
-  //     }
-  //   }),
-  // );
 
   // fetch with delay to avoid rate limits
   const results = [];
@@ -235,4 +217,43 @@ function transformRepo(rawdata, languages, today) {
     license: license?.name || null,
     trendingDate: today,
   };
+}
+
+/**
+ * Retrieves the README file from a given repository.
+ * @param {string} repoLink - The link to the repository.
+ * */
+export async function getReadme(repo) {
+  const res = await axios.get(`https://api.github.com/repos${repo}/readme`, {
+    headers: {
+      Authorization: `Bearer ${githubToken}`,
+      Accept: "application/vnd.github.v3.raw",
+    },
+  });
+  const readme = res.data;
+  return readme;
+}
+
+/**
+ * Retrieves the repository information from a given repository.
+ *
+ * @param {string} repo
+ *  - The link to the repository.
+ * @returns {Promise<Object>}
+ *  - A json object containing the repository information.
+ * @example await getRepo("/vanna-ai/vanna");
+ */
+export async function getRepo(repo) {
+  try {
+    const res = await axios.get(`https://api.github.com/repos${repo}`, {
+      headers: {
+        Authorization: `Bearer ${githubToken}`,
+        Accept: "application/vnd.github.v3.raw",
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching repository information:", error);
+    return null;
+  }
 }

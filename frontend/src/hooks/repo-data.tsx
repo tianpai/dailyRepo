@@ -41,7 +41,9 @@ export function useRepoData(endpoint: string, selectedDate?: Date) {
   const [error, setError] = useState<string>("");
 
   // Construct the full API URL with optional date parameter
-  const dateParam = selectedDate ? `?date=${selectedDate.toISOString().split('T')[0]}` : '';
+  const dateParam = selectedDate
+    ? `?date=${selectedDate.toISOString().split("T")[0]}`
+    : "";
   const trending_url = `${base_url}${endpoint}${dateParam}`;
 
   useEffect(() => {
@@ -173,7 +175,9 @@ export function useTrendingStarHistory(selectedDate?: Date) {
   const [error, setError] = useState<string>("");
 
   // Construct API URL for trending repositories star history with optional date parameter
-  const dateParam = selectedDate ? `?date=${selectedDate.toISOString().split('T')[0]}` : '';
+  const dateParam = selectedDate
+    ? `?date=${selectedDate.toISOString().split("T")[0]}`
+    : "";
   const star_history_url = `${base_url}/star-history${dateParam}`;
 
   useEffect(() => {
