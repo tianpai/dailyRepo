@@ -34,7 +34,7 @@ export function calculateAgeInDays(createdDate, updatedDate) {
   const created = new Date(createdDate);
   const updated = new Date(updatedDate);
 
-  const differenceInMilliseconds = updated - created;
+  const differenceInMilliseconds = updated.getTime() - created.getTime();
   const ageInDays = differenceInMilliseconds / (24 * 60 * 60 * 1000);
 
   return Math.floor(ageInDays);

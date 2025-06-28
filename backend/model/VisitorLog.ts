@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { IVisitorLog } from "../types/database.js";
 
 const VisitorLogSchema = new mongoose.Schema({
   timestamp: {
@@ -28,6 +29,6 @@ const VisitorLogSchema = new mongoose.Schema({
 VisitorLogSchema.index({ timestamp: -1 });
 VisitorLogSchema.index({ ip: 1 });
 
-const VisitorLog = mongoose.model("VisitorLog", VisitorLogSchema);
+const VisitorLog = mongoose.model<IVisitorLog>("VisitorLog", VisitorLogSchema);
 
 export default VisitorLog;

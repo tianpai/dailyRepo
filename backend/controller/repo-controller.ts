@@ -45,7 +45,7 @@ export async function getTrending(req, res, next) {
         .lean();
 
       // cache the real date long-term…
-      setCache(getTrendCacheKey(latestDate), docs, TTL.DATED);
+      setCache(getTrendCacheKey(latestDate), docs, TTL.ONE_EARTH_ROTATION);
       // …and today's alias with short TTL so it self-expires
       if (date === today) {
         // 1 hour because server is too drunk
@@ -60,7 +60,7 @@ export async function getTrending(req, res, next) {
     }
 
     //exact match found → normal daily TTL
-    setCache(cacheKey, docs, TTL.DATED);
+    setCache(cacheKey, docs, TTL.ONE_EARTH_ROTATION);
     return res.status(200).json({ isCached: false, date, data: docs });
   } catch (err) {
     next(err);
@@ -128,7 +128,7 @@ export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
     // Group star history data by repo fullName
     const groupedStarHistory = {};
     starHistoryRecords.forEach((record) => {
-      const repoName = record.repoId.fullName || record.repoId.name;
+      const repoName = (record.repoId as any).fullName || (record.repoId as any).name;
       groupedStarHistory[repoName] = record.history.map((historyPoint) => ({
         date: historyPoint.date,
         count: historyPoint.count,
@@ -137,7 +137,7 @@ export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
 
     // Cache the results with proper date-based cache key
     const actualCacheKey = `star-history-trending:${actualDate}`;
-    setCache(actualCacheKey, groupedStarHistory, TTL.DATED);
+    setCache(actualCacheKey, groupedStarHistory, TTL.ONE_EARTH_ROTATION);
 
     // If we used fallback date, also cache with requested date key for short time
     if (actualDate !== date) {
@@ -190,7 +190,7 @@ export async function getStarHistory(req, res, next) {
     // If we have recent data (within 1 month), return it
     if (
       existingHistory &&
-      new Date() - existingHistory.saveDate < ONE_MONTH_MS
+      new Date().getTime() - existingHistory.saveDate.getTime() < ONE_MONTH_MS
     ) {
       setCache(cacheKey, existingHistory.history, TTL.SEMAINE);
       return res.status(200).json({
@@ -253,7 +253,7 @@ export async function getRanking(req, res, next) {
     ]);
 
     // Cache the results
-    setCache(cacheKey, ranking, TTL.WEEK);
+    setCache(cacheKey, ranking, TTL.SEMAINE);
     return res.json(ranking);
   } catch (err) {
     next(err);
