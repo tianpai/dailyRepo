@@ -19,6 +19,8 @@ export const logVisitor = async (req, res, next) => {
 
       // Vercel screenshot requests
       if (userAgent.includes("vercel-screenshot/1.0")) return true;
+
+      return false;
     };
 
     if (shouldSkipLogging(req)) {
