@@ -1,23 +1,38 @@
 /*
- * A partial reimplementation in JS of the GitHub Star History API under
- * backend/shared/common/
+ * GitHub Star History API Implementation
  *
- * Star-History Repo: github.com/StarHistory/star-history
- * Star-History LICENSE: MIT
+ * Fetches star history data for GitHub repositories by sampling stargazer
+ * data across time periods and calculating historical star counts.
  *
+ * Features:
+ * - Fetches stargazer data with timestamps
+ * - Samples data points for efficient API usage
+ * - Returns time-series data of star counts
+ * - Handles rate limiting and pagination
  */
 
 import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
+// GitHub API base URLs
+const API_REPO = "https://api.github.com/repos/";
+const API_USER = "https://api.github.com/users/";
+
 const DEFAULT_PER_PAGE = 100;
 
 /**
- * returns an array of integers from `from` to `to`, inclusive.
- * example: range(1, 5) → [1, 2, 3, 4, 5]
+ * Generates an array of consecutive integers from start to end (inclusive)
+ *
+ * @param from - starting number
+ * @param to - ending number
+ * @returns array of integers [from, from+1, ..., to]
+ *
+ * @example
+ * range(1, 5) // returns [1, 2, 3, 4, 5]
+ * range(10, 12) // returns [10, 11, 12]
  */
-export function range(from, to) {
+export function range(from: number, to: number): number[] {
   const arr = [];
   for (let i = from; i <= to; i++) {
     arr.push(i);
@@ -26,30 +41,40 @@ export function range(from, to) {
 }
 
 /**
- * returns a date string in YYYY-MM-DD format
+ * Converts a timestamp, date string, or Date object to YYYY-MM-DD format
  *
- * @param sometime - a timestamp or Date object
- * sometime must be parseable by Date constructor
+ * @param sometime - timestamp (number), date string, or Date object
+ * @returns date string in ISO format (YYYY-MM-DD)
+ *
+ * @example
+ * getDateString(1640995200000) // returns "2022-01-01"
+ * getDateString("2022-12-25") // returns "2022-12-25"
  */
-export function getDateString(sometime) {
+export function getDateString(sometime: number | string | Date): string {
   return new Date(sometime).toISOString().slice(0, 10);
 }
 
 /**
- * Fetches a page of stargazers with starred_at timestamps.
- * @param {string} repo - the repository in "owner/name" format
- * @param {string} [token] - optional GitHub token for authenticated requests
- * @param {number} [page] - page number to fetch (default is 1)
+ * Fetches a single page of stargazers with starred_at timestamps from GitHub API
+ *
+ * @param repo - repository identifier in "owner/name" format
+ * @param token - GitHub personal access token for authentication
+ * @param page - page number to fetch (1-based indexing)
+ * @returns Promise resolving to axios response with stargazer data
  */
-export async function getRepoStargazers(repo, token, page) {
-  let url = `https://api.github.com/repos/${repo}/stargazers?per_page=${DEFAULT_PER_PAGE}`;
+export async function getRepoStargazers(
+  repo: string,
+  token: string,
+  page: number,
+) {
+  let url = API_REPO + repo + `/stargazers?per_page=${DEFAULT_PER_PAGE}`;
   if (page !== undefined) {
     url += `&page=${page}`;
   }
 
   return axios.get(url, {
     headers: {
-      // this header is required to get starred_at timestamps
+      // Required header to receive starred_at timestamps in response
       Accept: "application/vnd.github.v3.star+json",
       "X-GitHub-Api-Version": "2022-11-28",
       ...(token ? { Authorization: `token ${token}` } : {}),
@@ -58,13 +83,17 @@ export async function getRepoStargazers(repo, token, page) {
 }
 
 /**
- * Fetches total star count for the repo.
- * @param {string} repo - the repository in "owner/name" format
- * @param {string} [token] - optional GitHub token for authenticated requests
- * @returns {Promise<number>} - total stargazers count
+ * Fetches the total star count for a repository
+ *
+ * @param repo - repository identifier in "owner/name" format
+ * @param token - GitHub personal access token for authentication
+ * @returns Promise resolving to total stargazers count
  */
-export async function getRepoStargazersCount(repo, token) {
-  const { data } = await axios.get(`https://api.github.com/repos/${repo}`, {
+export async function getRepoStargazersCount(
+  repo: string,
+  token?: string,
+): Promise<number> {
+  const { data } = await axios.get(API_REPO + repo, {
     headers: {
       Accept: "application/vnd.github.v3.star+json",
       ...(token ? { Authorization: `token ${token}` } : {}),
@@ -74,65 +103,72 @@ export async function getRepoStargazersCount(repo, token) {
 }
 
 /**
- * Returns an array of { date, count } points (up to maxRequestAmount).
+ * Generates historical star count data for a repository by sampling stargazer timestamps
  *
- * 1. Fetches page 1 to read the Link header and get total pageCount.
- * 2. Builds a list of pages to request (either all or sampled).
- * 3. Fetches those pages in parallel.
- * 4. If pages < maxRequestAmount, combines all starred_at and picks evenly.
- *    Otherwise, takes first star of each sampled page to approximate count.
- * 5. Adds a "today" point with the real total count.
+ * This function implements an intelligent sampling strategy:
+ * 1. Fetches first page to determine total pages via Link header
+ * 2. If total pages < maxRequestAmount: fetches all pages and samples evenly
+ * 3. If total pages >= maxRequestAmount: samples pages evenly across the range
+ * 4. Constructs time-series data points showing cumulative star counts over time
+ * 5. Adds current date with actual total star count as final data point
+ *
+ * @param repo - repository identifier in "owner/name" format
+ * @param token - GitHub personal access token (defaults to GITHUB_TOKEN env var)
+ * @param maxRequestAmount - maximum number of API requests to make (default: 60)
+ * @returns Promise resolving to array of {date, count} objects representing star history
+ *
+ * @throws Error if repository has no stars or doesn't exist
  */
 export async function getRepoStarRecords(
-  repo,
-  token = process.env.GITHUB_TOKEN,
-  maxRequestAmount = 60,
-) {
-  // 1) initial request to get Link header
+  repo: string,
+  token: string = process.env.GITHUB_TOKEN,
+  maxRequestAmount: number = 60,
+): Promise<Array<{ date: string; count: number }>> {
+  // Fetch first page to extract pagination info from Link header
   const firstRes = await getRepoStargazers(repo, token, 1);
   const linkHeader = firstRes.headers.link || "";
 
-  // 2) extract pageCount from Link (if available)
+  // Parse total page count from Link header pagination info
   let pageCount = 1;
   const match = /next.*&page=(\d+).*last/.exec(linkHeader);
   if (match && match[1]) {
     pageCount = parseInt(match[1], 10);
   }
 
-  // If no stars
+  // Handle repositories with no stars
   if (
     pageCount === 1 &&
     Array.isArray(firstRes.data) &&
     firstRes.data.length === 0
   ) {
-    // TODO: Decide how to handle this case
     throw new Error(`No stars found or repo doesn't exist`);
-    // return [];
   }
 
-  // 3) build array of pages to fetch
-  let requestPages = [];
+  // Determine which pages to fetch based on total pages and request limit
+  let requestPages: number[] = [];
   if (pageCount < maxRequestAmount) {
+    // Fetch all pages if under the request limit
     requestPages = range(1, pageCount);
   } else {
-    // sample pages evenly
+    // Sample pages evenly across the total range
     requestPages = range(1, maxRequestAmount).map((i) =>
       Math.max(1, Math.round((i * pageCount) / maxRequestAmount) - 1),
     );
+    // Ensure first page is always included
     if (!requestPages.includes(1)) {
       requestPages[0] = 1;
     }
   }
 
-  // 4) fetch all those pages in parallel
+  // Fetch all selected pages concurrently
   const responses = await Promise.all(
     requestPages.map((pg) => getRepoStargazers(repo, token, pg)),
   );
 
-  // 5) build the date→count map
-  const starMap = new Map();
+  // Build date-to-count mapping using different strategies based on data density
+  const starMap = new Map<string, number>();
   if (requestPages.length < maxRequestAmount) {
-    // combine all starred_at entries
+    // High-resolution sampling: combine all stargazer data and sample evenly
     const allStars = [];
     responses.forEach((res) => {
       allStars.push(...res.data);
@@ -144,7 +180,7 @@ export async function getRepoStarRecords(
       starMap.set(date, count);
     }
   } else {
-    // take first star of each sampled page for approximate count
+    // Low-resolution sampling: use first star from each sampled page for approximation
     responses.forEach((res, idx) => {
       const data = res.data;
       if (Array.isArray(data) && data.length > 0) {
@@ -156,12 +192,12 @@ export async function getRepoStarRecords(
     });
   }
 
-  // 6) add "today" with real total
+  // Add current date with accurate total star count as final data point
   const totalStars = await getRepoStargazersCount(repo, token);
   starMap.set(getDateString(Date.now()), totalStars);
 
-  // 7) convert Map to array of { date, count }
-  const result = [];
+  // Convert Map to array of date-count objects
+  const result: Array<{ date: string; count: number }> = [];
   starMap.forEach((count, date) => {
     result.push({ date, count });
   });
@@ -169,10 +205,19 @@ export async function getRepoStarRecords(
   return result;
 }
 
-// Optional: fetch owner avatar URL
-export async function getRepoLogoUrl(repo, token) {
+/**
+ * Fetches the avatar URL for a repository owner
+ *
+ * @param repo - repository identifier in "owner/name" format
+ * @param token - GitHub personal access token for authentication
+ * @returns Promise resolving to avatar URL string
+ */
+export async function getRepoLogoUrl(
+  repo: string,
+  token?: string,
+): Promise<string> {
   const owner = repo.split("/")[0];
-  const { data } = await axios.get(`https://api.github.com/users/${owner}`, {
+  const { data } = await axios.get(API_USER + owner, {
     headers: {
       Accept: "application/vnd.github.v3.star+json",
       ...(token ? { Authorization: `bearer ${token}` } : {}),

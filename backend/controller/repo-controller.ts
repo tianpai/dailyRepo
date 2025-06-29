@@ -17,7 +17,7 @@ export async function getTrending(req, res, next) {
     if (!isValidDate(date)) {
       return res
         .status(400)
-        .json({ error: `Bad date: "${date}" (expected YYYY-MM-DD ≥ 2024)` });
+        .json({ error: `Bad date: "${date}" (expected YYYY-MM-DD > 2024)` });
     }
 
     const cacheKey = getTrendCacheKey(date);
@@ -128,7 +128,8 @@ export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
     // Group star history data by repo fullName
     const groupedStarHistory = {};
     starHistoryRecords.forEach((record) => {
-      const repoName = (record.repoId as any).fullName || (record.repoId as any).name;
+      const repoName =
+        (record.repoId as any).fullName || (record.repoId as any).name;
       groupedStarHistory[repoName] = record.history.map((historyPoint) => ({
         date: historyPoint.date,
         count: historyPoint.count,
