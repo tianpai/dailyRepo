@@ -38,3 +38,11 @@ export interface IVisitorLog extends Document {
   path: string;
   method: string;
 }
+
+export interface ITrendingDeveloper extends Document {
+  username: string;
+  repositoryPath: string;
+  profileUrl: string;
+  trendingDate: string;
+  location?: string;
+}
