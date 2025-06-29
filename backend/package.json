@@ -7,9 +7,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "scrape": "node dist/scheduler.js --run-now",
-    "dev:server": "ts-node server.ts",
-    "dev:scraper": "ts-node scheduler.ts",
-    "dev": "ts-node server.ts",
+    "dev:server": "tsx server.ts",
+    "dev:scraper": "tsx scheduler.ts",
+    "dev": "tsx server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "tianpai (github)",
@@ -31,6 +31,7 @@
   "devDependencies": {
     "@types/node": "^24.0.7",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }
 }
