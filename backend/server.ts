@@ -14,7 +14,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 const limiter = rateLimit({
-  windowMs: 30 * 60 * 1000, // 30 min
+  windowMs: 5 * 60 * 1000, // 5 min
   max: 10, // limit each IP
   message: "Too many requests, try again later.",
   skip: (req) => {
