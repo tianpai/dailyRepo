@@ -40,8 +40,9 @@ export async function scrapeTrending(): Promise<string[]> {
     let repos: string[] = [];
     for (const lang of LANGS) {
       // take unique repos from all languages
+      console.log(`Fetching trending repositories for language: ${lang}`);
       repos = unionStrings(repos, await extractTrendingRepos(langUrl(lang)));
-      setTimeout(() => {}, 1500);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
     console.log("Trending repositories by language:", repos);
     return repos;
@@ -103,8 +104,9 @@ export async function scrapeTrendingDevelopers(): Promise<TrendingDeveloper[]> {
     };
     const devs: TrendingDeveloper[] = [];
     for (const lang of LANGS) {
+      console.log("Fetching trending developers for language:", lang);
       devs.push(...(await extractTrendingDevelopers(devUrl(lang))));
-      setTimeout(() => {}, 2000);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
     console.log("Trending developers:", devs);
     return devs;
