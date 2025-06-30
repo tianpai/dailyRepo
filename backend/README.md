@@ -9,23 +9,32 @@ endpoints for the frontend and other consumers.
 ## Getting Started (Local Development)
 
 1. Clone the repository and navigate to the `backend` folder:
-    ```sh
-    git clone <repo-url>
-    cd backend
-    ```
+   ```sh
+   git clone <repo-url>
+   cd backend
+   ```
 2. Install dependencies:
-    ```sh
-    npm install
-    ```
+   ```sh
+   bun install
+   ```
 3. Create a `.env` file (see variables below).
 4. Start the server:
-    ```sh
-    node server.js
-    ```
-    Or for development with auto-reload (if nodemon is installed):
-    ```sh
-    npx nodemon server.js
-    ```
+   ```sh
+   bun server.ts
+   ```
+   Or for development with auto-reload:
+   ```sh
+   bun --watch server.ts
+   ```
+
+5. **Scheduler/Scraping Commands:**
+   ```sh
+   # Start scheduler in development mode
+   bun run dev:scraper
+   
+   # Run scraper job immediately
+   bun run scrape
+   ```
 
 ## Docker setup for DailyRepo Backend
 
@@ -56,22 +65,23 @@ WHITELIST_IP
 
 ## API Documentation
 
--   **GET /api/repos** — List repositories
--   **POST /api/repos** — Add a repository
--   **GET /api/repos/:id** — Get repository details
+- **GET /api/v1/repos/trending** — Get trending repositories for a specific date (e.g., `?date=YYYY-MM-DD`).
+- **GET /api/v1/repos/star-history** — Get star history data for all trending repositories.
+- **GET /api/v1/repos/:owner/:repo/star-history** — Get all star history for a specific repository.
+- **GET /api/v1/repos/ranking** — Get the top N ranked repositories (e.g., `?top=N`).
 
 ## Development & Contribution
 
--   Fork and clone the repo
--   Create feature branches for changes
--   Use clear commit messages
--   Open a pull request for review
+- Fork and clone the repo
+- Create feature branches for changes
+- Use clear commit messages
+- Open a pull request for review
 
 ## Troubleshooting
 
--   Ensure all `.env` variables are set
--   Check MongoDB and network connectivity
--   For Docker issues, try rebuilding with `--no-cache`
+- Ensure all `.env` variables are set
+- Check MongoDB and network connectivity
+- For Docker issues, try rebuilding with `--no-cache`
 
 ## License
 
@@ -84,3 +94,17 @@ For questions or support, open an issue or contact the maintainer.
 ## 🔗 Related
 
 repo: star-history
+
+## Current Development Status
+
+✅ **Completed Features:**
+- TrendingDeveloper model schema and database operations
+- Primary language helper function for repository classification
+- Data processing pipeline with developer scraping
+- Automated scheduling and rate-limited GitHub API integration
+- Star history collection and storage
+
+⏳ **Pending Tasks:**
+- API endpoints for developer data (`GET /api/v1/repos/developers`)
+- Language filtering for repositories (`GET /api/v1/repos/trending?language=javascript`)
+- Frontend integration for developer profiles and language filters
