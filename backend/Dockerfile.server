@@ -1,72 +1,40 @@
 # ========================================================================
-# STAGE 1: BUILD STAGE (TypeScript compilation)
+# SINGLE-STAGE DOCKERFILE (Bun runs TypeScript natively)
 # ========================================================================
 
-# Use lightweight Node.js 20 Alpine base image (5x smaller than regular Node)
-FROM node:20-alpine AS builder
+FROM oven/bun:1.2.17-alpine
 
-# Set working directory inside container (creates if not exists)
+# Set working directory inside container
 WORKDIR /usr/src/app
 
-# Copy ONLY package.json, package-lock.json, and tsconfig.json FIRST (optimizes Docker cache)
-# This allows reusing dependency layers when only code changes
+# Copy package files for dependency installation
 COPY package*.json ./
-COPY tsconfig.json ./
+COPY bun.lockb ./
 
-# Install ALL dependencies (including devDependencies for TypeScript build)
-# ci: Clean-install from lockfile (faster and more reliable than npm install)
-RUN npm ci
+# Install dependencies
+RUN bun install --production
 
-# Copy source code
+# Copy source code (TypeScript files)
 COPY . .
-
-# Build TypeScript to JavaScript
-RUN npm run build
-
-# ========================================================================
-# STAGE 2: RUNTIME IMAGE (Final production image)
-# ========================================================================
-
-# Start fresh with same base image
-FROM node:20-alpine
-
-# Set same working directory for consistency
-WORKDIR /usr/src/app
-
-# Install ONLY production dependencies
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-# Copy compiled JavaScript from builder stage
-COPY --from=builder /usr/src/app/dist ./dist
-
-# Copy any other necessary files (package.json for runtime)
-COPY --from=builder /usr/src/app/package*.json ./
 
 # ====================== SECURITY HARDENING ==============================
 # Create non-root user (express-user) and set permissions
 RUN adduser -D express-user && \
-    chown -R express-user /usr/src/app  # Recursive ownership change
+    chown -R express-user /usr/src/app
 
 # Switch to non-root user (reduces container breakout risk)
 USER express-user
 
 # ====================== RUNTIME CONFIGURATION ===========================
-# Set production environment (enables Express optimizations)
-ENV NODE_ENV=production
-
 # Set default PORT (override with -e PORT=xxxx at runtime)
+# and expose port to host system (matches Express server port)
 ENV PORT=6969
-
-# Expose port to host system (matches Express server port)
 EXPOSE 6969
 
 # ====================== HEALTH MONITORING ===============================
 # Check container health every 30s (adjust endpoint as needed)
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:{PORT}/health || exit 1  # Replace /health with your endpoint
+  CMD curl -f http://localhost:$PORT/health || exit 1
 
 # ====================== START COMMAND ===================================
-# Launch Express server (using node directly - no dev tools)
-# Entry point is compiled server.js file in dist directory
-CMD ["node", "dist/server.js"]  
+CMD ["bun", "server.ts"]
