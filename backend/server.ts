@@ -22,7 +22,7 @@ const limiter = rateLimit({
   },
 });
 
-DatabaseConnection.connect()
+await DatabaseConnection.connect()
   .then(() => {
     console.log("Database connection established");
   })
