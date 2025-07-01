@@ -3,44 +3,45 @@ import { Repo } from "../model/Repo.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { getRepoStarRecords } from "../services/fetching-star-history.js";
+import chalk from "chalk";
 dotenv.config();
 
 const testRepo = "ourongxing/newsnow";
 
-async function calculateRateLimitConsumption() {
+export async function calculateRateLimitConsumption() {
   mongoose
     .connect(process.env.MONGO)
     .then(() => {
-      console.log("MongoDB connected");
+      console.log(chalk.green("MongoDB connected"));
     })
     .catch((error) => {
-      console.error("MongoDB connection error:", error);
+      console.error(chalk.red("MongoDB connection error:"), error);
       process.exit(1);
     });
-  console.log("=== BEFORE fetching stars ===");
+  console.log(chalk.bold("=== BEFORE fetching stars ==="));
   const beforeRateLimit = await getRateLimit();
 
   const data = await fetchStars(testRepo);
   console.log(data);
 
-  console.log("=== AFTER fetching stars ===");
+  console.log(chalk.bold("=== AFTER fetching stars ==="));
   const afterRateLimit = await getRateLimit();
 
-  console.log("=== RATE LIMIT COMPARISON ===");
+  console.log(chalk.bold("=== RATE LIMIT COMPARISON ==="));
   compareRateLimits(beforeRateLimit, afterRateLimit);
 
   // Close MongoDB connection to terminate script
   await mongoose.connection.close();
-  console.log("MongoDB connection closed");
+  console.log(chalk.yellow("MongoDB connection closed"));
 }
 
 function compareRateLimits(before, after) {
   if (!before || !after) {
-    console.log("Cannot compare - missing rate limit data");
+    console.log(chalk.red("Cannot compare - missing rate limit data"));
     return;
   }
 
-  console.log("Rate Limit Changes:");
+  console.log(chalk.bold("Rate Limit Changes:"));
   console.log("==================");
 
   // Compare each resource type
@@ -53,7 +54,7 @@ function compareRateLimits(before, after) {
       afterResource.remaining - beforeResource.remaining;
 
     if (usedDifference > 0 || remainingDifference !== 0) {
-      console.log(`\n${resourceType.toUpperCase()}:`);
+      console.log(chalk.cyan(`\n${resourceType.toUpperCase()}:`));
       console.log(
         `  Used: ${beforeResource.used} → ${afterResource.used} (+${usedDifference})`,
       );
@@ -67,29 +68,56 @@ function compareRateLimits(before, after) {
   // Summary
   const totalUsed = after.rate.used - before.rate.used;
   console.log(
-    `\nSUMMARY: ${totalUsed} API calls consumed during star history fetch`,
+    chalk.yellow(
+      `\nSUMMARY: ${totalUsed} API calls consumed during star history fetch`,
+    ),
   );
 }
 
-async function getRateLimit() {
+export async function getRateLimitData() {
   try {
-    const response = await axios({
-      method: "get",
-      url: "https://api.github.com/rate_limit",
+    const response = await axios.get("https://api.github.com/rate_limit", {
       headers: {
         Accept: "application/vnd.github.v3+json",
         Authorization: `token ${process.env.GITHUB_TOKEN}`,
       },
     });
 
-    // Print the entire rate limit response
-    console.log(
-      "Full Rate Limit Data:",
-      JSON.stringify(response.data, null, 2),
-    );
     return response.data;
   } catch (error) {
-    console.error("Error fetching rate limit:", error);
+    throw new Error(`Failed to fetch GitHub rate limit: ${error.message}`);
+  }
+}
+
+export function displayRateLimit(rateLimitData) {
+  if (!rateLimitData) {
+    console.log(chalk.yellow("No rate limit data available"));
+    return;
+  }
+
+  console.log(chalk.bold("GitHub API Rate Limit Status:"));
+  console.log("=============================");
+  console.log(
+    `Core API: ${rateLimitData.rate.used}/${rateLimitData.rate.limit}`,
+  );
+  console.log(
+    `Reset time: ${new Date(rateLimitData.rate.reset * 1000).toISOString()}`,
+  );
+
+  if (rateLimitData.resources.search) {
+    console.log(
+      `Search API: ${rateLimitData.resources.search.used}/${rateLimitData.resources.search.limit}`,
+    );
+  }
+}
+
+export async function getRateLimit() {
+  try {
+    const rateLimitData = await getRateLimitData();
+    displayRateLimit(rateLimitData);
+    return rateLimitData;
+  } catch (error) {
+    console.error(chalk.red("Error fetching GitHub rate limit:"), error.message);
     return null;
   }
 }
@@ -99,7 +127,7 @@ async function fetchStars(repoName) {
     .select("_id")
     .lean();
   if (!repoDoc) {
-    console.error("Repo not found");
+    console.error(chalk.red("Repo not found"));
     return null;
   }
 
@@ -108,5 +136,3 @@ async function fetchStars(repoName) {
 
   return data;
 }
-
-await calculateRateLimitConsumption();
