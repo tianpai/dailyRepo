@@ -7,10 +7,14 @@
     "build": "bun build server.ts --outdir=dist --target=node",
     "start": "bun dist/server.js",
     "scrape": "bun scheduler.ts --run-now",
+    "scrape:batched": "bun scheduler-batched.ts --run-batched",
+    "scrape:estimate": "bun estimate-star-history.ts",
     "dev:server": "bun --watch server.ts",
     "dev:scraper": "bun --watch scheduler.ts",
+    "dev:scraper:batched": "bun --watch scheduler-batched.ts",
     "dev": "bun --watch server.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "test:rate-limit": "bun test-rate-limit-handling.ts"
   },
   "author": "tianpai (github)",
   "license": "MIT",
