@@ -6,6 +6,7 @@ import axios from "axios";
 import { TrendingDeveloper } from "../model/TrendingDeveloper";
 import { GithubUser } from "../types/api";
 import { logRed, logGreen, logGray } from "../utils/coloredConsoleLog";
+import chalk from "chalk";
 
 // Type definitions
 interface GitHubRepoData {
@@ -94,13 +95,11 @@ export async function prepTrendingData(): Promise<ProcessedRepo[]> {
   const repos: ProcessedRepo[] = [];
   for (let i = 0; i < repoNamesWithSlash.length; i++) {
     const repoName = repoNamesWithSlash[i];
+    const totalNumRepo = repoNamesWithSlash.length;
     try {
-      console.log(
-        `[${i + 1}/${repoNamesWithSlash.length}] Processing ${repoName}...`,
-      );
+      console.log(`[${i + 1}/${totalNumRepo}] ${chalk.blue(repoName)}...`);
       const repo = await processOneRepo(repoName, today);
       repos.push(repo);
-      console.log(`✓ ${repoName}: processed successfully`);
     } catch (error) {
       console.error(`Error processing repo ${repoName}:`, error);
     }
@@ -283,9 +282,9 @@ async function processOneRepo(
 ): Promise<ProcessedRepo> {
   const fullData = await getRepo(rawName);
   //add 2 second delay to avoid rate limits
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 3000));
   const langs = await fetchLanguages(fullData.languages_url);
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 3000));
   return transformRepo(fullData, langs, today);
 }
 
@@ -315,15 +314,32 @@ export async function getRepo(repo: string): Promise<GitHubRepoData | null> {
 
 /**
  * Make request to GitHub API for languages.
+ * It handles 403 rate limit errors by waiting 2 seconds and retrying.
  */
 async function fetchLanguages(url: string): Promise<LanguageData> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(
-      `fetchLanguages(${url}) failed: ${res.status} ${res.statusText}`,
-    );
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${githubToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+    return res.data;
+  } catch (error) {
+    if (error.response?.status === 403) {
+      console.log("Rate limit hit, waiting 2 seconds...");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Retry the request
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      });
+      return res.data;
+    }
+    throw error;
   }
-  return res.json();
 }
 
 /**
