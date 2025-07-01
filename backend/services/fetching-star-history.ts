@@ -13,6 +13,7 @@
 
 import axios from "axios";
 import dotenv from "dotenv";
+import { withRateLimitRetry } from "../utils/rate-limit-checker.js";
 dotenv.config();
 
 // GitHub API base URLs
@@ -72,14 +73,18 @@ export async function getRepoStargazers(
     url += `&page=${page}`;
   }
 
-  return axios.get(url, {
-    headers: {
-      // Required header to receive starred_at timestamps in response
-      Accept: "application/vnd.github.v3.star+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      ...(token ? { Authorization: `token ${token}` } : {}),
-    },
-  });
+  return withRateLimitRetry(
+    () => axios.get(url, {
+      headers: {
+        // Required header to receive starred_at timestamps in response
+        Accept: "application/vnd.github.v3.star+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        ...(token ? { Authorization: `token ${token}` } : {}),
+      },
+    }),
+    3,
+    token
+  );
 }
 
 /**
@@ -93,12 +98,16 @@ export async function getRepoStargazersCount(
   repo: string,
   token?: string,
 ): Promise<number> {
-  const { data } = await axios.get(API_REPO + repo, {
-    headers: {
-      Accept: "application/vnd.github.v3.star+json",
-      ...(token ? { Authorization: `token ${token}` } : {}),
-    },
-  });
+  const { data } = await withRateLimitRetry(
+    () => axios.get(API_REPO + repo, {
+      headers: {
+        Accept: "application/vnd.github.v3.star+json",
+        ...(token ? { Authorization: `token ${token}` } : {}),
+      },
+    }),
+    3,
+    token
+  );
   return data.stargazers_count;
 }
 
@@ -217,11 +226,15 @@ export async function getRepoLogoUrl(
   token?: string,
 ): Promise<string> {
   const owner = repo.split("/")[0];
-  const { data } = await axios.get(API_USER + owner, {
-    headers: {
-      Accept: "application/vnd.github.v3.star+json",
-      ...(token ? { Authorization: `bearer ${token}` } : {}),
-    },
-  });
+  const { data } = await withRateLimitRetry(
+    () => axios.get(API_USER + owner, {
+      headers: {
+        Accept: "application/vnd.github.v3.star+json",
+        ...(token ? { Authorization: `bearer ${token}` } : {}),
+      },
+    }),
+    3,
+    token
+  );
   return data.avatar_url;
 }
