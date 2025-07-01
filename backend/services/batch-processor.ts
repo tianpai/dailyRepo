@@ -1,13 +1,6 @@
-import {
-  logCyan,
-  logGreen,
-  logRed,
-  logYellow,
-} from "../utils/coloredConsoleLog.js";
 import chalk from "chalk";
 import {
   getCurrentRateLimit,
-  hasEnoughRateLimit,
   getTimeUntilReset,
   formatDuration,
   logRateLimitStatus,
@@ -68,13 +61,19 @@ export function calculateBatchSizes(
     itemsPerBatch.push(batchSize);
   }
 
-  logCyan(`📊 Batch Calculation:`);
-  logCyan(`  Total items: ${totalItems}`);
-  logCyan(`  Estimated API calls per item: ${estimatedCallsPerRepo}`);
-  logCyan(`  Max API calls per hour: ${maxApiCallsPerHour}`);
-  logCyan(`  Items per hour: ${reposPerHour}`);
-  logCyan(`  Total batches needed: ${totalBatches}`);
-  logCyan(`  Note: Processing will continue dynamically based on rate limit status`);
+  console.log(chalk.cyan(`Batch Calculation:`));
+  console.log(chalk.cyan(`  Total items: ${totalItems}`));
+  console.log(
+    chalk.cyan(`  Estimated API calls per item: ${estimatedCallsPerRepo}`),
+  );
+  console.log(chalk.cyan(`  Max API calls per hour: ${maxApiCallsPerHour}`));
+  console.log(chalk.cyan(`  Items per hour: ${reposPerHour}`));
+  console.log(chalk.cyan(`  Total batches needed: ${totalBatches}`));
+  console.log(
+    chalk.cyan(
+      `  Note: Processing will continue dynamically based on rate limit status`,
+    ),
+  );
 
   return {
     batchSize: reposPerHour,
@@ -103,31 +102,51 @@ export function createBatches<T>(items: T[], itemsPerBatch: number[]): T[][] {
 /**
  * Checks rate limit status and waits if necessary before processing next batch
  */
-async function checkRateLimitBeforeNextBatch(config: BatchConfig): Promise<void> {
-  logCyan(`\n🔍 Checking GitHub API rate limit before next batch...`);
-  
+async function checkRateLimitBeforeNextBatch(
+  config: BatchConfig,
+): Promise<void> {
+  console.log(
+    chalk.cyan(`
+Checking GitHub API rate limit before next batch...`),
+  );
+
   const rateLimit = await getCurrentRateLimit();
-  
+
   if (!rateLimit) {
-    logYellow(`⚠️  Could not fetch rate limit, continuing with caution...`);
+    console.log(
+      chalk.yellow(`Could not fetch rate limit, continuing with caution...`),
+    );
     return;
   }
-  
+
   logRateLimitStatus(rateLimit);
-  
+
   const { rate } = rateLimit;
-  const estimatedCallsForNextBatch = config.estimatedCallsPerRepo * Math.floor(config.maxApiCallsPerHour / config.estimatedCallsPerRepo);
-  
+  const estimatedCallsForNextBatch =
+    config.estimatedCallsPerRepo *
+    Math.floor(config.maxApiCallsPerHour / config.estimatedCallsPerRepo);
+
   // Check if we have enough calls remaining for the next batch
-  if (rate.remaining < Math.max(config.minRemainingCalls, estimatedCallsForNextBatch)) {
+  if (
+    rate.remaining <
+    Math.max(config.minRemainingCalls, estimatedCallsForNextBatch)
+  ) {
     const waitTime = getTimeUntilReset(rateLimit);
-    logYellow(`⏳ Insufficient rate limit remaining (${rate.remaining}). Waiting ${formatDuration(waitTime)} for reset...`);
-    
+    console.log(
+      chalk.yellow(
+        `Insufficient rate limit remaining (${rate.remaining}). Waiting ${formatDuration(waitTime)} for reset...`,
+      ),
+    );
+
     // Add a small buffer to ensure reset has occurred
-    await new Promise(resolve => setTimeout(resolve, waitTime + 10000));
-    logGreen("✅ Rate limit reset, continuing with next batch...");
+    await new Promise((resolve) => setTimeout(resolve, waitTime + 10000));
+    console.log(chalk.green("Rate limit reset, continuing with next batch..."));
   } else {
-    logGreen(`✅ Sufficient rate limit remaining (${rate.remaining}), continuing immediately...`);
+    console.log(
+      chalk.green(
+        `Sufficient rate limit remaining (${rate.remaining}), continuing immediately...`,
+      ),
+    );
   }
 }
 
@@ -157,30 +176,37 @@ export async function processBatches<TInput, TOutput>(
   const processed: TOutput[] = [];
   const failed: string[] = [];
 
-  logGreen(
-    `🚀 Starting batch processing of ${items.length} items in ${totalBatches} batches`,
+  console.log(
+    chalk.green(
+      `Starting batch processing of ${items.length} items in ${totalBatches} batches`,
+    ),
   );
-  logYellow(`⏱️  Estimated completion time: ${estimatedHours} hour(s)`);
+  console.log(
+    chalk.yellow(`Estimated completion time: ${estimatedHours} hour(s)`),
+  );
 
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
     const batchStartTime = Date.now();
 
-    logCyan(
-      `\n📦 Processing batch ${i + 1}/${totalBatches} (${batch.length} items)`,
+    console.log(
+      chalk.cyan(`
+Processing batch ${i + 1}/${totalBatches} (${batch.length} items)`),
     );
-    logCyan(`   Batch started at: ${new Date().toISOString()}`);
+    console.log(chalk.cyan(`   Batch started at: ${new Date().toISOString()}`));
 
     try {
       const batchResults = await processFunction(batch, i + 1, totalBatches);
       processed.push(...batchResults);
 
       const batchDuration = Date.now() - batchStartTime;
-      logGreen(
-        `✅ Batch ${i + 1} completed in ${(batchDuration / 1000).toFixed(2)}s`,
+      console.log(
+        chalk.green(
+          `Batch ${i + 1} completed in ${(batchDuration / 1000).toFixed(2)}s`,
+        ),
       );
     } catch (error) {
-      logRed(`❌ Batch ${i + 1} failed: ${error.message}`);
+      console.log(chalk.red(`Batch ${i + 1} failed: ${error.message}`));
       // Mark all items in this batch as failed
       batch.forEach((item) => {
         failed.push(String(item));
@@ -193,9 +219,12 @@ export async function processBatches<TInput, TOutput>(
     }
   }
 
-  logGreen(`\n🎉 Batch processing completed!`);
-  logGreen(`   Processed: ${processed.length} items`);
-  logGreen(`   Failed: ${failed.length} items`);
+  console.log(
+    chalk.green(`
+Batch processing completed!`),
+  );
+  console.log(chalk.green(`   Processed: ${processed.length} items`));
+  console.log(chalk.green(`   Failed: ${failed.length} items`));
 
   return {
     processed,
@@ -203,32 +232,6 @@ export async function processBatches<TInput, TOutput>(
     totalBatches,
     estimatedHours,
   };
-}
-
-/**
- * Creates a resumable batch processor that can handle interruptions
- */
-export interface BatchState {
-  currentBatch: number;
-  processedItems: string[];
-  failedItems: string[];
-  startTime: number;
-}
-
-export async function resumableBatchProcessor<TInput, TOutput>(
-  items: TInput[],
-  processFunction: (
-    batch: TInput[],
-    batchIndex: number,
-    totalBatches: number,
-  ) => Promise<TOutput[]>,
-  stateFile: string,
-  config: BatchConfig = DEFAULT_BATCH_CONFIG,
-): Promise<BatchResult<TOutput>> {
-  // TODO: Implement state persistence for resumable processing
-  // This would allow resuming from where processing left off if interrupted
-
-  return processBatches(items, processFunction, config);
 }
 
 /**
