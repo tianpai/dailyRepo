@@ -212,8 +212,15 @@ export async function saveStarHistoryBatched(
     ),
   );
 
-  // Show batch calculation
+  // Calculate and show batch information
   const batchCalc = calculateBatchSizes(repoNames.length, STAR_HISTORY_CONFIG);
+  console.log(chalk.cyan(`   Repositories per batch: ${batchCalc.batchSize}`));
+  console.log(chalk.cyan(`   Total batches: ${batchCalc.totalBatches}`));
+  console.log(
+    chalk.cyan(
+      `   Estimated processing time: ${batchCalc.estimatedHours} hour(s)`,
+    ),
+  );
 
   // Process in batches
   const batchResult = await processBatches(
@@ -248,8 +255,8 @@ export async function saveStarHistoryBatched(
       allSuccessfulResults.length -
       batchResult.failed.length,
     batchInfo: {
-      totalBatches: batchResult.totalBatches,
-      estimatedHours: batchResult.estimatedHours,
+      totalBatches: batchCalc.totalBatches,
+      estimatedHours: batchCalc.estimatedHours,
     },
   };
 
