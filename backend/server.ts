@@ -62,7 +62,7 @@ if (process.argv.includes("--debug")) {
   // Trust Vercel's proxy, ensure rate limiting to work correctly
   app.set("trust proxy", 1);
   app.use(limiter);
-  app.use("/api/v1/repos", checkFrontendToken, repoRoutes);
+  app.use("/api/v1/repos", repoRoutes);
 }
 
 const server = app.listen(port, () => {
