@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "bun build server.ts --outdir=dist --target=node",
+    "build:scrape": "bun build scheduler-batched.ts --outdir=dist --target=node",
     "start": "bun dist/server.js",
+    "start:batched": "bun dist/scheduler-batched.js --run-batched",
     "scrape": "bun scheduler.ts --run-now",
     "scrape:batched": "bun scheduler-batched.ts --run-batched",
     "scrape:estimate": "bun estimate-star-history.ts",
