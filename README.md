@@ -1,7 +1,7 @@
 # DailyRepo
 
 ![License](https://img.shields.io/github/license/tianpai/dailyRepo)
-![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js)
+![Bun](https://img.shields.io/badge/Bun-1.2.17+-green?logo=Bun)
 ![React](https://img.shields.io/badge/React-19-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue?logo=typescript)
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)
