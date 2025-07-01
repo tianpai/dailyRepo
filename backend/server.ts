@@ -34,7 +34,7 @@ mongoose
 
 app.use(express.json());
 app.use(helmet());
-app.use(compression());
+// app.use(compression()); // Disabled: Brotli not supported on Render
 app.use(logVisitor);
 
 app.use(
