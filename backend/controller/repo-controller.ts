@@ -1,7 +1,7 @@
-import { Repo, StarHistory } from "../model/Repo.js";
-import { getCache, setCache, TTL, getTrendCacheKey } from "../utils/caching.js";
-import { getTodayUTC, isValidDate } from "../utils/time.js";
-import { getRepoStarRecords } from "../services/fetching-star-history.js";
+import { Repo, StarHistory } from "../model/Repo";
+import { getCache, setCache, TTL, getTrendCacheKey } from "../utils/caching";
+import { getTodayUTC, isValidDate } from "../utils/time";
+import { getRepoStarRecords } from "../services/fetching-star-history";
 
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 

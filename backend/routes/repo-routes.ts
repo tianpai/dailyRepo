@@ -4,7 +4,7 @@ import {
   getStarHistory,
   getRanking,
   getStarHistoryAllDataPointTrendingData,
-} from "../controller/repo-controller.js";
+} from "../controller/repo-controller";
 
 async function notImplemented(_, res) {
   res.status(501).json({ error: "Not implemented" });
