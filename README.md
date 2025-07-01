@@ -94,7 +94,7 @@ intuitive UI.
 ### Near-Term
 
 - [ ] Expand repository details view (description, license, last updated)
-- [ ] Expand scrapping range to include language-specific repositories and developers
+- [x] Expand scrapping range to include language-specific repositories and developers
 - [ ] Finalize category filtering in UI (backend categorization system is ready)
 - [ ] Implement repository topics and tag cloud for richer filtering
 - [ ] Add hover animations and visual enhancements
