@@ -6,8 +6,6 @@ import {
   getStarHistoryAllDataPointTrendingData,
 } from "../controller/repo-controller.js";
 
-const repoRouter = Router();
-
 async function notImplemented(_, res) {
   res.status(501).json({ error: "Not implemented" });
 }
