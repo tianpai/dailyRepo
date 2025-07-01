@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import chalk from "chalk";
 import dotenv from "dotenv";
 import {
@@ -16,21 +15,18 @@ import { getRateLimit } from "./tests/rate-limit-consumption-star-history";
 import { formatDuration } from "./utils/time";
 import { runScrapeJob } from "./scheduler";
 import { scrapeTrending } from "./services/repo-scraping";
+import { DatabaseConnection } from "./services/db-connection";
 
 dotenv.config();
 const LOG = console.log;
 
-const MONGO_URI = process.env.MONGO;
-
 /**
- * Ensure a MongoDB connection is established.
+ * Ensure a database connection is established.
  */
-export async function ensureMongoConnected() {
-  if (mongoose.connection.readyState !== 1) {
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 10000,
-    });
-    console.log("MongoDB connected");
+export async function ensureDatabaseConnected() {
+  if (!DatabaseConnection.getConnectionStatus()) {
+    await DatabaseConnection.connect();
+    console.log("Database connected");
   }
 }
 
@@ -132,7 +128,7 @@ export async function runBatchedScrapeJob() {
   console.log("=".repeat(60));
 
   try {
-    await ensureMongoConnected();
+    await ensureDatabaseConnected();
     /*
      * step 1 and 2 comsume very minimal rate limits
      * around 2-4 API calss per repo
@@ -173,9 +169,9 @@ export async function runBatchedScrapeJob() {
     console.log("!".repeat(60));
     process.exitCode = 1;
   } finally {
-    // Note: Don't disconnect MongoDB if batched processing is still ongoing
+    // Note: Don't disconnect database if batched processing is still ongoing
     if (process.exitCode !== 0) {
-      await mongoose.disconnect();
+      await DatabaseConnection.disconnect();
     }
 
     const totalDuration = formatDuration(jobStartTime);
@@ -257,7 +253,7 @@ if (process.argv.includes("--estimate")) {
 process.on("unhandledRejection", async (err) => {
   console.error("Unhandled Rejection:", err);
   try {
-    await mongoose.disconnect();
+    await DatabaseConnection.disconnect();
   } catch {}
   process.exit(1);
 });

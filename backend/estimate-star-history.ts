@@ -1,20 +1,16 @@
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 import chalk from "chalk";
 import { estimateStarHistoryProcessing } from "./services/batched-star-history";
 import { Repo } from "./model/Repo";
+import { DatabaseConnection } from "./services/db-connection";
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO;
-
 async function main() {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 10000,
-    });
-    console.log(chalk.green("MongoDB connected"));
+    // Connect to database
+    await DatabaseConnection.connect();
+    console.log(chalk.green("Database connected"));
 
     // Get current repository count from database
     const repoCount = await Repo.countDocuments();
@@ -54,8 +50,8 @@ async function main() {
     console.error(chalk.red("Error:"), error);
     process.exit(1);
   } finally {
-    await mongoose.disconnect();
-    console.log(chalk.yellow("\nDisconnected from MongoDB"));
+    await DatabaseConnection.disconnect();
+    console.log(chalk.yellow("\nDisconnected from database"));
   }
 }
 

@@ -1,12 +1,12 @@
 import express from "express";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import repoRoutes from "./routes/repo-routes";
-import compression from "compression";
+// import compression from "compression";
 import helmet from "helmet";
 import { logVisitor } from "./middleware/visitor-logger";
+import { DatabaseConnection } from "./services/db-connection";
 
 dotenv.config();
 
@@ -22,13 +22,12 @@ const limiter = rateLimit({
   },
 });
 
-mongoose
-  .connect(process.env.MONGO)
+DatabaseConnection.connect()
   .then(() => {
-    console.log("MongoDB connected");
+    console.log("Database connection established");
   })
   .catch((error) => {
-    console.error("MongoDB connection error:", error);
+    console.error("Database connection error:", error);
     process.exit(1);
   });
 
@@ -39,18 +38,13 @@ app.use(logVisitor);
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://daily-repo-git-master-tianpais-projects.vercel.app",
-      "https://daily-repo-qxubug6ed-tianpais-projects.vercel.app",
-      "https://daily-repo.vercel.app",
-    ],
+    origin: ["http://localhost:5173", "https://daily-repo.vercel.app"],
     methods: ["GET"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
-app.get("/health", (req, res) => {
+app.get("/health", (_, res) => {
   res.status(200).json({ status: "ok" });
 });
 
@@ -69,9 +63,11 @@ const server = app.listen(port, () => {
 });
 
 /* Graceful shutdown */
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   console.log("SIGTERM signal received: closing HTTP server");
-  server.close(() => {
-    console.log("HTTP server closed", Date.now());
+  server.close(async () => {
+    console.log("Server closed", Date.now());
+    await DatabaseConnection.disconnect();
+    process.exit(0);
   });
 });

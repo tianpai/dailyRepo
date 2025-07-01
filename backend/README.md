@@ -19,19 +19,23 @@ endpoints for the frontend and other consumers.
    ```
 3. Create a `.env` file (see variables below).
 4. Start the server:
+
    ```sh
    bun server.ts
    ```
+
    Or for development with auto-reload:
+
    ```sh
    bun --watch server.ts
    ```
 
 5. **Scheduler/Scraping Commands:**
+
    ```sh
    # Start scheduler in development mode
    bun run dev:scraper
-   
+
    # Run scraper job immediately
    bun run scrape
    ```
@@ -98,6 +102,7 @@ repo: star-history
 ## Current Development Status
 
 ✅ **Completed Features:**
+
 - TrendingDeveloper model schema and database operations
 - Primary language helper function for repository classification
 - Data processing pipeline with developer scraping
@@ -105,6 +110,8 @@ repo: star-history
 - Star history collection and storage
 
 ⏳ **Pending Tasks:**
-- API endpoints for developer data (`GET /api/v1/repos/developers`)
+
+- Ensure API endpoints accepting date parameters (example: `GET /api/v1/repos/trending?date=YYYY-MM-DD`)
+- API endpoints for developer data (`GET /api/v1/developers?date=YYYY-MM-DD`)
 - Language filtering for repositories (`GET /api/v1/repos/trending?language=javascript`)
 - Frontend integration for developer profiles and language filters

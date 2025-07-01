@@ -1,5 +1,4 @@
 import cron from "node-cron";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 import {
   prepTrendingData,
@@ -9,9 +8,8 @@ import {
   saveStarHistoryBatch,
 } from "./services/repo-data";
 import { logCyan } from "./utils/coloredConsoleLog";
+import { DatabaseConnection } from "./services/db-connection";
 dotenv.config();
-
-const MONGO_URI = process.env.MONGO;
 
 /**
  * Formats a duration in milliseconds to a human-readable string.
@@ -31,14 +29,12 @@ function formatDuration(startTime: number): string {
 }
 
 /**
- * Ensure a MongoDB connection is established.
+ * Ensure a database connection is established.
  */
-async function ensureMongoConnected() {
-  if (mongoose.connection.readyState !== 1) {
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 10000,
-    });
-    console.log("MongoDB connected");
+async function ensureDatabaseConnected() {
+  if (!DatabaseConnection.getConnectionStatus()) {
+    await DatabaseConnection.connect();
+    console.log("Database connected");
   }
 }
 
@@ -111,7 +107,7 @@ export async function runScrapeJob() {
   console.log("=".repeat(60));
 
   try {
-    await ensureMongoConnected();
+    await ensureDatabaseConnected();
 
     // Step 1: Process repositories
     console.log("\n[1/3] PROCESSING REPOSITORIES");
@@ -143,7 +139,7 @@ export async function runScrapeJob() {
     console.log("!".repeat(60));
     process.exitCode = 1;
   } finally {
-    await mongoose.disconnect();
+    await DatabaseConnection.disconnect();
 
     const totalDuration = formatDuration(jobStartTime);
     const status = process.exitCode === 0 ? "SUCCESS" : "FAILED";
@@ -173,7 +169,7 @@ if (process.argv.includes("--run-now")) {
 process.on("unhandledRejection", async (err) => {
   console.error("Unhandled Rejection:", err);
   try {
-    await mongoose.disconnect();
+    await DatabaseConnection.disconnect();
   } catch {}
   process.exit(1);
 });
