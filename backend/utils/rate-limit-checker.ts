@@ -66,7 +66,9 @@ export interface GitHubRateLimit {
 /**
  * Fetches current GitHub API rate limit status
  */
-export async function getCurrentRateLimit(token?: string): Promise<GitHubRateLimit | null> {
+export async function getCurrentRateLimit(
+  token?: string,
+): Promise<GitHubRateLimit | null> {
   try {
     const response = await axios({
       method: "get",
@@ -87,7 +89,10 @@ export async function getCurrentRateLimit(token?: string): Promise<GitHubRateLim
 /**
  * Checks if we have sufficient API calls remaining
  */
-export function hasEnoughRateLimit(rateLimit: GitHubRateLimit, requiredCalls: number = 100): boolean {
+export function hasEnoughRateLimit(
+  rateLimit: GitHubRateLimit,
+  requiredCalls: number = 100,
+): boolean {
   const remaining = rateLimit.rate.remaining;
   return remaining >= requiredCalls;
 }
@@ -107,7 +112,7 @@ export function getTimeUntilReset(rateLimit: GitHubRateLimit): number {
 export function formatDuration(milliseconds: number): string {
   const minutes = Math.floor(milliseconds / 60000);
   const seconds = Math.floor((milliseconds % 60000) / 1000);
-  
+
   if (minutes > 0) {
     return `${minutes}m ${seconds}s`;
   }
@@ -121,12 +126,14 @@ export function logRateLimitStatus(rateLimit: GitHubRateLimit): void {
   const { rate } = rateLimit;
   const resetDate = new Date(rate.reset * 1000);
   const timeUntilReset = getTimeUntilReset(rateLimit);
-  
+
   console.log(chalk.cyan(`GitHub API Rate Limit Status:`));
   console.log(chalk.cyan(`   Used: ${rate.used}/${rate.limit}`));
   console.log(chalk.cyan(`   Remaining: ${rate.remaining}`));
   console.log(chalk.cyan(`   Resets at: ${resetDate.toISOString()}`));
-  console.log(chalk.cyan(`   Time until reset: ${formatDuration(timeUntilReset)}`));
+  console.log(
+    chalk.cyan(`   Time until reset: ${formatDuration(timeUntilReset)}`),
+  );
 }
 
 /**
@@ -136,29 +143,37 @@ export function logRateLimitStatus(rateLimit: GitHubRateLimit): void {
  */
 export async function handleRateLimitExceeded(token?: string): Promise<void> {
   const rateLimit = await getCurrentRateLimit(token);
-  
+
   if (!rateLimit) {
     console.log(chalk.red("Could not fetch rate limit, waiting 5 seconds..."));
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     return;
   }
-  
+
   logRateLimitStatus(rateLimit);
-  
+
   const { rate } = rateLimit;
-  
+
   // If we're at the maximum limit (5000), wait for reset
   if (rate.remaining === 0 || rate.used >= 5000) {
     const waitTime = getTimeUntilReset(rateLimit);
-    console.log(chalk.yellow(`Rate limit exhausted (${rate.used}/${rate.limit}). Waiting ${formatDuration(waitTime)} for reset...`));
-    
+    console.log(
+      chalk.yellow(
+        `Rate limit exhausted (${rate.used}/${rate.limit}). Waiting ${formatDuration(waitTime)} for reset...`,
+      ),
+    );
+
     // Add a small buffer to ensure reset has occurred
-    await new Promise(resolve => setTimeout(resolve, waitTime + 10000));
+    await new Promise((resolve) => setTimeout(resolve, waitTime + 10000));
     console.log(chalk.green("Rate limit should be reset, continuing..."));
   } else {
     // If we're not at max limit, something else caused the 403, wait briefly
-    console.log(chalk.yellow(`Got 403 but rate limit not exhausted (${rate.used}/${rate.limit}). Waiting 5 seconds...`));
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    console.log(
+      chalk.yellow(
+        `Got 403 but rate limit not exhausted (${rate.used}/${rate.limit}). Waiting 5 seconds...`,
+      ),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   }
 }
 
@@ -168,25 +183,35 @@ export async function handleRateLimitExceeded(token?: string): Promise<void> {
 export async function withRateLimitRetry<T>(
   apiCall: () => Promise<T>,
   maxRetries: number = 3,
-  token?: string
+  token?: string,
 ): Promise<T> {
   let lastError: any;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await apiCall();
     } catch (error) {
       lastError = error;
-      
+
       // Check if it's a 403 (rate limit) error
       if (error.response?.status === 403) {
-        console.log(chalk.yellow(`Attempt ${attempt}: Got 403 error, checking rate limit...`));
-        
+        console.log(
+          chalk.yellow(
+            `Attempt ${attempt}: Got 403 error, checking rate limit...`,
+          ),
+        );
+
         if (attempt < maxRetries) {
           await handleRateLimitExceeded(token);
-          console.log(chalk.cyan(`Retrying API call (attempt ${attempt + 1}/${maxRetries})...`));
+          console.log(
+            chalk.cyan(
+              `Retrying API call (attempt ${attempt + 1}/${maxRetries})...`,
+            ),
+          );
         } else {
-          console.log(chalk.red(`Max retries (${maxRetries}) reached for API call`));
+          console.log(
+            chalk.red(`Max retries (${maxRetries}) reached for API call`),
+          );
           throw error;
         }
       } else {
@@ -195,6 +220,6 @@ export async function withRateLimitRetry<T>(
       }
     }
   }
-  
+
   throw lastError;
 }
