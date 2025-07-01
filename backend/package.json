@@ -20,6 +20,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
+    "@mhoc/axios-digest-auth": "^0.8.0",
     "axios": "^1.8.4",
     "chalk": "^5.4.1",
     "cheerio": "^1.0.0",
@@ -34,6 +35,8 @@
     "node-cron": "^3.0.3"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "@types/node": "^24.0.7",
     "bun-types": "^1.2.17"
   }
