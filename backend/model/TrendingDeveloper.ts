@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { ITrendingDeveloper } from "../types/database.js";
+import { ITrendingDeveloper } from "../types/database";
 
 const TrendingDeveloperSchema = new mongoose.Schema({
   username: { type: String, required: true }, // GitHub username of the developer

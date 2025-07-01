@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import chalk from "chalk";
-import { estimateStarHistoryProcessing } from "./services/batched-star-history.js";
-import { Repo } from "./model/Repo.js";
+import { estimateStarHistoryProcessing } from "./services/batched-star-history";
+import { Repo } from "./model/Repo";
 
 dotenv.config();
 

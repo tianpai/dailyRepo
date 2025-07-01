@@ -4,7 +4,7 @@ import {
   getTimeUntilReset,
   formatDuration,
   logRateLimitStatus,
-} from "../utils/rate-limit-checker.js";
+} from "../utils/rate-limit-checker";
 
 /**
  * Configuration for rate limiting and batching

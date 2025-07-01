@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { IVisitorLog } from "../types/database.js";
+import { IVisitorLog } from "../types/database";
 
 const VisitorLogSchema = new mongoose.Schema({
   timestamp: {

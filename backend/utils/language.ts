@@ -1,4 +1,4 @@
-import { LanguageMap } from "../types/database.js";
+import { LanguageMap } from "../types/database";
 
 /**
  * Finds the primary language (most used) from a language map.

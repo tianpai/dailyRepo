@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import chalk from "chalk";
 
-import { prepTrendingData, saveTrendingData } from "../services/repo-data.js";
+import { prepTrendingData, saveTrendingData } from "../services/repo-data";
 
 dotenv.config();
 

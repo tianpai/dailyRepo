@@ -13,7 +13,7 @@
 
 import axios from "axios";
 import dotenv from "dotenv";
-import { withRateLimitRetry } from "../utils/rate-limit-checker.js";
+import { withRateLimitRetry } from "../utils/rate-limit-checker";
 dotenv.config();
 
 // GitHub API base URLs

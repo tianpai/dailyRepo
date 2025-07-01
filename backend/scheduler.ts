@@ -7,8 +7,8 @@ import {
   prepTrendingDevelopers,
   saveTrendingDevelopers,
   saveStarHistoryBatch,
-} from "./services/repo-data.js";
-import { logCyan } from "./utils/coloredConsoleLog.js";
+} from "./services/repo-data";
+import { logCyan } from "./utils/coloredConsoleLog";
 dotenv.config();
 
 const MONGO_URI = process.env.MONGO;

@@ -3,11 +3,10 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
-import repoRoutes from "./routes/repo-routes.js";
+import repoRoutes from "./routes/repo-routes";
 import compression from "compression";
 import helmet from "helmet";
-import { checkFrontendToken } from "./middleware/check-token.js";
-import { logVisitor } from "./middleware/visitor-logger.js";
+import { logVisitor } from "./middleware/visitor-logger";
 
 dotenv.config();
 
