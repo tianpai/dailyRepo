@@ -446,7 +446,7 @@ export async function prepTrendingDevelopers(): Promise<ProcessedDeveloper[]> {
 
       // Add 2-second delay between API calls to stay under 5000/hour limit
       if (i < trendingDevelopers.length - 1) {
-        logGray("Waiting 2 seconds before next API call...");
+        console.log(chalk.gray("Waiting 2 seconds before next API call..."));
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     } catch (error) {
