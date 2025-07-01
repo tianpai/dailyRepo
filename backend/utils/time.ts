@@ -94,3 +94,18 @@ export function validateDate(date) {
 
   return date;
 }
+
+/**
+ * Formats a duration in milliseconds to a human-readable string.
+ */
+export function formatDuration(startTime: number): string {
+  const endTime = performance.now();
+  const duration = endTime - startTime;
+  const seconds = duration / 1000;
+  if (seconds > 60) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes} minute(s) ${remainingSeconds.toFixed(2)} seconds`;
+  }
+  return `${seconds.toFixed(2)} seconds`;
+}
