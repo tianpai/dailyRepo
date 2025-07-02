@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
-import repoRoutes from "./routes/repo-routes";
+import apiRouterV1 from "./routes/main-routes";
 // import compression from "compression";
 import helmet from "helmet";
 import { logVisitor } from "./middleware/visitor-logger";
@@ -50,13 +50,12 @@ app.get("/health", (_, res) => {
 
 if (process.argv.includes("--debug")) {
   console.log("Debug mode enabled");
-  app.use("/api/v1/repos", repoRoutes);
 } else {
   // Trust Vercel's proxy, ensure rate limiting to work correctly
   app.set("trust proxy", 1);
   app.use(limiter);
-  app.use("/api/v1/repos", repoRoutes);
 }
+app.use(apiRouterV1);
 
 const server = app.listen(port, () => {
   console.log(`Server is running on ${port}`);
