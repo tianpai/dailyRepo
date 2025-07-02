@@ -6,15 +6,12 @@ import {
   getStarHistoryAllDataPointTrendingData,
 } from "../controller/repo-controller";
 
-async function notImplemented(_, res) {
-  res.status(501).json({ error: "Not implemented" });
-}
+const repoRouter = Router();
 
-const router = Router();
+// relative to: /api/v1/repos/
+repoRouter.get("/trending", getTrending); // ?date=YYYY-MM-DD
+repoRouter.get("/star-history", getStarHistoryAllDataPointTrendingData);
+repoRouter.get("/:owner/:repo/star-history", getStarHistory); // all star history for a repo
+repoRouter.get("/ranking", getRanking); // ?top=N
 
-router.get("/trending", getTrending); // ?date=YYYY-MM-DD
-router.get("/star-history", getStarHistoryAllDataPointTrendingData);
-router.get("/:owner/:repo/star-history", getStarHistory); // all star history for a repo
-router.get("/ranking", getRanking); // ?top=N
-
-export default router;
+export default repoRouter;

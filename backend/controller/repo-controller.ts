@@ -2,6 +2,7 @@ import { Repo, StarHistory } from "../model/Repo";
 import { getCache, setCache, TTL, getTrendCacheKey } from "../utils/caching";
 import { getTodayUTC, isValidDate } from "../utils/time";
 import { getRepoStarRecords } from "../services/fetching-star-history";
+import { NextFunction, Request, Response } from "express";
 
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -9,21 +10,27 @@ const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
  * GET /repos/trending
  * ?date=YYYY-MM-DD  (optional; empty → today)
  */
-export async function getTrending(req, res, next) {
+export async function getTrending(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   try {
     const today = getTodayUTC();
     const date = req.query.date || today;
 
     if (!isValidDate(date)) {
-      return res
+      res
         .status(400)
         .json({ error: `Bad date: "${date}" (expected YYYY-MM-DD > 2024)` });
+      return;
     }
 
     const cacheKey = getTrendCacheKey(date);
     const cached = getCache(cacheKey);
     if (cached) {
-      return res.status(200).json({ isCached: true, date, data: cached });
+      res.status(200).json({ isCached: true, date, data: cached });
+      return;
     }
 
     //try exact match
@@ -52,16 +59,18 @@ export async function getTrending(req, res, next) {
         setCache(cacheKey, docs, TTL.HAPPY_HOUR);
       }
 
-      return res.status(200).json({
+      res.status(200).json({
         isCached: false,
         date: latestDate,
         data: docs,
       });
+      return;
     }
 
     //exact match found → normal daily TTL
     setCache(cacheKey, docs, TTL.ONE_EARTH_ROTATION);
-    return res.status(200).json({ isCached: false, date, data: docs });
+    res.status(200).json({ isCached: false, date, data: docs });
+    return;
   } catch (err) {
     next(err);
   }
@@ -71,26 +80,32 @@ export async function getTrending(req, res, next) {
  * GET /repos/star-history
  * ?date=YYYY-MM-DD  (optional; empty → latest date)
  */
-export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
+export async function getStarHistoryAllDataPointTrendingData(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const today = getTodayUTC();
     const date = req.query.date || today;
 
     if (!isValidDate(date)) {
-      return res
+      res
         .status(400)
         .json({ error: `Bad date: "${date}" (expected YYYY-MM-DD ≥ 2024)` });
+      return;
     }
 
     // Check cache first
     const cacheKey = `star-history-trending:${date}`;
     const cached = getCache(cacheKey);
     if (cached) {
-      return res.status(200).json({
+      res.status(200).json({
         isCached: true,
         date: date,
         data: cached,
       });
+      return;
     }
 
     // Try exact match first
@@ -145,11 +160,12 @@ export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
       setCache(cacheKey, groupedStarHistory, TTL.HAPPY_HOUR);
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       isCached: false,
       date: actualDate,
       data: groupedStarHistory,
     });
+    return;
   } catch (err) {
     next(err);
   }
@@ -158,7 +174,11 @@ export async function getStarHistoryAllDataPointTrendingData(req, res, next) {
 /**
  * GET /repos/:name/:repo/star-history
  */
-export async function getStarHistory(req, res, next) {
+export async function getStarHistory(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const { owner, repo } = req.params;
     const fname = `${owner}/${repo}`;
@@ -167,9 +187,10 @@ export async function getStarHistory(req, res, next) {
     const cacheKey = `star-history:${fname}`;
     const cached = getCache(cacheKey);
     if (cached) {
-      return res
+      res
         .status(200)
         .json({ isCached: true, date: getTodayUTC(), data: cached });
+      return;
     }
 
     // Check database for existing star history
@@ -177,10 +198,11 @@ export async function getStarHistory(req, res, next) {
       .select("_id")
       .lean();
     if (!repoDoc) {
-      return res.status(404).json({
+      res.status(404).json({
         error: "Repo not found",
         msg: "Try use 'Star History'",
       });
+      return;
     }
 
     // Check if we have recent star history data
@@ -194,11 +216,12 @@ export async function getStarHistory(req, res, next) {
       new Date().getTime() - existingHistory.saveDate.getTime() < ONE_MONTH_MS
     ) {
       setCache(cacheKey, existingHistory.history, TTL.SEMAINE);
-      return res.status(200).json({
+      res.status(200).json({
         isCached: false,
         date: getTodayUTC(),
         data: existingHistory.history,
       });
+      return;
     }
 
     // Fetch from GitHub API
@@ -211,7 +234,8 @@ export async function getStarHistory(req, res, next) {
     });
 
     setCache(cacheKey, data, TTL.THIRTY_FLIRTY);
-    return res.status(200).json({ isCached: false, data: data });
+    res.status(200).json({ isCached: false, data: data });
+    return;
   } catch (err) {
     next(err);
   }
@@ -221,9 +245,13 @@ export async function getStarHistory(req, res, next) {
  * GET /repos/ranking
  * ?top=N (optional, default 10, max 100)
  */
-export async function getRanking(req, res, next) {
+export async function getRanking(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
-    let top = parseInt(req.query.top ?? "10", 10);
+    let top = parseInt((req.query.top as string) ?? "10", 10);
     if (isNaN(top) || top <= 0) top = 10;
     // If top is greater than 100, it will be set to 100
     top = Math.min(top, 100);
@@ -232,7 +260,8 @@ export async function getRanking(req, res, next) {
     const cacheKey = `ranking:${top}`;
     const cachedData = getCache(cacheKey);
     if (cachedData) {
-      return res.json(cachedData);
+      res.json(cachedData);
+      return;
     }
 
     const ranking = await Repo.aggregate([
@@ -255,7 +284,8 @@ export async function getRanking(req, res, next) {
 
     // Cache the results
     setCache(cacheKey, ranking, TTL.SEMAINE);
-    return res.json(ranking);
+    res.json(ranking);
+    return;
   } catch (err) {
     next(err);
   }
