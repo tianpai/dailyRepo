@@ -225,7 +225,7 @@ if (process.argv.includes("--estimate")) {
 } else if (process.argv.includes("--run-batched")) {
   runBatchedScrapeJob().finally(() => {
     console.log("Batched scraping job initiated.");
-    // Don't exit - let batched processing continue
+    process.exit(0);
   });
 } else if (process.argv.includes("--run-now")) {
   runScrapeJob().finally(() => {
