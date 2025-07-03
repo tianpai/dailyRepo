@@ -6,7 +6,7 @@ import apiRouterV1 from "./routes/main-routes";
 // import compression from "compression";
 import helmet from "helmet";
 import { logVisitor } from "./middleware/visitor-logger";
-import { DatabaseConnection } from "./services/db-connection";
+import { connectToDatabase } from "./services/db-connection";
 
 dotenv.config();
 
@@ -22,24 +22,16 @@ const limiter = rateLimit({
   },
 });
 
-await DatabaseConnection.connect()
-  .then(() => {
-    console.log("Database connection established");
-  })
-  .catch((error) => {
-    console.error("Database connection error:", error);
-    process.exit(1);
-  });
+await connectToDatabase();
 
 app.use(express.json());
 app.use(helmet());
 // app.use(compression()); // Disabled: Brotli not supported on Render
-app.use(logVisitor);
 
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://daily-repo.vercel.app"],
-    methods: ["GET"],
+    methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
@@ -49,12 +41,18 @@ app.get("/health", (_, res) => {
 });
 
 if (process.argv.includes("--debug")) {
+  app.use((req, res, next) => {
+    console.log(`Incoming request: ${req.method} ${req.path}`);
+    next();
+  });
   console.log("Debug mode enabled");
 } else {
   // Trust Vercel's proxy, ensure rate limiting to work correctly
   app.set("trust proxy", 1);
+  app.use(logVisitor);
   app.use(limiter);
 }
+
 app.use(apiRouterV1);
 
 const server = app.listen(port, () => {
@@ -66,7 +64,6 @@ process.on("SIGTERM", async () => {
   console.log("SIGTERM signal received: closing HTTP server");
   server.close(async () => {
     console.log("Server closed", Date.now());
-    await DatabaseConnection.disconnect();
     process.exit(0);
   });
 });
