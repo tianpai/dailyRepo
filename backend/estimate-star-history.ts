@@ -2,14 +2,14 @@ import dotenv from "dotenv";
 import chalk from "chalk";
 import { estimateStarHistoryProcessing } from "./services/batched-star-history";
 import { Repo } from "./model/Repo";
-import { DatabaseConnection } from "./services/db-connection";
+import { connectToDatabase } from "./services/db-connection";
 
 dotenv.config();
 
 async function main() {
   try {
     // Connect to database
-    await DatabaseConnection.connect();
+    await connectToDatabase();
     console.log(chalk.green("Database connected"));
 
     // Get current repository count from database
@@ -50,7 +50,6 @@ async function main() {
     console.error(chalk.red("Error:"), error);
     process.exit(1);
   } finally {
-    await DatabaseConnection.disconnect();
     console.log(chalk.yellow("\nDisconnected from database"));
   }
 }
