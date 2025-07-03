@@ -11,7 +11,7 @@ const cache = new NodeCache({
  * example:
  * getTrendCacheKey("2025-04-02") "trending:2025-04-02"
  */
-export function getTrendCacheKey(date) {
+export function getTrendCacheKey(date: string) {
   return `trending:${date}`;
 }
 
@@ -22,15 +22,15 @@ export const TTL = {
   THIRTY_FLIRTY: 30 * 24 * 60 * 60, // 1 month
 };
 
-export function getCache(key) {
+export function getCache(key: string) {
   return cache.get(key);
 }
 
-export function setCache(key, value, ttl = undefined) {
+export function setCache(key: string, value: any, ttl: number) {
   return cache.set(key, value, ttl);
 }
 
-export function delCache(key) {
+export function delCache(key: string) {
   return cache.del(key);
 }
 
