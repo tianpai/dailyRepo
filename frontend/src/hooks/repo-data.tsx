@@ -38,7 +38,7 @@ export function useRepoData(
   page?: number,
 ) {
   // Get environment variables for API base URL and authentication token
-  const base_url = import.meta.env.VITE_DATABASE_URL as string;
+  const base_url = import.meta.env.VITE_DATABASE_REPOS as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
   if (!base_url || !token) throw new Error("Missing token in env");
 
@@ -118,7 +118,7 @@ export function useRepoData(
  */
 export function useStarHistory(fullname: string) {
   // Get environment variables for API base URL and authentication token
-  const base_url = import.meta.env.VITE_DATABASE_URL as string;
+  const base_url = import.meta.env.VITE_DATABASE_REPOS as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
   if (!base_url || !token) throw new Error("Missing token in env");
 
@@ -180,7 +180,7 @@ export function useStarHistory(fullname: string) {
  */
 export function useTrendingStarHistory(selectedDate?: Date) {
   // Get environment variables for API base URL and authentication token
-  const base_url = import.meta.env.VITE_DATABASE_URL as string;
+  const base_url = import.meta.env.VITE_DATABASE_REPOS as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
   if (!base_url || !token) throw new Error("Missing token in env");
 
@@ -244,7 +244,7 @@ export function useTrendingStarHistory(selectedDate?: Date) {
  * // }
  */
 export function useBulkStarHistory(repoNames: string[]) {
-  const base_url = import.meta.env.VITE_DATABASE_URL as string;
+  const base_url = import.meta.env.VITE_DATABASE_REPOS as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
   if (!base_url || !token) throw new Error("Missing token in env");
 
