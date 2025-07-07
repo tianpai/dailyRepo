@@ -47,6 +47,7 @@ interface ProcessedDeveloper {
   profileUrl: string;
   trendingDate: string;
   location?: string;
+  avatar_url: string;
 }
 
 interface StarHistoryResult {
@@ -441,12 +442,14 @@ export async function prepTrendingDevelopers(): Promise<ProcessedDeveloper[]> {
         profileUrl: `https://github.com/${dev.username}`,
         trendingDate: today,
         location: userInfo?.location || undefined,
+        avatar_url: userInfo?.avatar_url || "",
       };
       processedDevelopers.push(processedDev);
 
+      console.log(`${i + 1}/${trendingDevelopers.length}:`, dev.username);
       // Add 2-second delay between API calls to stay under 5000/hour limit
       if (i < trendingDevelopers.length - 1) {
-        console.log(chalk.gray("Waiting 2 seconds before next API call..."));
+        // console.log(chalk.gray("Waiting 2 seconds before next API call..."));
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     } catch (error) {
