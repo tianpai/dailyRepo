@@ -25,7 +25,11 @@ export const RepoDataProvider = ({
     undefined,
   );
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-  const { data, pagination, loading, error } = useRepoData("/trending", selectedDate, currentPage);
+  const { data, pagination, loading, error } = useRepoData(
+    "/trending",
+    selectedDate,
+    currentPage,
+  );
 
   // Reset to page 1 when date changes
   React.useEffect(() => {
@@ -34,15 +38,15 @@ export const RepoDataProvider = ({
 
   return (
     <RepoDataContext.Provider
-      value={{ 
-        data, 
-        loading, 
-        error, 
-        selectedDate, 
-        setSelectedDate, 
-        currentPage, 
-        setCurrentPage, 
-        pagination 
+      value={{
+        data,
+        loading,
+        error,
+        selectedDate,
+        setSelectedDate,
+        currentPage,
+        setCurrentPage,
+        pagination,
       }}
     >
       {children}

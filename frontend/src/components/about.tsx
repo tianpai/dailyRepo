@@ -8,7 +8,7 @@ import {
 } from "./ui/card";
 import { FaLinkedin, FaGithub } from "react-icons/fa";
 
-function About(): React.JSX.Element {
+export function About(): React.JSX.Element {
   return (
     <div className="min-h-screen p-0 m-0">
       <Card>
@@ -172,5 +172,3 @@ function LegalDisclaimer(): React.JSX.Element {
     </section>
   );
 }
-
-export default About;
