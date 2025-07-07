@@ -15,7 +15,10 @@ import { getRateLimit } from "./tests/rate-limit-consumption-star-history";
 import { formatDuration } from "./utils/time";
 import { runScrapeJob } from "./scheduler";
 import { scrapeTrending } from "./services/repo-scraping";
-import { connectToDatabase, isConnectedToDatabase } from "./services/db-connection";
+import {
+  connectToDatabase,
+  isConnectedToDatabase,
+} from "./services/db-connection";
 
 dotenv.config();
 const LOG = console.log;
@@ -61,11 +64,6 @@ async function processDevelopers() {
   );
 
   await saveTrendingDevelopers(developers);
-  developers.forEach((d, i) => {
-    console.log(
-      ` ${i + 1}. [${d.username}] ${d.repositoryPath} ${d.location || "No location"}`,
-    );
-  });
   console.log(
     `\nSaved ${developers.length} developers to database at ${new Date().toISOString()}`,
   );
