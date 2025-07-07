@@ -17,19 +17,26 @@ import type {
   RepoData,
   starDataPoint,
   ApiResponse,
+  PaginationMetadata,
 } from "@/interface/repository.tsx";
 
 /**
  * Custom hook for fetching repository data from any API endpoint
  *
  * @param endpoint - The API endpoint path (e.g., '/trending', '/ranking')
- * @returns Object containing data array, loading state, and error message
+ * @param selectedDate - Optional date filter for trending data
+ * @param page - Optional page number for pagination (defaults to 1)
+ * @returns Object containing data array, pagination metadata, loading state, and error message
  *
  * @example
- * const { data, loading, error } = useRepoData('/trending');
- * const { data, loading, error } = useRepoData('/ranking?top=50');
+ * const { data, pagination, loading, error } = useRepoData('/trending');
+ * const { data, pagination, loading, error } = useRepoData('/trending', new Date(), 2);
  */
-export function useRepoData(endpoint: string, selectedDate?: Date) {
+export function useRepoData(
+  endpoint: string,
+  selectedDate?: Date,
+  page?: number,
+) {
   // Get environment variables for API base URL and authentication token
   const base_url = import.meta.env.VITE_DATABASE_URL as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
@@ -37,14 +44,20 @@ export function useRepoData(endpoint: string, selectedDate?: Date) {
 
   // State management for API response data, loading, and error states
   const [data, setData] = useState<RepoData[]>([]);
+  const [pagination, setPagination] = useState<PaginationMetadata | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  // Construct the full API URL with optional date parameter
-  const dateParam = selectedDate
-    ? `?date=${selectedDate.toISOString().split("T")[0]}`
-    : "";
-  const trending_url = `${base_url}${endpoint}${dateParam}`;
+  // Construct the full API URL with optional date and page parameters
+  const params = new URLSearchParams();
+  if (selectedDate) {
+    params.append("date", selectedDate.toISOString().split("T")[0]);
+  }
+  if (page && page > 1) {
+    params.append("page", page.toString());
+  }
+  const queryString = params.toString();
+  const trending_url = `${base_url}${endpoint}${queryString ? `?${queryString}` : ""}`;
 
   useEffect(() => {
     /**
@@ -76,6 +89,9 @@ export function useRepoData(endpoint: string, selectedDate?: Date) {
           };
         });
         setData(mapped);
+
+        // Set pagination metadata from backend response
+        setPagination(json.pagination);
       } catch (err) {
         // Handle and store error messages
         setError(err instanceof Error ? err.message : "Unknown error");
@@ -85,9 +101,9 @@ export function useRepoData(endpoint: string, selectedDate?: Date) {
       }
     };
     fetchData();
-  }, [trending_url, token]); // Re-run when URL, token, or date changes
+  }, [trending_url, token]); // Re-run when URL, token, date, or page changes
 
-  return { data, loading, error };
+  return { data, pagination, loading, error };
 }
 
 /**
@@ -211,4 +227,64 @@ export function useTrendingStarHistory(selectedDate?: Date) {
   }, [star_history_url, token]); // Re-run when URL, token, or date changes
 
   return { data, actualDate, loading, error };
+}
+
+/**
+ * Custom hook for fetching star history data for multiple repositories in bulk
+ *
+ * @param repoNames - Array of repository names in format "owner/repo"
+ * @returns Object containing grouped star history data, loading state, and error message
+ *
+ * @example
+ * const { data, loading, error } = useBulkStarHistory(['facebook/react', 'microsoft/vscode']);
+ * // data will be an object like:
+ * // {
+ * //   "facebook/react": [{ date: "2024-01-01", count: 220000 }, ...],
+ * //   "microsoft/vscode": [{ date: "2024-01-01", count: 160000 }, ...]
+ * // }
+ */
+export function useBulkStarHistory(repoNames: string[]) {
+  const base_url = import.meta.env.VITE_DATABASE_URL as string;
+  const token = import.meta.env.VITE_DEV_AUTH as string;
+  if (!base_url || !token) throw new Error("Missing token in env");
+
+  const [data, setData] = useState<Record<string, starDataPoint[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+
+  const bulk_star_history_url = `${base_url}/star-history`;
+
+  useEffect(() => {
+    if (!repoNames.length) {
+      setData({});
+      setLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(bulk_star_history_url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ repoNames }),
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch bulk star history");
+
+        const json = await res.json();
+        setData(json.data || {});
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [repoNames, bulk_star_history_url]);
+
+  return { data, loading, error };
 }

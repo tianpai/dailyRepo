@@ -1,7 +1,20 @@
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export interface ApiResponse<T> {
   isCached: boolean;
   date: string; // "2025-04-30" date of trending
   data: T;
+}
+
+export interface PaginatedApiResponse<T> extends ApiResponse<T> {
+  pagination: PaginationMetadata;
 }
 
 export interface starDataPoint {
@@ -18,7 +31,7 @@ export interface NormalizedDayData {
   day: number;
   [repoName: string]: number; // repo names as keys with star counts as values
 }
-export type RawRepoApiResponse = ApiResponse<RawRepoData[]>;
+export type RawRepoApiResponse = PaginatedApiResponse<RawRepoData[]>;
 
 // ================ UI PROPS ========================
 
