@@ -34,15 +34,7 @@ export function Header() {
         </Link>
       </HeaderTitle>
       <HeaderActions>
-        <div className="flex items-center space-x-4">
-          <Link
-            to="/about"
-            className="major-mono text-sm font-medium hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            About
-          </Link>
-          <ModeToggle />
-        </div>
+        <ModeToggle />
       </HeaderActions>
     </HeaderContainer>
   );
