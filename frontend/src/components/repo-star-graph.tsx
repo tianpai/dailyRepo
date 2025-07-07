@@ -1,4 +1,5 @@
 "use client";
+import { useMemo } from "react";
 import { LuChartArea } from "react-icons/lu";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import {
@@ -14,18 +15,24 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useTrendingStarHistory } from "@/hooks/repo-data";
+import { useBulkStarHistory } from "@/hooks/repo-data";
 import { convertToNormalizedDays } from "@/lib/star-history-data";
 import { useRepoDataContext } from "@/context/repo-data-provider";
 
 export function RepoStarGraph() {
-  const { selectedDate } = useRepoDataContext();
+  const { selectedDate, data: repoData } = useRepoDataContext();
+
+  // Extract repo names from current repo data for bulk star history fetch
+  const fullRepoNames = useMemo(() => {
+    const names = repoData.map((repo) => `${repo.owner}/${repo.name}`);
+    return names;
+  }, [repoData]);
+
   const {
     data: starHistoryData,
-    actualDate,
     loading,
     error,
-  } = useTrendingStarHistory(selectedDate);
+  } = useBulkStarHistory(fullRepoNames);
   if (loading)
     return (
       <div>
@@ -44,10 +51,12 @@ export function RepoStarGraph() {
     );
   }
 
-  // Convert the star history data to normalized format using actual API date
+  // Convert the star history data to normalized format using selected date
   const apiResponse = {
     isCached: false,
-    date: actualDate || new Date().toISOString().split("T")[0],
+    date:
+      selectedDate?.toISOString().split("T")[0] ||
+      new Date().toISOString().split("T")[0],
     data: starHistoryData,
   };
 
