@@ -2,9 +2,10 @@ import NodeCache from "node-cache";
 
 const cache = new NodeCache({
   stdTTL: 14400, // 4 hours in seconds
-  checkperiod: 1800, // 30 minutes in seconds
-  maxKeys: 50, // <- SAFETY VALVE: Prevent memory leaks
-});
+  checkperiod: 3600, // 1 hour in seconds
+  maxKeys: 1000, // <- SAFETY VALVE: Prevent memory leaks (increased for date-based keys)
+  deleteOnExpire: true, // Automatically delete expired keys
+} as NodeCache.Options);
 
 /**
  * Assume date is in YYYY-MM-DD format
@@ -18,6 +19,7 @@ export function getTrendCacheKey(date: string) {
 export const TTL = {
   HAPPY_HOUR: 60 * 60, // 1 hour
   ONE_EARTH_ROTATION: 24 * 60 * 60, // 1 day
+  TWO_DAYS: 2 * 24 * 60 * 60, // 2 days
   SEMAINE: 7 * 24 * 60 * 60, // 1 week
   THIRTY_FLIRTY: 30 * 24 * 60 * 60, // 1 month
 };
