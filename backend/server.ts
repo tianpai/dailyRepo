@@ -23,7 +23,6 @@ const limiter = rateLimit({
 });
 
 await connectToDatabase();
-
 app.use(express.json());
 app.use(helmet());
 // app.use(compression()); // Disabled: Brotli not supported on Render
@@ -41,8 +40,10 @@ app.get("/health", (_, res) => {
 });
 
 if (process.argv.includes("--debug")) {
-  app.use((req, res, next) => {
-    console.log(`Incoming request: ${req.method} ${req.path}`);
+  app.use((req, _res, next) => {
+    console.log(
+      `Incoming request: ${req.method} ${req.path}\n${JSON.stringify(req.params)}\n${JSON.stringify(req.headers)}`,
+    );
     next();
   });
   console.log("Debug mode enabled");
