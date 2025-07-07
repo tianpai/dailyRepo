@@ -8,6 +8,15 @@ let isConnected = false;
 let addedIPs: string[] = [];
 let isCleanupRegistered = false;
 
+const mongooseOptions = {
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 45000,
+  tls: true,
+  tlsAllowInvalidCertificates: false,
+  tlsAllowInvalidHostnames: false,
+  bufferCommands: false,
+};
+
 async function getCurrentIP(): Promise<string> {
   const response = await fetch("https://ipinfo.io/ip", {
     method: "GET",
@@ -133,7 +142,56 @@ function registerCleanup(): void {
   isCleanupRegistered = true;
 }
 
+async function connectToDatabaseDebug(): Promise<void> {
+  if (isConnected) {
+    return;
+  }
+
+  const mongoUri = process.env.MONGO;
+  if (!mongoUri) {
+    throw new Error("MongoDB connection string not provided");
+  }
+
+  console.log("Debug mode: connecting directly to MongoDB (no IP management)");
+
+  try {
+    await mongoose.connect(mongoUri, mongooseOptions);
+
+    isConnected = true;
+    console.log("MongoDB connected successfully (debug mode)");
+
+    mongoose.connection.on("disconnected", () => {
+      console.log("MongoDB disconnected");
+      isConnected = false;
+    });
+
+    mongoose.connection.on("error", async (error) => {
+      console.error("MongoDB connection error:", error);
+      isConnected = false;
+
+      try {
+        await mongoose.connect(mongoUri, mongooseOptions);
+        isConnected = true;
+        console.log("MongoDB reconnected successfully (debug mode)");
+      } catch (reconnectError) {
+        console.error("Failed to reconnect:", reconnectError);
+        process.exit(1);
+      }
+    });
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    process.exit(1);
+  }
+}
+
 export async function connectToDatabase(): Promise<void> {
+  const isDebugMode = process.argv.includes("--debug");
+
+  if (isDebugMode) {
+    await connectToDatabaseDebug();
+    return;
+  }
+
   if (isConnected) {
     return;
   }
@@ -151,15 +209,7 @@ export async function connectToDatabase(): Promise<void> {
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-      tls: true,
-      tlsAllowInvalidCertificates: false,
-      tlsAllowInvalidHostnames: false,
-      bufferCommands: false,
-    });
-
+    await mongoose.connect(mongoUri, mongooseOptions);
     isConnected = true;
     console.log("MongoDB connected successfully");
 
@@ -184,15 +234,7 @@ export async function connectToDatabase(): Promise<void> {
 
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        await mongoose.connect(mongoUri, {
-          serverSelectionTimeoutMS: 10000,
-          socketTimeoutMS: 45000,
-          tls: true,
-          tlsAllowInvalidCertificates: false,
-          tlsAllowInvalidHostnames: false,
-          bufferCommands: false,
-        });
-
+        await mongoose.connect(mongoUri, mongooseOptions);
         isConnected = true;
         console.log("MongoDB reconnected successfully");
       } catch (reconnectError) {
