@@ -10,7 +10,13 @@ import {
 } from "@/components/ui/card";
 import { useRepoDataContext } from "@/context/repo-data-provider";
 import { ChartPieDonut } from "@/components/lang-pie-chart.tsx";
-import { RepoStarGraph } from "@/components/repo-star-graph.tsx";
+import { lazy, Suspense } from "react";
+
+const RepoStarGraph = lazy(() =>
+  import("@/components/repo-star-graph.tsx").then((module) => ({
+    default: module.RepoStarGraph,
+  })),
+);
 import { RepoDatePicker } from "@/components/date-picker.tsx";
 import { RepoPagination } from "@/components/repo-pagination";
 
@@ -31,7 +37,8 @@ function formatNumber(num: number): string {
 }
 
 export function RepoList() {
-  const { data, loading, error, currentPage, pagination } = useRepoDataContext();
+  const { data, loading, error, currentPage, pagination } =
+    useRepoDataContext();
   if (loading)
     return (
       <div className="text-center">
@@ -44,11 +51,15 @@ export function RepoList() {
     return <div className="text-center">No repositories found.</div>;
   const limit = pagination?.limit || 15;
   const startRank = (currentPage - 1) * limit;
-  
+
   return (
     <div>
       <RepoDatePicker></RepoDatePicker>
-      <RepoStarGraph></RepoStarGraph>
+      <Suspense
+        fallback={<div className="h-96 bg-gray-100 rounded-lg animate-pulse" />}
+      >
+        <RepoStarGraph></RepoStarGraph>
+      </Suspense>
       {data.map((repo: RepoData, i: number) => (
         <RepoCard key={repo.url} {...repo} rank={startRank + i + 1} />
       ))}
@@ -67,8 +78,8 @@ export function RepoCard({
   language,
 }: RepoCardProps) {
   return (
-    <Card className="flex flex-col md:flex-row items-center mt-4">
-      <CardHeader className="flex flex-shrink-0 flex-row flex-grow-0 w-full md:w-2/7">
+    <Card className="flex flex-col md:flex-row items-stretch mt-4">
+      <CardHeader className="flex flex-shrink-0 flex-row flex-grow-0 w-full md:w-1/3">
         <p className="text-xl font-extrabold pr-5">{rank}</p>
         <div>
           <CardTitle className="flex flex-col">
@@ -79,17 +90,18 @@ export function RepoCard({
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="flex-grow w-full md:w-1/2">
+      <CardContent className="flex-grow w-full md:w-1/3 flex items-center">
         {description}
       </CardContent>
-      <CardFooter className="justify-end-safe m-0 flex-shrink-0 flex-grow-0 w-full md:w-3/13 flex items-center">
-        <div className="w-full md:w-auto">
+      <CardFooter className="justify-center m-0 flex-shrink-0 flex-grow-0 w-full md:w-1/3 flex items-center p-4">
+        <div className="w-full max-w-sm">
           <ChartPieDonut language={language} />
         </div>
       </CardFooter>
     </Card>
   );
 }
+
 export function RepoCardHeader({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between mb-4">

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import "ldrs/react/LineWobble.css";
 
 function Countdown() {
-  const [counter, setCounter] = useState(45);
+  const [counter, setCounter] = useState(20);
   useEffect(() => {
     const interval = setInterval(() => {
       setCounter((prevCounter) => (prevCounter > 0 ? prevCounter - 1 : 0));
@@ -15,8 +15,7 @@ function Countdown() {
   }, []);
   return (
     <p>
-      Initial loading can take up to {counter} seconds on the free tier of
-      Render.
+      Initial loading can take up to {counter} seconds. It is cheap hosting. ;)
     </p>
   );
 }
