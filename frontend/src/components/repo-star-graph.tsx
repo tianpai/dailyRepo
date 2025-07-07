@@ -116,6 +116,7 @@ export function RepoStarGraph() {
                 strokeWidth={2}
                 dot={false}
                 connectNulls={false}
+                isAnimationActive={false}
               />
             ))}
           </LineChart>

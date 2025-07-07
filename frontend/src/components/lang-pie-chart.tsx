@@ -1,20 +1,13 @@
 "use client";
 
-import { Pie, PieChart } from "recharts";
-import { useMemo } from "react";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { type LanguageMap } from "@/interface/repository";
 import {
   toChartData,
   type PieDatum,
   languageColors,
-  maxLanguageCount,
 } from "@/lib/pie-chart-data";
 
 interface ChartPieDonutProps {
@@ -22,30 +15,22 @@ interface ChartPieDonutProps {
 }
 
 export function ChartPieDonut({ language }: ChartPieDonutProps) {
-  /* 1. Hooks run unconditionally */
+  const [showAll, setShowAll] = useState(false);
+
   const chartData: PieDatum[] = useMemo(
     () => toChartData(language),
     [language],
   );
 
-  const chartConfig: ChartConfig = useMemo(() => {
-    const base: ChartConfig = {
-      count: { label: "Repositories" },
-    };
+  const topLanguages = useMemo(() => {
+    return chartData.slice(0, 2);
+  }, [chartData]);
 
-    Object.keys(language).forEach((lang) => {
-      base[lang] = {
-        label: lang,
-        color: languageColors[lang] ?? "#000000",
-      };
-    });
-
-    return base;
-  }, [language]);
+  const displayLanguages = showAll ? chartData : topLanguages;
+  const hasMore = chartData.length > 2;
 
   const isEmpty = Object.keys(language).length === 0;
 
-  /* 2. Then decide what to render */
   if (isEmpty) {
     return (
       <Card className="flex flex-col items-center justify-center py-8">
@@ -62,37 +47,66 @@ export function ChartPieDonut({ language }: ChartPieDonutProps) {
   return (
     <Card className="flex flex-col">
       <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[100px] md:max-h-[200px] lg:max-h-[300px]"
-        >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-              formatter={(value: number, name: string) => [
-                name + " ",
-                `${value}%`,
-              ]}
-            />
-            <Pie
-              data={chartData}
-              dataKey="count"
-              nameKey="language"
-              innerRadius={20}
-              outerRadius={40}
-            />
-          </PieChart>
-        </ChartContainer>
+        <div className="w-full h-6 bg-gray-200 rounded-full overflow-hidden flex">
+          {chartData.map((item) => (
+            <div
+              key={item.language}
+              className="flex items-center justify-center text-xs font-medium text-white relative group"
+              style={{
+                width: `${item.count}%`,
+                backgroundColor: languageColors[item.language] ?? "#000000",
+                minWidth: item.count > 5 ? "auto" : "0",
+              }}
+              title={`${item.language}: ${item.count === 0 ? "<1" : item.count}%`}
+            >
+              {item.count > 10 && (
+                <span
+                  className="truncate px-1"
+                  style={{
+                    textShadow:
+                      "1px 1px 0 rgba(0,0,0,0.7), -1px -1px 0 rgba(0,0,0,0.5), 1px -1px 0 rgba(0,0,0,0.5), -1px 1px 0 rgba(0,0,0,0.5)",
+                  }}
+                >
+                  {item.language}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1 text-xs">
+          {displayLanguages.map((item) => (
+            <div key={item.language} className="flex items-center gap-1">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{
+                  backgroundColor: languageColors[item.language] ?? "#000000",
+                }}
+              />
+              <span>
+                {item.language} ({item.count === 0 ? "<1" : item.count}%)
+              </span>
+            </div>
+          ))}
+        </div>
+        {hasMore && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-50 transition-colors"
+          >
+            {showAll ? (
+              <>
+                <ChevronUp className="w-3 h-3" />
+                Show less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-3 h-3" />
+                Show all {chartData.length} languages
+              </>
+            )}
+          </button>
+        )}
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 leading-none font-medium">
-          {maxLanguageCount(language)}
-        </div>
-        <div className="text-muted-foreground leading-none">
-          {Object.keys(language).length} languages
-        </div>
-      </CardFooter>
     </Card>
   );
 }
