@@ -12,6 +12,7 @@ import { useRepoDataContext } from "@/context/repo-data-provider";
 import { ChartPieDonut } from "@/components/lang-pie-chart.tsx";
 import { RepoStarGraph } from "@/components/repo-star-graph.tsx";
 import { RepoDatePicker } from "@/components/date-picker.tsx";
+import { RepoPagination } from "@/components/repo-pagination";
 
 import type {
   StatsProps,
@@ -30,7 +31,7 @@ function formatNumber(num: number): string {
 }
 
 export function RepoList() {
-  const { data, loading, error } = useRepoDataContext();
+  const { data, loading, error, currentPage, pagination } = useRepoDataContext();
   if (loading)
     return (
       <div className="text-center">
@@ -41,13 +42,17 @@ export function RepoList() {
     return <div className="text-center text-red-500">Error: {error}</div>;
   if (data.length === 0)
     return <div className="text-center">No repositories found.</div>;
+  const limit = pagination?.limit || 15;
+  const startRank = (currentPage - 1) * limit;
+  
   return (
     <div>
       <RepoDatePicker></RepoDatePicker>
       <RepoStarGraph></RepoStarGraph>
       {data.map((repo: RepoData, i: number) => (
-        <RepoCard key={repo.url} {...repo} rank={i + 1} />
+        <RepoCard key={repo.url} {...repo} rank={startRank + i + 1} />
       ))}
+      <RepoPagination />
     </div>
   );
 }

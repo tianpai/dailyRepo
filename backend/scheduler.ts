@@ -8,7 +8,7 @@ import {
   saveStarHistoryBatch,
 } from "./services/repo-data";
 import { logCyan } from "./utils/coloredConsoleLog";
-import { DatabaseConnection } from "./services/db-connection";
+import { connectToDatabase, isConnectedToDatabase } from "./services/db-connection";
 dotenv.config();
 
 /**
@@ -32,8 +32,8 @@ function formatDuration(startTime: number): string {
  * Ensure a database connection is established.
  */
 async function ensureDatabaseConnected() {
-  if (!DatabaseConnection.getConnectionStatus()) {
-    await DatabaseConnection.connect();
+  if (!isConnectedToDatabase()) {
+    await connectToDatabase();
     console.log("Database connected");
   }
 }
@@ -139,8 +139,6 @@ export async function runScrapeJob() {
     console.log("!".repeat(60));
     process.exitCode = 1;
   } finally {
-    await DatabaseConnection.disconnect();
-
     const totalDuration = formatDuration(jobStartTime);
     const status = process.exitCode === 0 ? "SUCCESS" : "FAILED";
 
@@ -168,8 +166,5 @@ if (process.argv.includes("--run-now")) {
 // Catch unhandled promise rejections
 process.on("unhandledRejection", async (err) => {
   console.error("Unhandled Rejection:", err);
-  try {
-    await DatabaseConnection.disconnect();
-  } catch {}
   process.exit(1);
 });
