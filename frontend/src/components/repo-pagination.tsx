@@ -100,7 +100,7 @@ export function RepoPagination() {
   };
 
   return (
-    <div className="flex justify-center mt-8">
+    <div className="flex justify-center mt-8 pb-15">
       <Pagination>
         <PaginationContent>
           {/* Previous Button */}
