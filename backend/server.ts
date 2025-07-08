@@ -14,7 +14,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 min
-  max: 10, // limit each IP
+  max: 50, // limit each IP
   message: "Too many requests, try again later.",
   skip: (req) => {
     const whitelist = [process.env.WHITELIST_IP];
