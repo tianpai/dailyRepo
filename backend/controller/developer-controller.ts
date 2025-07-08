@@ -65,7 +65,9 @@ export async function getTrendingDevelopers(
         ]);
 
         if (latestDate) {
-          allDevelopers = await TrendingDeveloper.find({ trendingDate: latestDate })
+          allDevelopers = await TrendingDeveloper.find({
+            trendingDate: latestDate,
+          })
             .select("-trendingDate")
             .sort({ username: 1 });
           actualDate = latestDate;

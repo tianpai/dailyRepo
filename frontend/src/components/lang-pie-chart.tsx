@@ -9,6 +9,7 @@ import {
   type PieDatum,
   languageColors,
 } from "@/lib/pie-chart-data";
+import { getOptimalForegroundColor } from "@/lib/fg-color";
 
 interface ChartPieDonutProps {
   language: LanguageMap;
@@ -51,7 +52,7 @@ export function ChartPieDonut({ language }: ChartPieDonutProps) {
           {chartData.map((item) => (
             <div
               key={item.language}
-              className="flex items-center justify-center text-xs font-medium text-white relative group"
+              className="flex items-center justify-center text-xs font-medium relative group"
               style={{
                 width: `${item.count}%`,
                 backgroundColor: languageColors[item.language] ?? "#000000",
@@ -63,8 +64,7 @@ export function ChartPieDonut({ language }: ChartPieDonutProps) {
                 <span
                   className="truncate px-1"
                   style={{
-                    textShadow:
-                      "1px 1px 0 rgba(0,0,0,0.7), -1px -1px 0 rgba(0,0,0,0.5), 1px -1px 0 rgba(0,0,0,0.5), -1px 1px 0 rgba(0,0,0,0.5)",
+                    color: getOptimalForegroundColor(languageColors[item.language] ?? "#000000"),
                   }}
                 >
                   {item.language}
