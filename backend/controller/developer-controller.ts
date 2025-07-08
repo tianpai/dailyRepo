@@ -48,10 +48,29 @@ export async function getTrendingDevelopers(
     let allDevelopers: ITrendingDeveloper[] =
       (getCache(cacheKey) as ITrendingDeveloper[]) || null;
 
+    let actualDate = date;
+
     if (!allDevelopers) {
       allDevelopers = await TrendingDeveloper.find({ trendingDate: date })
         .select("-trendingDate")
         .sort({ username: 1 });
+
+      // If no developers found for requested date, fall back to latest date
+      if (!allDevelopers.length) {
+        const [{ latestDate } = {}] = await TrendingDeveloper.aggregate([
+          { $match: { trendingDate: { $exists: true, $ne: null } } },
+          { $sort: { trendingDate: -1 } },
+          { $limit: 1 },
+          { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
+        ]);
+
+        if (latestDate) {
+          allDevelopers = await TrendingDeveloper.find({ trendingDate: latestDate })
+            .select("-trendingDate")
+            .sort({ username: 1 });
+          actualDate = latestDate;
+        }
+      }
 
       setCache(cacheKey, allDevelopers, TTL.HAPPY_HOUR);
     }
@@ -90,6 +109,7 @@ export async function getDeveloperDetails(
   );
   if (cachedDev) {
     res.status(200).json({ developer: cachedDev });
+    return;
   }
 
   const developer = await TrendingDeveloper.findOne({
