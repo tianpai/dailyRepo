@@ -4,6 +4,8 @@ import { getTodayUTC, isValidDate } from "../utils/time";
 import { getRepoStarRecords } from "../services/fetching-star-history";
 import { NextFunction, Request, Response } from "express";
 import { IRepo } from "../types/database";
+import dotenv from "dotenv";
+dotenv.config();
 
 interface TrendingQuery {
   date?: string;
@@ -366,7 +368,7 @@ export async function getTrendingkeywords(
     };
     const serviceUrl = `${mlServerUrl}/analyze-keywords`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     const response = await fetch(serviceUrl, {
       method: "POST",
