@@ -293,6 +293,125 @@ export async function getStarHistory(
 }
 
 /**
+ * GET /repos/highlight
+ * This endpoint will talk to another service to get keywords
+ *
+ * POST /analyze-keywords
+ *
+ * example:
+ * DOMAIN/analyze-keywords?topN=10"
+ * DOMAIN/analyze-keywords?topN=10&includeRelated=true"
+ *
+ * IncludeRelated is optional, default false.
+ */
+import { KeywordAnalysisResponseFromMLServices } from "../types/ml-service";
+import { PIPELINE } from "../utils/db-pipline";
+export async function getTrendingkeywords(
+  req: Request,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> {
+  try {
+    const topN = 10;
+    const includeRelated = req.query.includeRelated === "true";
+    const distanceThreshold = 0.25;
+    const includeClusterSizes = true;
+    const today = getTodayUTC();
+
+    // --- Cache Key Update: Include new parameters in cache key ---
+    const cacheKey = `trending-keywords:${today}-${includeRelated}`;
+    const cached = getCache(cacheKey);
+
+    if (cached) {
+      res.status(200).json({
+        isCached: true,
+        data: cached,
+      });
+      return;
+    }
+
+    let mlServerUrl = process.env.ML_SERVER_PUBLIC;
+    if (process.argv.includes("--debug")) {
+      console.log("Debug mode enabled using private ML link");
+      mlServerUrl = process.env.ML_SERVER_LOCAL;
+    }
+
+    if (!mlServerUrl) {
+      throw new Error("ML_SERVER_PUBLIC environment variable is not set");
+    }
+
+    // Fetch topics from MongoDB using the pipeline
+    const repoTopicsResult = await Repo.aggregate(PIPELINE);
+    const topics: string[] = repoTopicsResult[0]?.topics || [];
+
+    if (topics.length === 0) {
+      res.status(200).json({
+        isCached: false,
+        data: {
+          topKeywords: [],
+          related: {},
+          clusterSizes: {},
+        },
+      });
+      return;
+    }
+
+    // Construct the POST request body to ML microservice
+    const requestBody = {
+      topics: topics,
+      topN: topN,
+      includeRelated: includeRelated,
+      distance_threshold: distanceThreshold,
+      includeClusterSizes: includeClusterSizes,
+    };
+    const serviceUrl = `${mlServerUrl}/analyze-keywords`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(serviceUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      throw new Error(
+        `ML service responded with ${response.status}: ${response.statusText}`,
+      );
+    }
+    const keywordData: KeywordAnalysisResponseFromMLServices =
+      await response.json();
+
+    setCache(cacheKey, keywordData, TTL.ONE_EARTH_ROTATION);
+
+    res.status(200).json({
+      isCached: false,
+      data: keywordData,
+    });
+    return;
+  } catch (err) {
+    console.error("Error fetching trending keywords:", err);
+
+    if (err instanceof Error && err.name === "AbortError") {
+      res.status(408).json({
+        error: "Request timeout - ML service took too long to respond",
+        fallback: [],
+      });
+      return;
+    }
+
+    res.status(503).json({
+      error: "Keyword analysis service temporarily unavailable",
+      fallback: [],
+    });
+    return;
+  }
+}
+/**
  * GET /repos/ranking
  * ?top=N (optional, default 10, max 100)
  */
