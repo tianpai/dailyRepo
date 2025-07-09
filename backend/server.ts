@@ -11,7 +11,7 @@ import { connectToDatabase } from "./services/db-connection";
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = parseInt(process.env.PORT || "3000", 10);
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 min
   max: 50, // limit each IP
@@ -56,7 +56,7 @@ if (process.argv.includes("--debug")) {
 
 app.use(apiRouterV1);
 
-const server = app.listen(port, () => {
+const server = app.listen(port, "::", () => {
   console.log(`Server is running on ${port}`);
 });
 
