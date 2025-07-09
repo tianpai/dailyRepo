@@ -323,7 +323,6 @@ export async function getTrendingkeywords(
     // --- Cache Key Update: Include new parameters in cache key ---
     const cacheKey = `trending-keywords:${today}-${includeRelated}`;
     const cached = getCache(cacheKey);
-
     if (cached) {
       res.status(200).json({
         isCached: true,
@@ -332,18 +331,21 @@ export async function getTrendingkeywords(
       return;
     }
 
-    let mlServerUrl = process.env.ML_SERVER_PUBLIC;
+    let mlServerUrl = process.env.ML_SERVER_PRIVATE;
     if (process.argv.includes("--debug")) {
       console.log("Debug mode enabled using private ML link");
       mlServerUrl = process.env.ML_SERVER_LOCAL;
     }
 
     if (!mlServerUrl) {
-      throw new Error("ML_SERVER_PUBLIC environment variable is not set");
+      throw new Error("ML_SERVER_PRIVATE environment variable is not set");
     }
 
     // Fetch topics from MongoDB using the pipeline
     const repoTopicsResult = await Repo.aggregate(PIPELINE);
+    console.log("*".repeat(50));
+    console.log(repoTopicsResult[0]?.topics);
+    console.log("*".repeat(50));
     const topics: string[] = repoTopicsResult[0]?.topics || [];
 
     if (topics.length === 0) {
@@ -367,8 +369,9 @@ export async function getTrendingkeywords(
       includeClusterSizes: includeClusterSizes,
     };
     const serviceUrl = `${mlServerUrl}/analyze-keywords`;
+    console.log(`ML url: ${serviceUrl}`);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const timeoutId = setTimeout(() => controller.abort(), 300000);
 
     const response = await fetch(serviceUrl, {
       method: "POST",
@@ -387,6 +390,7 @@ export async function getTrendingkeywords(
     }
     const keywordData: KeywordAnalysisResponseFromMLServices =
       await response.json();
+    console.log("Keyword data from ML service:\n", keywordData);
 
     setCache(cacheKey, keywordData, TTL.ONE_EARTH_ROTATION);
 
