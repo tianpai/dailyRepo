@@ -308,6 +308,7 @@ export async function getStarHistory(
  */
 import { KeywordAnalysisResponseFromMLServices } from "../types/ml-service";
 import { PIPELINE } from "../utils/db-pipline";
+import { languages } from "../utils/language-list";
 export async function getTrendingkeywords(
   req: Request,
   res: Response,
@@ -320,7 +321,7 @@ export async function getTrendingkeywords(
     const includeClusterSizes = true;
     const today = getTodayUTC();
 
-    // --- Cache Key Update: Include new parameters in cache key ---
+    // cache
     const cacheKey = `trending-keywords:${today}-${includeRelated}`;
     const cached = getCache(cacheKey);
     if (cached) {
@@ -346,7 +347,13 @@ export async function getTrendingkeywords(
     console.log("*".repeat(50));
     console.log(repoTopicsResult[0]?.topics);
     console.log("*".repeat(50));
-    const topics: string[] = repoTopicsResult[0]?.topics || [];
+    const allTopics: string[] = repoTopicsResult[0]?.topics || [];
+
+    // Filter out languages from topics as they provide no insights to topics
+    const topics: string[] = allTopics.filter(
+      (topic) =>
+        !languages.some((lang) => lang.toLowerCase() === topic.toLowerCase()),
+    );
 
     if (topics.length === 0) {
       res.status(200).json({
@@ -367,6 +374,7 @@ export async function getTrendingkeywords(
       includeRelated: includeRelated,
       distance_threshold: distanceThreshold,
       includeClusterSizes: includeClusterSizes,
+      batchSize: 64,
     };
     const serviceUrl = `${mlServerUrl}/analyze-keywords`;
     console.log(`ML url: ${serviceUrl}`);
@@ -390,7 +398,6 @@ export async function getTrendingkeywords(
     }
     const keywordData: KeywordAnalysisResponseFromMLServices =
       await response.json();
-    console.log("Keyword data from ML service:\n", keywordData);
 
     setCache(cacheKey, keywordData, TTL.ONE_EARTH_ROTATION);
 
