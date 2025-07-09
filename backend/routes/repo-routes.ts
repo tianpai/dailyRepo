@@ -5,6 +5,7 @@ import {
   getRanking,
   getStarHistoryAllDataPointTrendingData,
   getStarHistoryForRepos,
+  getTrendingkeywords,
 } from "../controller/repo-controller";
 
 const repoRouter = Router();
@@ -15,5 +16,6 @@ repoRouter.post("/star-history", getStarHistoryForRepos);
 repoRouter.get("/star-history", getStarHistoryAllDataPointTrendingData);
 repoRouter.get("/:owner/:repo/star-history", getStarHistory); // all star history for a repo
 repoRouter.get("/ranking", getRanking); // ?top=N
+repoRouter.get("/keywords", getTrendingkeywords);
 
 export default repoRouter;
