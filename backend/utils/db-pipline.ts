@@ -56,3 +56,54 @@ export const PIPELINE = [
     },
   },
 ];
+
+export const language_list_top = (limit: number) => [
+  {
+    $group: {
+      _id: null,
+      latestDate: { $max: "$trendingDate" },
+      docs: { $push: "$$ROOT" },
+    },
+  },
+  { $unwind: "$docs" },
+  { $match: { $expr: { $eq: ["$docs.trendingDate", "$latestDate"] } } },
+  { $project: { language: "$docs.language" } },
+  {
+    $project: {
+      languageArray: { $objectToArray: "$language" },
+    },
+  },
+  { $unwind: "$languageArray" },
+  {
+    $group: {
+      _id: "$languageArray.k",
+      totalBytes: { $sum: "$languageArray.v" },
+    },
+  },
+  {
+    $group: {
+      _id: null,
+      languages: {
+        $push: {
+          k: "$_id",
+          v: "$totalBytes",
+        },
+      },
+    },
+  },
+  {
+    $project: {
+      languages: {
+        $slice: [
+          { $sortArray: { input: "$languages", sortBy: { v: -1 } } },
+          limit,
+        ],
+      },
+    },
+  },
+  {
+    $replaceRoot: {
+      newRoot: { $arrayToObject: "$languages" },
+    },
+  },
+];
