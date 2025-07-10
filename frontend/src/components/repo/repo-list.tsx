@@ -9,16 +9,16 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useRepoDataContext } from "@/context/repo-data-provider";
-import { ChartPieDonut } from "@/components/lang-pie-chart.tsx";
+import { ChartPieDonut } from "@/components/repo/lang-pie-chart.tsx";
 import { lazy, Suspense } from "react";
 
 const RepoStarGraph = lazy(() =>
-  import("@/components/repo-star-graph.tsx").then((module) => ({
+  import("@/components/repo/repo-star-graph.tsx").then((module) => ({
     default: module.RepoStarGraph,
   })),
 );
 import { RepoDatePicker } from "@/components/date-picker.tsx";
-import { RepoPagination } from "@/components/repo-pagination";
+import { RepoPagination } from "@/components/repo/repo-pagination";
 
 import type {
   StatsProps,
@@ -55,10 +55,11 @@ export function RepoList() {
   return (
     <div>
       <RepoDatePicker></RepoDatePicker>
+      <h2 className="text-2xl font-bold mb-4">Daily Highlight</h2>
       <Suspense
         fallback={<div className="h-96 bg-gray-100 rounded-lg animate-pulse" />}
       >
-        <RepoStarGraph></RepoStarGraph>
+        <RepoStarGraph />
       </Suspense>
       {data.map((repo: RepoData, i: number) => (
         <RepoCard key={repo.url} {...repo} rank={startRank + i + 1} />

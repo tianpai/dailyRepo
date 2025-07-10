@@ -5,9 +5,10 @@ import { About } from "./components/about.tsx";
 import { ThemeProvider } from "./components/theme-provider.tsx";
 import { RepoDataProvider } from "./context/repo-data-provider.tsx";
 import { PageContainer } from "./components/page-container.tsx";
-import { Homepage } from "./components/home/homepage.tsx";
+import { RepoPage } from "./components/repo/repo-page.tsx";
 import { DeveloperPage } from "./components/developers/developer-page.tsx";
 import { SidebarLayout } from "./components/app-sidebar.tsx";
+import { DailyHighlight } from "./components/highlights/highlight-page.tsx";
 
 export default function App() {
   return (
@@ -16,7 +17,8 @@ export default function App() {
         <Router>
           <Header></Header>
           <Routes>
-            <Route path="/" element={<Homepage />} />
+            <Route path="/repos" element={<RepoPage />} />
+            <Route path="/" element={<DailyHighlight />} />
             <Route
               path="/about"
               element={

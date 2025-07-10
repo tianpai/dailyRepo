@@ -64,7 +64,9 @@ export function ChartPieDonut({ language }: ChartPieDonutProps) {
                 <span
                   className="truncate px-1"
                   style={{
-                    color: getOptimalForegroundColor(languageColors[item.language] ?? "#000000"),
+                    color: getOptimalForegroundColor(
+                      languageColors[item.language] ?? "#000000",
+                    ),
                   }}
                 >
                   {item.language}
