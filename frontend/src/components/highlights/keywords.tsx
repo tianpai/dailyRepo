@@ -1,6 +1,7 @@
 import { useKeywords } from "@/hooks/repo-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { COLORS } from "@/lib/bg-color";
 
 interface KeywordData {
   originalTopicsCount: number;
@@ -9,6 +10,14 @@ interface KeywordData {
   clusterSizes?: {
     string: number;
   };
+}
+import { getOptimalForegroundColor } from "../../lib/fg-color.ts";
+
+// Get color for a keyword based on its index
+function getKeywordColor(index: number): string {
+  const colorKeys = Object.keys(COLORS);
+  const colorKey = colorKeys[index % colorKeys.length];
+  return COLORS[colorKey as keyof typeof COLORS];
 }
 
 function KeywordsDisplay({
@@ -35,14 +44,28 @@ function KeywordsDisplay({
   }
 
   return (
-    <div className="flex flex-wrap justify-center gap-2 p-2">
-      <h2>Top Keywords: {data?.topKeywords?.length || 0}</h2>
-      <div className="w-full">
-        {data?.topKeywords?.map((keyword: string, index: number) => (
-          <Badge className="m-1" key={index} variant="default">
-            {keyword}
-          </Badge>
-        ))}
+    <div className="rounded-lg shadow-md p-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-1">Top Keywords</h2>
+        <p className="text-sm text-gray-400">
+          {data?.topKeywords?.length || 0} trending topics
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {data?.topKeywords?.map((keyword: string, index: number) => {
+          const bgColor = getKeywordColor(index);
+          const textColor = getOptimalForegroundColor(bgColor);
+          return (
+            <Badge
+              key={index}
+              variant="outline"
+              className="text-xs px-3 py-1 border-0 hover:opacity-80 transition-opacity"
+              style={{ backgroundColor: bgColor, color: textColor }}
+            >
+              {keyword}
+            </Badge>
+          );
+        })}
       </div>
     </div>
   );

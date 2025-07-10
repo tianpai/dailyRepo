@@ -11,8 +11,8 @@ export function DailyHighlightContainer({
   children: ReactNode;
 }) {
   return (
-    <div className="w-full flex flex-col gap-2 items-center h-full">
-      {children}
+    <div className="w-full max-w-6xl mx-auto px-4 py-6">
+      <div className="space-y-8">{children}</div>
     </div>
   );
 }
@@ -21,10 +21,20 @@ export function DailyHighlight() {
   return (
     <PageContainer>
       <SidebarLayout>
-        <DailyHighlightContainer>
-          <KeywordsContainer />
-          <LanguagesContainer />
-        </DailyHighlightContainer>
+        <div className="min-h-screen ">
+          <div className="pt-8 pb-12">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold mb-2">Daily Highlights</h1>
+              <p className="text-gray-400">
+                Discover trending topics and programming languages
+              </p>
+            </div>
+            <DailyHighlightContainer>
+              <KeywordsContainer />
+              <LanguagesContainer />
+            </DailyHighlightContainer>
+          </div>
+        </div>
       </SidebarLayout>
     </PageContainer>
   );
