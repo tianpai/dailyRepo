@@ -25,46 +25,13 @@ import type {
   RepoCardProps,
   RepoData,
 } from "@/interface/repository.tsx";
-
-// Color palette matching the star history graph
-const REPO_COLORS = {
-  color1: "#FF6B6B",
-  color2: "#4ECDC4",
-  color3: "#45B7D1",
-  color4: "#96CEB4",
-  color5: "#FFEAA7",
-  color6: "#DDA0DD",
-  color7: "#98D8C8",
-  color8: "#F7DC6F",
-  color9: "#BB8FCE",
-  color10: "#85C1E9",
-  color11: "#F8C471",
-  color12: "#82E0AA",
-  color13: "#F1948A",
-  color14: "#85C1E9",
-  color15: "#F8D7DA",
-  color16: "#D5DBDB",
-  color17: "#A3E4D7",
-  color18: "#D7BDE2",
-  color19: "#A9DFBF",
-  color20: "#F9E79F",
-  color21: "#AED6F1",
-  color22: "#F5B7B1",
-  color23: "#A2D9CE",
-  color24: "#E8DAEF",
-  color25: "#FADBD8",
-  color26: "#D0ECE7",
-  color27: "#FCF3CF",
-  color28: "#EBDEF0",
-  color29: "#D6EAF8",
-  color30: "#EDBB99",
-};
+import { COLORS } from "../../lib/bg-color";
 
 // Get color for a repository based on its index (matching star graph logic)
 function getRepoColor(index: number): string {
-  const colorKeys = Object.keys(REPO_COLORS);
+  const colorKeys = Object.keys(COLORS);
   const colorKey = colorKeys[index % colorKeys.length];
-  return REPO_COLORS[colorKey as keyof typeof REPO_COLORS];
+  return COLORS[colorKey as keyof typeof COLORS];
 }
 
 function formatNumber(num: number): string {
@@ -143,7 +110,7 @@ export function RepoCard({
         </div>
       </CardHeader>
       <CardContent className="flex-grow w-full md:w-1/3 flex items-center">
-        {description}
+        <div className="line-clamp-5">{description}</div>
       </CardContent>
       <CardFooter className="justify-center m-0 flex-shrink-0 flex-grow-0 w-full md:w-1/3 flex items-center p-4">
         <div className="w-full max-w-sm">
