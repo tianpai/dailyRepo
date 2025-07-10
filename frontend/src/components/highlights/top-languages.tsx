@@ -103,11 +103,17 @@ function LanguagesChartBarMixed({
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full shadow-md">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Programming Languages</h3>
+            <p className="text-sm text-gray-600">
+              Distribution of popular languages
+            </p>
+          </div>
           <div className="flex items-center gap-2">
-            <Label htmlFor="topN" className="text-sm">
+            <Label htmlFor="topN" className="text-sm font-medium">
               Top:
             </Label>
             <Input
@@ -117,7 +123,7 @@ function LanguagesChartBarMixed({
               max="10"
               value={topN}
               onChange={(e) => onTopNChange(e.target.value)}
-              className="w-15 h-8"
+              className="w-16 h-8"
             />
           </div>
         </div>
@@ -167,8 +173,7 @@ export function LanguagesContainer() {
   };
 
   return (
-    <>
-      <h2>Top languages</h2>
+    <div className="rounded-lg shadow-md">
       <LanguagesChartBarMixed
         data={data}
         chartConfig={chartConfig}
@@ -177,6 +182,6 @@ export function LanguagesContainer() {
         topN={topN}
         onTopNChange={handleTopNChange}
       />
-    </>
+    </div>
   );
 }
