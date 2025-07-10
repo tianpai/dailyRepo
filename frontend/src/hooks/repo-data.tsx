@@ -349,7 +349,7 @@ interface TopLanguageResp {
 /**
  * Custom hook for fetching top programming languages used in trending repositories
  *
- * @param topN - Number of top languages to fetch (optional, defaults to 5, max 15)
+ * @param top - Number of top languages to fetch (optional, defaults to 5, max 15)
  * @returns Object containing language data, loading state, and error message
  *
  * @example
@@ -357,12 +357,12 @@ interface TopLanguageResp {
  * const { data, loading, error } = useTopLanguages(10);
  * // data will be an array like:
  * // [
- * //   { language: "JavaScript", count: 1250 },
- * //   { language: "Python", count: 980 },
- * //   { language: "TypeScript", count: 750 }
+ * //   {  "JavaScript", : 1250 },
+ * //   {  "Python", : 980 },
+ * //   { "TypeScript" : 750 }
  * // ]
  */
-export function useTopLanguages(topN?: number) {
+export function useTopLanguages(top?: number) {
   const base_url = import.meta.env.VITE_DATABASE_REPOS as string;
   const token = import.meta.env.VITE_DEV_AUTH as string;
   if (!base_url || !token) throw new Error("Missing token in env");
@@ -371,10 +371,9 @@ export function useTopLanguages(topN?: number) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  // Construct API URL with optional topN parameter
   const params = new URLSearchParams();
-  if (topN && topN > 0) {
-    params.append("topN", Math.min(topN, 15).toString());
+  if (top && top > 0) {
+    params.append("top", Math.min(top, 15).toString());
   }
   const queryString = params.toString();
   const url = `${base_url}/language-list${queryString ? `?${queryString}` : ""}`;
@@ -400,6 +399,6 @@ export function useTopLanguages(topN?: number) {
     fetchData();
   }, [url, token]);
 
-  console.log("Top Languages Response:", { data, loading, error });
+  console.log("Top Languages Response:", data);
   return { data, loading, error };
 }

@@ -11,18 +11,6 @@ interface KeywordData {
   };
 }
 
-// Hook for providing keyword data
-function useKeywordData() {
-  const { data, loading, error } = useKeywords();
-
-  return {
-    data,
-    loading,
-    error,
-  };
-}
-
-// Presentational component for keywords
 function KeywordsDisplay({
   data,
   loading,
@@ -41,14 +29,14 @@ function KeywordsDisplay({
   if (error) {
     return (
       <div className={`text-center text-red-500 ${className}`}>
-        Error: {error}
+        Error: Can't fetch keywords
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-2 p-2">
-      <div>Top Keywords: {data?.topKeywords?.length || 0}</div>
+    <div className="flex flex-wrap justify-center gap-2 p-2">
+      <h2>Top Keywords: {data?.topKeywords?.length || 0}</h2>
       <div className="w-full">
         {data?.topKeywords?.map((keyword: string, index: number) => (
           <Badge className="m-1" key={index} variant="default">
@@ -60,9 +48,8 @@ function KeywordsDisplay({
   );
 }
 
-// Container component that combines data and presentation
 export function KeywordsContainer({ className }: { className?: string }) {
-  const { data, loading, error } = useKeywordData();
+  const { data, loading, error } = useKeywords();
 
   return (
     <KeywordsDisplay
