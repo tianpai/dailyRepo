@@ -1,7 +1,6 @@
 import { Repo, StarHistory } from "../model/Repo";
 import { getCache, setCache, TTL, getTrendCacheKey } from "../utils/caching";
 import { getTodayUTC, isValidDate } from "../utils/time";
-import { getRepoStarRecords } from "../services/fetching-star-history";
 import { NextFunction, Request, Response } from "express";
 import { IRepo } from "../types/database";
 import dotenv from "dotenv";
@@ -224,6 +223,7 @@ export async function getStarHistoryAllDataPointTrendingData(
   }
 }
 
+import { getRepoStarRecords } from "../services/fetching-star-history";
 /**
  * GET /repos/:name/:repo/star-history
  */
@@ -306,7 +306,10 @@ export async function getStarHistory(
  *
  * IncludeRelated is optional, default false.
  */
-import { KeywordAnalysisResponseFromMLServices } from "../types/ml-service";
+import {
+  KeywordAnalysisResponseFromMLServices,
+  keywordResp,
+} from "../types/ml-service";
 import { PIPELINE } from "../utils/db-pipline";
 import { languages } from "../utils/language-list";
 export async function getTrendingkeywords(
@@ -317,6 +320,7 @@ export async function getTrendingkeywords(
   try {
     const topN = 10;
     const includeRelated = req.query.includeRelated === "true";
+    //TODO: make this distance threshold configurable via frontend
     const distanceThreshold = 0.25;
     const includeClusterSizes = true;
     const today = getTodayUTC();
@@ -328,6 +332,7 @@ export async function getTrendingkeywords(
       res.status(200).json({
         isCached: true,
         data: cached,
+        today: today,
       });
       return;
     }
@@ -344,9 +349,6 @@ export async function getTrendingkeywords(
 
     // Fetch topics from MongoDB using the pipeline
     const repoTopicsResult = await Repo.aggregate(PIPELINE);
-    console.log("*".repeat(50));
-    console.log(repoTopicsResult[0]?.topics);
-    console.log("*".repeat(50));
     const allTopics: string[] = repoTopicsResult[0]?.topics || [];
 
     // Filter out languages from topics as they provide no insights to topics
@@ -358,7 +360,9 @@ export async function getTrendingkeywords(
     if (topics.length === 0) {
       res.status(200).json({
         isCached: false,
+        date: today,
         data: {
+          originalTopicsCount: allTopics.length,
           topKeywords: [],
           related: {},
           clusterSizes: {},
@@ -377,7 +381,6 @@ export async function getTrendingkeywords(
       batchSize: 64,
     };
     const serviceUrl = `${mlServerUrl}/analyze-keywords`;
-    console.log(`ML url: ${serviceUrl}`);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 300000);
 
@@ -389,7 +392,6 @@ export async function getTrendingkeywords(
       body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
-
     clearTimeout(timeoutId);
     if (!response.ok) {
       throw new Error(
@@ -402,9 +404,10 @@ export async function getTrendingkeywords(
     setCache(cacheKey, keywordData, TTL.ONE_EARTH_ROTATION);
 
     res.status(200).json({
+      date: today,
       isCached: false,
       data: keywordData,
-    });
+    } as keywordResp);
     return;
   } catch (err) {
     console.error("Error fetching trending keywords:", err);
@@ -424,6 +427,7 @@ export async function getTrendingkeywords(
     return;
   }
 }
+
 /**
  * GET /repos/ranking
  * ?top=N (optional, default 10, max 100)
@@ -571,6 +575,53 @@ export async function getStarHistoryForRepos(
         dbHits: dbHits.length,
         skipped: skipped.length,
       },
+    });
+    return;
+  } catch (err) {
+    next(err);
+  }
+}
+
+import { language_list_top } from "../utils/db-pipline";
+interface TopLangsResponse {
+  [languageName: string]: number;
+}
+/*
+ * GET /repos/top-lang
+ *
+ * params: topN (optional, default 5, max 15)
+ *
+ */
+export async function getTopLang(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    let top = parseInt((req.query.top as string) ?? "5", 10);
+    if (isNaN(top) || top <= 0) top = 5;
+    top = Math.min(top, 15);
+
+    const cacheKey = `top-languages:${top}`;
+    const cachedData = getCache(cacheKey) as any[];
+    if (cachedData) {
+      res.status(200).json({
+        isCached: true,
+        data: cachedData,
+        count: cachedData.length,
+      });
+      return;
+    }
+
+    const pipeline = language_list_top(top);
+    const dbResult = await Repo.aggregate(pipeline);
+    const topLangs: TopLangsResponse[] = dbResult[0] || [];
+
+    setCache(cacheKey, topLangs, TTL.ONE_EARTH_ROTATION);
+
+    res.status(200).json({
+      isCached: false,
+      data: topLangs,
     });
     return;
   } catch (err) {

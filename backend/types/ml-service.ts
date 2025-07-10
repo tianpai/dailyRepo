@@ -7,3 +7,18 @@ export interface KeywordAnalysisResponseFromMLServices {
     [key: string]: number;
   };
 }
+
+export interface keywordData {
+  originalTopicsCount: number;
+  topKeywords: string[];
+  related?: Record<string, string[]>;
+  clusterSizes?: {
+    string: number;
+  };
+}
+
+export interface keywordResp {
+  isCached: boolean;
+  date: string;
+  data: keywordData;
+}
