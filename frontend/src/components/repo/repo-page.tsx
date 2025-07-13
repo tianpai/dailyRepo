@@ -1,5 +1,5 @@
 import { RepoList } from "@/components/repo/repo-list.tsx";
-import { useRepoDataContext } from "@/context/repo-data-provider.tsx";
+import { useRepoDataContext } from "@/components/repo/repo-data-provider";
 import { LoadingSkeleton } from "@/components/skeleton.tsx";
 import { PageContainer } from "@/components/page-container.tsx";
 import { SidebarLayout } from "@/components/app-sidebar.tsx";

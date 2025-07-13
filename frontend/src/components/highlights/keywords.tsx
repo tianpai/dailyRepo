@@ -1,7 +1,9 @@
-import { useKeywords } from "@/hooks/repo-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { COLORS } from "@/lib/bg-color";
+import { COLORS } from "@/lib/color.ts";
+
+import { useMemo } from "react";
+import { useApi, env } from "@/hooks/useApi";
 
 interface KeywordData {
   originalTopicsCount: number;
@@ -11,7 +13,46 @@ interface KeywordData {
     string: number;
   };
 }
+
 import { getOptimalForegroundColor } from "../../lib/fg-color.ts";
+
+function useKeywords() {
+  const base_url = env("VITE_DATABASE_REPOS");
+  const token = env("VITE_DEV_AUTH");
+
+  const urlArgs = useMemo(
+    () => ({
+      baseUrl: base_url,
+      endpoint: "keywords",
+    }),
+    [base_url],
+  );
+
+  const fetchOptions = useMemo(
+    () => ({
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+    [token],
+  );
+
+  const {
+    data: response,
+    loading,
+    error,
+    refetch,
+  } = useApi<KeywordData>({
+    urlArgs,
+    fetchOptions,
+  });
+
+  return {
+    data: response || ({} as KeywordData),
+    date: "", // Note: The date is now part of the error object if needed
+    loading,
+    error: error?.error?.message || "",
+    refetch,
+  };
+}
 
 // Get color for a keyword based on its index
 function getKeywordColor(index: number): string {

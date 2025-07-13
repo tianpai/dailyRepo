@@ -1,4 +1,4 @@
-import { Document, ObjectId } from 'mongoose';
+import { Document, ObjectId } from "mongoose";
 
 // Language map type from frontend
 export type LanguageMap = Record<string, number>;

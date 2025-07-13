@@ -1,12 +1,13 @@
 "use client";
 
-import type { LanguageMap } from "../../interface/repository";
+import type { LanguageMap } from "@/interface/repository";
 import { Pie, PieChart, Cell } from "recharts";
 import { toChartData, languageColors } from "@/lib/pie-chart-data";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTopLanguages } from "@/hooks/repo-data";
+import { useApi, env } from "@/hooks/useApi";
+import { type Query } from "@/lib/url-builder";
 import {
   type ChartConfig,
   ChartContainer,
@@ -15,11 +16,42 @@ import {
 } from "@/components/ui/chart";
 import { useMemo, useState, useEffect } from "react";
 
-export const description = "A mixed bar chart";
+type TopLangResponse = { data: LanguageMap; count?: number };
 
-// Hook for providing language data
+// fetch data from endpoint and transform it into a format suitable for the chart
 function useLanguageChartData(numberOfLanguages: number = 10) {
-  const { data, loading, error } = useTopLanguages(numberOfLanguages);
+  const baseUrl = env("VITE_DATABASE_LANGUAGES");
+  const token = env("VITE_DEV_AUTH");
+
+  const urlArgs = useMemo(
+    () => ({
+      baseUrl,
+      endpoint: "language-list",
+      query:
+        numberOfLanguages > 0
+          ? ({ top: Math.min(numberOfLanguages, 15) } as Query)
+          : undefined,
+    }),
+    [baseUrl, numberOfLanguages],
+  );
+
+  const fetchOptions = useMemo(
+    () => ({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
+    [token],
+  );
+
+  const {
+    data: raw,
+    loading,
+    error: apiError,
+  } = useApi<TopLangResponse>({ urlArgs, fetchOptions });
+
+  const data = useMemo(() => raw?.data ?? {}, [raw]);
+  const error = useMemo(() => apiError?.error?.message ?? null, [apiError]);
 
   // Create dynamic chart configuration based on the language data
   const chartConfig = useMemo(() => {
@@ -88,71 +120,73 @@ function LanguagesChartBarMixed({
 
   const { inner, outer } = getRadiusValues();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full"> Loading...</div>
-    );
-  }
+  const renderStateMessage = (message: string) => (
+    <div className="flex items-center justify-center h-full">{message}</div>
+  );
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        Error: Fetching language
+  if (loading) return renderStateMessage("Loading...");
+  if (error) return renderStateMessage("Error: Fetching language");
+
+  const header = (
+    <div className="flex items-center justify-between">
+      <div>
+        <h3 className="text-lg font-semibold">Programming Languages</h3>
+        <p className="text-sm text-gray-600">
+          Distribution of popular languages
+        </p>
       </div>
-    );
-  }
+      <div className="flex items-center gap-2">
+        <Label htmlFor="topN" className="text-sm font-medium">
+          Top:
+        </Label>
+        <Input
+          id="topN"
+          type="number"
+          min="3"
+          max="10"
+          value={topN}
+          onChange={(e) => onTopNChange(e.target.value)}
+          className="w-16 h-8"
+          inputMode="numeric"
+          pattern="[0-9]*"
+        />
+      </div>
+    </div>
+  );
+
+  const pieChart = (
+    <Pie
+      data={data}
+      cx="50%"
+      cy="50%"
+      labelLine={false}
+      label={({ language, count }) => `${language}: ${count}%`}
+      innerRadius={inner}
+      outerRadius={outer}
+      dataKey="count"
+    >
+      {data.map((entry, index) => (
+        <Cell key={`cell-${index}`} fill={entry.fill} />
+      ))}
+    </Pie>
+  );
+
+  const tooltip = (
+    <ChartTooltip
+      content={
+        <ChartTooltipContent hideLabel formatter={(value) => `${value}%`} />
+      }
+    />
+  );
 
   return (
     <Card className="w-full shadow-md">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">Programming Languages</h3>
-            <p className="text-sm text-gray-600">
-              Distribution of popular languages
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="topN" className="text-sm font-medium">
-              Top:
-            </Label>
-            <Input
-              id="topN"
-              type="number"
-              min="3"
-              max="10"
-              value={topN}
-              onChange={(e) => onTopNChange(e.target.value)}
-              className="w-16 h-8"
-            />
-          </div>
-        </div>
-      </CardHeader>
+      <CardHeader className="pb-4">{header}</CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ language, count }) => `${language}: ${count}%`}
-              innerRadius={inner}
-              outerRadius={outer}
-              dataKey="count"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Pie>
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  hideLabel
-                  formatter={(value) => `${value}%`}
-                />
-              }
-            />
+            {pieChart}
+            {tooltip}
           </PieChart>
         </ChartContainer>
       </CardContent>

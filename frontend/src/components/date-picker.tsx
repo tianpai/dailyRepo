@@ -1,7 +1,10 @@
 "use client";
 
-import { Calendar as CalendarIcon } from "lucide-react";
-import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -9,38 +12,52 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useRepoDataContext } from "@/context/repo-data-provider";
+import { useDateContext } from "@/components/date-provider";
+
+function formatDate(date: Date) {
+  const monthAbbreviations = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = monthAbbreviations[date.getMonth()];
+  const day = date.getDate();
+  return `${month} ${day}`;
+}
 
 export function RepoDatePicker() {
-  const { data, selectedDate, setSelectedDate } = useRepoDataContext();
+  const { selectedDate, setSelectedDate } = useDateContext();
 
-  // Get current trending date from data (the actual scraped date), fallback to today
-  const currentTrendingDate =
-    data.length > 0 ? new Date(data[0].trendingDate) : new Date();
-  const displayDate = selectedDate || currentTrendingDate;
+  // Default to today if no date is selected
+  const today = new Date();
+  const displayDate = selectedDate || today;
 
   // Function to handle date change
   const changeDate = (increment: number) => {
-    if (selectedDate && selectedDate <= currentTrendingDate) {
-      const newDate = new Date(selectedDate);
-      newDate.setDate(newDate.getDate() + increment);
-      setSelectedDate(newDate);
-    } else {
-      const newDate = new Date(currentTrendingDate);
-      newDate.setDate(newDate.getDate() + increment);
-      setSelectedDate(newDate);
-    }
+    const currentDate = selectedDate || today;
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + increment);
+    setSelectedDate(newDate);
   };
 
   return (
-    <div className="max-w-full mb-4 flex items-center gap-1 p-2 sm:p-4">
+    <div className="max-w-full flex items-center gap-1">
       <Button
         variant="outline"
         size="icon"
         onClick={() => changeDate(-1)}
         className="h-10 w-10 shrink-0"
       >
-        <LuArrowLeft className="h-4 w-4" />
+        <ChevronLeft className="h-4 w-4" />
       </Button>
 
       <div className="flex-1 min-w-0">
@@ -48,31 +65,28 @@ export function RepoDatePicker() {
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="w-full justify-start text-left font-normal text-lg sm:text-xl font-bold h-10"
+              className="w-full justify-center font-normal h-10"
             >
               <CalendarIcon className="h-4 w-4 mr-2" />
-              <span className="truncate">
-                {displayDate.toLocaleDateString()}
-              </span>
+              <span className="truncate ">{formatDate(displayDate)}</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-1">
             <Calendar
               mode="single"
-              selected={selectedDate || currentTrendingDate}
+              selected={displayDate}
               onSelect={(date) => setSelectedDate(date)}
             />
           </PopoverContent>
         </Popover>
       </div>
-
       <Button
         variant="outline"
         size="icon"
         onClick={() => changeDate(1)}
         className="h-10 w-10 shrink-0"
       >
-        <LuArrowRight className="h-4 w-4" />
+        <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
   );
