@@ -19,9 +19,11 @@ import {
 import { useBulkStarHistory } from "@/hooks/repo-data";
 import { convertToNormalizedDays } from "@/components/repo/star-history-data";
 import { useRepoDataContext } from "@/components/repo/repo-data-provider";
+import { useDateContext } from "@/components/date-provider";
 
 export function RepoStarGraph() {
-  const { selectedDate, data: repoData } = useRepoDataContext();
+  const { selectedDate } = useDateContext();
+  const { data: repoData } = useRepoDataContext();
 
   // Extract repo names from current repo data for bulk star history fetch
   const fullRepoNames = useMemo(() => {
