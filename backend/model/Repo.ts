@@ -30,5 +30,8 @@ StarHistorySchema.index({ repoId: 1, saveDate: -1 });
 StarHistorySchema.index({ "history.date": 1 });
 
 const Repo = mongoose.model<IRepo>("Repo", RepoSchema);
-const StarHistory = mongoose.model<IStarHistory>("StarHistory", StarHistorySchema);
+const StarHistory = mongoose.model<IStarHistory>(
+  "StarHistory",
+  StarHistorySchema,
+);
 export { Repo, StarHistory };

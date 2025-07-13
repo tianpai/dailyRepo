@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useRepoDataContext } from "@/context/repo-data-provider";
+import { useRepoDataContext } from "@/components/repo/repo-data-provider";
 import {
   Pagination,
   PaginationContent,

@@ -2,7 +2,7 @@ import type {
   RawStarHistoryApiResponse,
   NormalizedDayData,
   starDataPoint,
-} from "../interface/repository.tsx";
+} from "@/interface/repository.tsx";
 
 function convertToNormalizedDays(
   starHistory: RawStarHistoryApiResponse,

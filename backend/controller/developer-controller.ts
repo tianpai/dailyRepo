@@ -3,6 +3,7 @@ import { getTodayUTC, isValidDate } from "../utils/time";
 import { TrendingDeveloper } from "../model/TrendingDeveloper";
 import { getCache, setCache, TTL, getTrendCacheKey } from "../utils/caching";
 import { ITrendingDeveloper } from "../types/database";
+import { makeSuccess, makeError } from "../types/api";
 
 /**
  * GET /developers
@@ -14,7 +15,8 @@ export async function getDevelopersList(
   res: Response,
   _next: NextFunction,
 ): Promise<void> {
-  res.status(200).json({ developers: [] });
+  const response = makeSuccess({ developers: [] }, new Date().toISOString());
+  res.status(200).json(response);
 }
 
 /**
@@ -37,10 +39,12 @@ export async function getTrendingDevelopers(
     const date = (req.query.date as string) || getTodayUTC();
 
     if (!isValidDate(date)) {
-      res.status(400).json({
-        developers: [],
-        date: date,
-      });
+      const response = makeError(
+        new Date().toISOString(),
+        400,
+        `Invalid date format: ${date}`,
+      );
+      res.status(400).json(response);
       return;
     }
 
@@ -91,9 +95,15 @@ export async function getTrendingDevelopers(
       },
     };
 
-    res.status(200).json(result);
+    const response = makeSuccess(result, new Date().toISOString());
+    res.status(200).json(response);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch developers" });
+    const response = makeError(
+      new Date().toISOString(),
+      500,
+      "Failed to fetch developers",
+    );
+    res.status(500).json(response);
   }
 }
 
@@ -110,7 +120,11 @@ export async function getDeveloperDetails(
     getTrendCacheKey(`developer-${req.params.username}`),
   );
   if (cachedDev) {
-    res.status(200).json({ developer: cachedDev });
+    const response = makeSuccess(
+      { developer: cachedDev },
+      new Date().toISOString(),
+    );
+    res.status(200).json(response);
     return;
   }
 
@@ -118,10 +132,20 @@ export async function getDeveloperDetails(
     username: req.params.username,
   });
   if (!developer) {
-    res.status(404).json({ developer: null, message: "Developer not found" });
+    const response = makeError(
+      new Date().toISOString(),
+      404,
+      "Developer not found",
+    );
+    res.status(404).json(response);
+    return;
   }
   setCache(`developer-${developer.username}`, developer, TTL.SEMAINE);
 
-  res.status(200).json({ developer: developer });
+  const response = makeSuccess(
+    { developer: developer },
+    new Date().toISOString(),
+  );
+  res.status(200).json(response);
   return;
 }

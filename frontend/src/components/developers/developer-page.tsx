@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { PageContainer } from "@/components/page-container";
 import { SidebarLayout } from "@/components/app-sidebar";
 import { useTrendingDevelopers } from "@/hooks/developer-data";
+import { useDateContext } from "@/components/date-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -27,10 +28,16 @@ export function DeveloperPage() {
 
 function DeveloperPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
+  const { selectedDate } = useDateContext();
   const { data, pagination, loading, error } = useTrendingDevelopers(
-    undefined,
+    selectedDate,
     currentPage,
   );
+
+  // Reset to page 1 when date changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate]);
 
   if (loading) return <p>Loading developers...</p>;
   if (error) return <p>Error: {error}</p>;

@@ -1,16 +1,50 @@
-// API Response types based on frontend interfaces
-export interface ApiResponse<T> {
+/* ============================================================================
+ *
+ *                   DailyRepo Backend RestfulAPI response types
+ *
+ * =============================================================================
+ */
+
+interface ApiBase {
   isCached: boolean;
   date: string;
+  isSuccess: boolean;
+}
+
+export interface ApiSuccess<T> extends ApiBase {
+  isSuccess: true;
   data: T;
+  error?: never;
 }
 
-export interface StarDataPoint {
-  date: string;
-  count: number;
+export interface ApiError extends ApiBase {
+  isSuccess: false;
+  error: { code: number; message: string };
+  data?: never;
+}
+export type ApiResponse<T> = ApiSuccess<T> | ApiError;
+
+export function makeSuccess<T>(data: T, date: string): ApiSuccess<T> {
+  return {
+    isCached: false,
+    date: date,
+    isSuccess: true,
+    data,
+  };
 }
 
-export type StarHistoryData = Record<string, StarDataPoint[]>;
+export function makeError(
+  date: string,
+  code: number,
+  message: string,
+): ApiError {
+  return {
+    isCached: false,
+    date: date,
+    isSuccess: false,
+    error: { code, message },
+  };
+}
 
 /* ============================================================================
  *
@@ -138,12 +172,6 @@ export interface License {
   node_id: string;
 }
 
-/*
- *
- *
- *
- *
- */
 // https://api.github.com/users/XAMPPRocky
 // trailing slash will get 404 Not Found
 export interface GithubUser {

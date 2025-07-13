@@ -6,9 +6,12 @@ import {
   prepTrendingDevelopers,
   saveTrendingDevelopers,
   saveStarHistoryBatch,
-} from "./services/repo-data";
+} from "./services/scraping-services/repo-data";
 import { logCyan } from "./utils/coloredConsoleLog";
-import { connectToDatabase, isConnectedToDatabase } from "./services/db-connection";
+import {
+  connectToDatabase,
+  isConnectedToDatabase,
+} from "./services/db-connection";
 dotenv.config();
 
 /**
