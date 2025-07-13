@@ -42,21 +42,10 @@ export interface TrendingDevelopersResponse {
   pagination: PaginationMetadata;
 }
 
-export interface DeveloperDetailsResponse {
-  developer: RawDeveloperData | null;
-  message?: string;
-}
-
 // Hook return types
 export interface UseTrendingDevelopersResult {
   data: DeveloperData[];
   pagination: PaginationMetadata | null;
-  loading: boolean;
-  error: string;
-}
-
-export interface UseDeveloperDetailsResult {
-  data: DeveloperData | null;
   loading: boolean;
   error: string;
 }

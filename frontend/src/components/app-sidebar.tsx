@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import { RepoDatePicker } from "@/components/date-picker";
 
 // Menu items.
 const items = [
@@ -51,12 +52,24 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
+        <DatePickerGroup />
         <TrendingGroup />
       </SidebarContent>
       <SidebarFooter>
         <FooterGroup />
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function DatePickerGroup() {
+  return (
+    <SidebarGroup>
+      <SidebarHeader className="major-mono">Select Date</SidebarHeader>
+      <SidebarGroupContent className="px-2">
+        <RepoDatePicker />
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }
 

@@ -1,5 +1,3 @@
-import { GoRepoForked } from "react-icons/go";
-import { FaRegStar } from "react-icons/fa6";
 import {
   Card,
   CardHeader,
@@ -8,7 +6,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { useRepoDataContext } from "@/context/repo-data-provider";
+import { useRepoDataContext } from "@/components/repo/repo-data-provider";
 import { ChartPieDonut } from "@/components/repo/lang-pie-chart.tsx";
 import { lazy, Suspense } from "react";
 
@@ -17,31 +15,15 @@ const RepoStarGraph = lazy(() =>
     default: module.RepoStarGraph,
   })),
 );
-import { RepoDatePicker } from "@/components/date-picker.tsx";
 import { RepoPagination } from "@/components/repo/repo-pagination";
-
-import type {
-  StatsProps,
-  RepoCardProps,
-  RepoData,
-} from "@/interface/repository.tsx";
-import { COLORS } from "../../lib/bg-color";
+import type { RepoCardProps, RepoData } from "@/interface/repository.tsx";
+import { COLORS } from "@/lib/color";
 
 // Get color for a repository based on its index (matching star graph logic)
 function getRepoColor(index: number): string {
   const colorKeys = Object.keys(COLORS);
   const colorKey = colorKeys[index % colorKeys.length];
   return COLORS[colorKey as keyof typeof COLORS];
-}
-
-function formatNumber(num: number): string {
-  if (num >= 1000) {
-    const formatted = (num / 1000).toFixed(1);
-    return formatted.endsWith(".0")
-      ? `${formatted.slice(0, -2)}k`
-      : `${formatted}k`;
-  }
-  return num.toString();
 }
 
 export function RepoList() {
@@ -62,8 +44,7 @@ export function RepoList() {
 
   return (
     <div>
-      <RepoDatePicker></RepoDatePicker>
-      <h2 className="text-2xl font-bold mb-4">Daily Highlight</h2>
+      <h1 className="text-2xl font-bold mb-4">Daily Repo List</h1>
       <Suspense
         fallback={<div className="h-96 bg-gray-100 rounded-lg animate-pulse" />}
       >
@@ -150,24 +131,5 @@ export function RepoName({
     <a href={url} rel="noopener noreferrer" target="_blank">
       {owner + "/" + name}
     </a>
-  );
-}
-
-export function RepoStats({ stars, fork }: StatsProps) {
-  return (
-    <div className="flex items-center space-x-5 text-sm font-medium text-gray-700">
-      <span className="flex items-center">
-        <FaRegStar className="mr-1 p-0 text-yellow-500" />
-        <span className="tabular-nums min-w-[2.5rem] text-right">
-          {formatNumber(stars)}
-        </span>
-      </span>
-      <span className="flex items-center">
-        <GoRepoForked className="mr-0 p-0 text-purple-500" />
-        <span className="tabular-nums min-w-[2.5rem] text-right">
-          {formatNumber(fork)}
-        </span>
-      </span>
-    </div>
   );
 }

@@ -4,7 +4,8 @@ import {
   getTimeUntilReset,
   formatDuration,
   logRateLimitStatus,
-} from "../utils/rate-limit-checker";
+} from "../../utils/rate-limit-checker";
+import { logGreen } from "../../utils/coloredConsoleLog";
 
 /**
  * Configuration for rate limiting and batching
@@ -219,12 +220,9 @@ Processing batch ${i + 1}/${totalBatches} (${batch.length} items)`),
     }
   }
 
-  console.log(
-    chalk.green(`
-Batch processing completed!`),
-  );
-  console.log(chalk.green(`   Processed: ${processed.length} items`));
-  console.log(chalk.green(`   Failed: ${failed.length} items`));
+  logGreen(`Batch processing completed!`);
+  logGreen(`   Processed: ${processed.length} items`);
+  logGreen(`   Failed: ${failed.length} items`);
 
   return {
     processed,

@@ -1,7 +1,7 @@
 import { processBatches, calculateBatchSizes } from "./batch-processor";
 import chalk from "chalk";
-import { getRepoStarRecords } from "./fetching-star-history";
-import { Repo, StarHistory } from "../model/Repo";
+import { getRepoStarRecords } from "../fetching-star-history";
+import { Repo, StarHistory } from "../../model/Repo";
 
 // Type definitions to match repo-data.ts
 interface StarHistoryProcessResult {
