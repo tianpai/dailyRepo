@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import { LuChartArea } from "react-icons/lu";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { COLORS } from "@/lib/color";
 import {
   Card,
   CardContent,
@@ -16,8 +17,8 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { useBulkStarHistory } from "@/hooks/repo-data";
-import { convertToNormalizedDays } from "@/lib/star-history-data";
-import { useRepoDataContext } from "@/context/repo-data-provider";
+import { convertToNormalizedDays } from "@/components/repo/star-history-data";
+import { useRepoDataContext } from "@/components/repo/repo-data-provider";
 
 export function RepoStarGraph() {
   const { selectedDate, data: repoData } = useRepoDataContext();
@@ -65,7 +66,7 @@ export function RepoStarGraph() {
   const repoNames = Object.keys(starHistoryData).map(
     (fullName) => fullName.split("/")[1],
   );
-  const colorKeys = Object.keys(REPO_COLORS);
+  const colorKeys = Object.keys(COLORS);
 
   // Create dynamic chart config
   const chartConfig: ChartConfig = {};
@@ -73,7 +74,7 @@ export function RepoStarGraph() {
     const colorKey = colorKeys[index % colorKeys.length];
     chartConfig[repoName] = {
       label: repoName,
-      color: REPO_COLORS[colorKey as keyof typeof REPO_COLORS],
+      color: COLORS[colorKey as keyof typeof COLORS],
     };
   });
 
@@ -125,37 +126,3 @@ export function RepoStarGraph() {
     </Card>
   );
 }
-
-// 30 predefined colors for different repositories
-const REPO_COLORS = {
-  color1: "#FF6B6B",
-  color2: "#4ECDC4",
-  color3: "#45B7D1",
-  color4: "#96CEB4",
-  color5: "#FFEAA7",
-  color6: "#DDA0DD",
-  color7: "#98D8C8",
-  color8: "#F7DC6F",
-  color9: "#BB8FCE",
-  color10: "#85C1E9",
-  color11: "#F8C471",
-  color12: "#82E0AA",
-  color13: "#F1948A",
-  color14: "#85C1E9",
-  color15: "#F8D7DA",
-  color16: "#D5DBDB",
-  color17: "#A3E4D7",
-  color18: "#D7BDE2",
-  color19: "#A9DFBF",
-  color20: "#F9E79F",
-  color21: "#AED6F1",
-  color22: "#F5B7B1",
-  color23: "#A2D9CE",
-  color24: "#E8DAEF",
-  color25: "#FADBD8",
-  color26: "#D0ECE7",
-  color27: "#FCF3CF",
-  color28: "#EBDEF0",
-  color29: "#D6EAF8",
-  color30: "#EDBB99",
-};

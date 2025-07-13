@@ -1,14 +1,13 @@
 import React, { createContext, useContext } from "react";
-import { useRepoData } from "../hooks/repo-data";
-import type { RepoData, PaginationMetadata } from "../interface/repository"; // Import the type
+import { useRepoData } from "@/hooks/repo-data";
+import { useDateContext } from "@/components/date-provider";
+import type { RepoData, PaginationMetadata } from "@/interface/repository"; // Import the type
 
 // Define the type for the context value
 type RepoDataContextType = {
   data: RepoData[] | [];
   loading: boolean;
   error: string | "";
-  selectedDate: Date | undefined;
-  setSelectedDate: (date: Date | undefined) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   pagination: PaginationMetadata | null;
@@ -21,9 +20,7 @@ export const RepoDataProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
-    undefined,
-  );
+  const { selectedDate } = useDateContext();
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const { data, pagination, loading, error } = useRepoData(
     "/trending",
@@ -42,8 +39,6 @@ export const RepoDataProvider = ({
         data,
         loading,
         error,
-        selectedDate,
-        setSelectedDate,
         currentPage,
         setCurrentPage,
         pagination,

@@ -21,19 +21,17 @@ export function DailyHighlight() {
   return (
     <PageContainer>
       <SidebarLayout>
-        <div className="min-h-screen ">
-          <div className="pt-8 pb-12">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold mb-2">Daily Highlights</h1>
-              <p className="text-gray-400">
-                Discover trending topics and programming languages
-              </p>
-            </div>
-            <DailyHighlightContainer>
-              <KeywordsContainer />
-              <LanguagesContainer />
-            </DailyHighlightContainer>
+        <div>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Daily Highlights</h1>
+            <p className="text-gray-400">
+              Discover trending topics and programming languages
+            </p>
           </div>
+          <DailyHighlightContainer>
+            <KeywordsContainer />
+            <LanguagesContainer />
+          </DailyHighlightContainer>
         </div>
       </SidebarLayout>
     </PageContainer>

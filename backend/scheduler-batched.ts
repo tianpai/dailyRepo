@@ -5,16 +5,16 @@ import {
   saveTrendingData,
   prepTrendingDevelopers,
   saveTrendingDevelopers,
-} from "./services/repo-data";
+} from "./services/scraping-services/repo-data";
 import {
   saveStarHistoryBatched,
   estimateStarHistoryProcessing,
-} from "./services/batched-star-history";
+} from "./services/scraping-services/batched-star-history";
 import { logCyan, logGreen, logYellow } from "./utils/coloredConsoleLog";
 import { getRateLimit } from "./tests/rate-limit-consumption-star-history";
 import { formatDuration } from "./utils/time";
 import { runScrapeJob } from "./scheduler";
-import { scrapeTrending } from "./services/repo-scraping";
+import { scrapeTrending } from "./services/scraping-services/repo-scraping";
 import {
   connectToDatabase,
   isConnectedToDatabase,
@@ -133,31 +133,26 @@ export async function runBatchedScrapeJob() {
      */
 
     // Step 1: Process repositories
-    console.log("\n[1/3] PROCESSING REPOSITORIES");
+    logYellow("\n[1/3] PROCESSING REPOSITORIES");
     console.log("-".repeat(40));
     const repoStartTime = performance.now();
     const repos = await processRepositories();
     logCyan(`Step 1 completed in ${formatDuration(repoStartTime)}\n`);
 
     // Step 2: Process developers
-    console.log("[2/3] PROCESSING DEVELOPERS");
+    logYellow("[2/3] PROCESSING DEVELOPERS");
     console.log("-".repeat(40));
     const devStartTime = performance.now();
     await processDevelopers();
     logCyan(`Step 2 completed in ${formatDuration(devStartTime)}\n`);
 
     // Step 3: Process star history with batching
-    console.log("[3/3] PROCESSING STAR HISTORY (BATCHED)");
+    logYellow("[3/3] PROCESSING STAR HISTORY (BATCHED)");
     console.log("-".repeat(40));
     const repoNames = repos.map((r) => r.fullName);
     const starHistoryStartTime = performance.now();
     const starHistoryResult = await processStarHistoryBatched(repoNames);
     logCyan(`Step 3 initiated in ${formatDuration(starHistoryStartTime)}\n`);
-
-    logGreen(`Job completed successfully!`);
-    logGreen(
-      `Note: Star history processing will continue in batches over ${starHistoryResult.batchInfo.estimatedHours} hour(s)`,
-    );
 
     process.exitCode = 0;
   } catch (err) {
@@ -167,19 +162,13 @@ export async function runBatchedScrapeJob() {
     console.log("!".repeat(60));
     process.exitCode = 1;
   } finally {
-    // Note: Don't disconnect database if batched processing is still ongoing
-
     const totalDuration = formatDuration(jobStartTime);
     const status = process.exitCode === 0 ? "SUCCESS" : "FAILED";
 
     console.log("\n" + "=".repeat(60));
-    console.log(`[${new Date().toISOString()}] JOB PHASE 1 COMPLETED`);
+    console.log(`[${new Date().toISOString()}] JOB COMPLETED`);
     console.log(`Total Duration: ${totalDuration}`);
     console.log(`Status: ${status}`);
-    console.log(`Exit Code: ${process.exitCode}`);
-    if (process.exitCode === 0) {
-      logYellow("Note: Star history batching will continue in the background");
-    }
     console.log("=".repeat(60) + "\n");
   }
 }
@@ -215,7 +204,7 @@ export async function estimateBatchedJob() {
 if (process.argv.includes("--estimate")) {
   estimateBatchedJob().finally(() => {
     console.log("Estimation completed.");
-    process.exit(0);
+    process.exit(process.exitCode || 0);
   });
 } else if (process.argv.includes("--run-batched")) {
   runBatchedScrapeJob().finally(() => {

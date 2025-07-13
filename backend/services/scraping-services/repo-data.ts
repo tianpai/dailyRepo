@@ -1,11 +1,11 @@
 import { scrapeTrending, scrapeTrendingDevelopers } from "./repo-scraping";
-import { getTodayUTC, getUTCDate, calculateAgeInDays } from "../utils/time";
-import { Repo, StarHistory } from "../model/Repo";
-import { getRepoStarRecords } from "./fetching-star-history";
+import { getTodayUTC, getUTCDate, calculateAgeInDays } from "../../utils/time";
+import { Repo, StarHistory } from "../../model/Repo";
+import { getRepoStarRecords } from "../fetching-star-history";
 import axios from "axios";
-import { TrendingDeveloper } from "../model/TrendingDeveloper";
-import { GithubUser } from "../types/api";
-import { logRed, logGreen, logGray } from "../utils/coloredConsoleLog";
+import { TrendingDeveloper } from "../../model/TrendingDeveloper";
+import { GithubUser } from "../../types/api";
+import { logRed, logGreen, logGray } from "../../utils/coloredConsoleLog";
 import chalk from "chalk";
 
 // Type definitions
@@ -392,7 +392,7 @@ function transformRepo(
 
 /**
  * Retrieves the README file from a given repository.
- * @param {string} repoLink - The link to the repository.
+ * @param {string} repo
  * */
 export async function getReadme(repo: string): Promise<string> {
   const res = await axios.get(`https://api.github.com/repos${repo}/readme`, {
