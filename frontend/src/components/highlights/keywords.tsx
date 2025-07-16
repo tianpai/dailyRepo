@@ -72,41 +72,42 @@ function KeywordsDisplay({
   error: string | null;
   className?: string;
 }) {
-  if (loading) {
-    return <Skeleton className={`h-60 w-full ${className}`} />;
-  }
-
-  if (error) {
-    return (
-      <div className={`text-center text-red-500 ${className}`}>
-        Error: Can't fetch keywords
-      </div>
-    );
-  }
-
   return (
-    <div className="rounded-lg shadow-md p-6">
+    <div className={`rounded-lg shadow-md p-6 ${className}`}>
       <div className="mb-4">
         <h2 className="text-xl font-semibold mb-1">Top Keywords</h2>
         <p className="text-sm text-gray-400">
           {data?.topKeywords?.length || 0} trending topics
         </p>
+        {error ? (
+          <div className="text-center text-red-500">
+            Error: Can't fetch keywords
+          </div>
+        ) : null}
       </div>
-      <div className="flex flex-wrap gap-2">
-        {data?.topKeywords?.map((keyword: string, index: number) => {
-          const bgColor = getKeywordColor(index);
-          const textColor = getOptimalForegroundColor(bgColor);
-          return (
-            <Badge
-              key={index}
-              variant="outline"
-              className="text-xs px-3 py-1 border-0 hover:opacity-80 transition-opacity"
-              style={{ backgroundColor: bgColor, color: textColor }}
-            >
-              {keyword}
-            </Badge>
-          );
-        })}
+      <div className="flex flex-wrap gap-2 justify-items-center w-5xl">
+        {loading ? (
+          <>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-6 w-20 rounded-full" />
+            ))}
+          </>
+        ) : (
+          data?.topKeywords?.map((keyword: string, index: number) => {
+            const bgColor = getKeywordColor(index);
+            const textColor = getOptimalForegroundColor(bgColor);
+            return (
+              <Badge
+                key={index}
+                variant="outline"
+                className="text-xs px-3 py-1 border-0 hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: bgColor, color: textColor }}
+              >
+                {keyword}
+              </Badge>
+            );
+          })
+        )}
       </div>
     </div>
   );
