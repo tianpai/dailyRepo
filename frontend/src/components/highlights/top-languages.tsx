@@ -180,8 +180,8 @@ function LanguagesChartBarMixed({
   );
 
   return (
-    <Card className="w-full shadow-md">
-      <CardHeader className="pb-4">{header}</CardHeader>
+    <Card>
+      <CardHeader className="pb-2">{header}</CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <PieChart>
@@ -209,15 +209,13 @@ export function LanguagesContainer() {
   };
 
   return (
-    <div className="rounded-lg shadow-md">
-      <LanguagesChartBarMixed
-        data={data}
-        chartConfig={chartConfig}
-        loading={loading}
-        error={error}
-        topN={topNInput}
-        onTopNChange={handleTopNChange}
-      />
-    </div>
+    <LanguagesChartBarMixed
+      data={data}
+      chartConfig={chartConfig}
+      loading={loading}
+      error={error}
+      topN={topNInput}
+      onTopNChange={handleTopNChange}
+    />
   );
 }

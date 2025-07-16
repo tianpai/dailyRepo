@@ -14,7 +14,7 @@
     "dev:server": "bun --watch server.ts",
     "dev:scraper": "bun --watch scheduler.ts",
     "dev:scraper:batched": "bun --watch scheduler-batched.ts",
-    "dev": "bun --watch server.ts",
+    "dev": "bun --watch server.ts --debug",
     "test": "bun test",
     "test:rate-limit": "bun test-rate-limit-handling.ts"
   },

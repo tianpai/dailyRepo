@@ -80,24 +80,6 @@ async function processStarHistoryBatched(repoNames: string[]) {
   logCyan("\n📊 Estimating star history processing requirements...");
   estimateStarHistoryProcessing(repoNames);
 
-  // Ask for confirmation in production (or proceed automatically)
-  console.log(
-    chalk.yellow(
-      "\nIMPORTANT: This will process repositories in batches over multiple hours",
-    ),
-  );
-  LOG(
-    chalk.yellow(
-      "to respect GitHub API rate limits. Each batch will be processed with",
-    ),
-  );
-  LOG(
-    chalk.yellow(
-      "a 1-hour delay between batches to stay under the 5000 requests/hour limit.",
-    ),
-  );
-
-  // Start the batched processing
   LOG(
     `\nStarting batched star history collection for ${repoNames.length} repos...`,
   );

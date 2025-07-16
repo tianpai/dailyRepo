@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Repo } from "../model/Repo";
+import { Keywords } from "../model/Keywords";
 import { getCache, setCache, TTL } from "../utils/caching";
 import { getTodayUTC } from "../utils/time";
 import {
@@ -8,54 +9,51 @@ import {
   analyzeKeywordOutput,
 } from "../services/server-services/ml-keyword-service";
 import { makeSuccess, makeError } from "../types/api";
-
-/**
- * GET /repos/highlight
- * This endpoint will talk to another service to get keywords
- *
- * POST /analyze-keywords
- *
- * example:
- * DOMAIN/analyze-keywords?topN=10"
- * DOMAIN/analyze-keywords?topN=10&includeRelated=true"
- *
- * IncludeRelated is optional, default false.
- */
 import { PIPELINE } from "../utils/db-pipline";
 import { languages } from "../utils/language-list";
+
 export async function getTrendingkeywords(
-  req: Request,
+  _req: Request,
   res: Response,
   _next: NextFunction,
 ): Promise<void> {
   try {
-    const topN = 15;
-    const includeRelated = req.query.includeRelated === "true";
-    const distanceThreshold = 0.25;
-    const includeClusterSizes = true;
     const today = getTodayUTC();
-
-    // cache
     const cacheKey: string = `trending-keywords:${today}`;
-    const cached = getCache(cacheKey) as analyzeKeywordOutput | null;
-    if (cached) {
-      const response = makeSuccess(cached, today);
+
+    // Check cache first
+    const cachedData = getCache(cacheKey) as analyzeKeywordOutput | null;
+    if (cachedData) {
+      const response = makeSuccess(cachedData, today);
       response.isCached = true;
       res.status(200).json(response);
       return;
     }
 
-    // Fetch topics from MongoDB using the pipeline
+    // If cache misses, check the database
+    const dbResult = await Keywords.findOne({ date: today }).sort({ date: -1 });
+    if (dbResult) {
+      const keywordData = dbResult.analysis;
+      setCache(cacheKey, keywordData, TTL._12_HOUR);
+      const response = makeSuccess(keywordData, today);
+      response.isCached = false; // Data from DB, not cache
+      res.status(200).json(response);
+      return;
+    }
+
+    // If not in DB, fetch from ML service
+    const topN = 15;
+    const distanceThreshold = 0.25;
+    const includeClusterSizes = true;
+
     const repoTopicsResult = await Repo.aggregate(PIPELINE);
     const allTopics: string[] = repoTopicsResult[0]?.topics || [];
 
-    // Filter out languages from topics as they provide no insights to topics
     const topics: string[] = allTopics.filter(
       (topic) =>
         !languages.some((lang) => lang.toLowerCase() === topic.toLowerCase()),
     );
 
-    // Handle no topics are found
     if (topics.length === 0) {
       res.status(200).json(
         makeSuccess(
@@ -71,33 +69,40 @@ export async function getTrendingkeywords(
       return;
     }
 
-    // Construct the POST request body to ML microservice
     const requestBody: analyzeKeywordInput = {
       topics: topics,
       topN: topN,
-      includeRelated: includeRelated,
+      includeRelated: true,
       distance_threshold: distanceThreshold,
       includeClusterSizes: includeClusterSizes,
       batchSize: 64,
     };
 
-    const keywordData: analyzeKeywordOutput =
-      await fetchAnalyzeKeywords(requestBody);
+    const keywordData = await fetchAnalyzeKeywords(requestBody);
 
-    // save to database and cache
-    setCache(cacheKey, keywordData, TTL.ONE_EARTH_ROTATION);
+    // Save to database and cache
+    try {
+      await Keywords.findOneAndUpdate(
+        { date: today },
+        { $set: { analysis: keywordData } },
+        { upsert: true, new: true },
+      );
+      setCache(cacheKey, keywordData, TTL._12_HOUR);
+    } catch (dbError) {
+      console.error("Error saving keywords to database:", dbError);
+      // Decide if you should return an error or just log it
+    }
 
     res.status(200).json(makeSuccess(keywordData, today));
-    return;
   } catch (err) {
     console.error("Error fetching trending keywords:", err);
-
+    const today = getTodayUTC();
     if (err instanceof Error && err.name === "AbortError") {
       res
         .status(408)
         .json(
           makeError(
-            getTodayUTC(),
+            today,
             408,
             "Request timeout - ML service took too long to respond",
           ),
@@ -109,11 +114,10 @@ export async function getTrendingkeywords(
       .status(503)
       .json(
         makeError(
-          getTodayUTC(),
+          today,
           503,
           "Keyword analysis service temporarily unavailable",
         ),
       );
-    return;
   }
 }
