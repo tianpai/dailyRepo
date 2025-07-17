@@ -1,34 +1,15 @@
 export function getTodayUTC() {
-  const now = new Date();
-  const yyyy = now.getUTCFullYear();
-  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(now.getUTCDate()).padStart(2, "0");
-
-  return `${yyyy}-${mm}-${dd}`;
+  return new Date().toISOString().split("T")[0];
 }
 
-export function getYesterdayUTC() {
-  const now = new Date();
-  now.setUTCDate(now.getUTCDate() - 1);
-
-  const yyyy = now.getUTCFullYear();
-  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(now.getUTCDate()).padStart(2, "0");
-
-  return `${yyyy}-${mm}-${dd}`;
-}
+export const getYesterdayUTC = () =>
+  new Date(Date.now() - 86400000).toISOString().split("T")[0];
 
 /**
  * given a date string in YYYY-MM-DD format in UTC timezone,
  */
-export function getUTCDate(dateStr) {
-  const date = new Date(dateStr);
-  const yyyy = date.getUTCFullYear();
-  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(date.getUTCDate()).padStart(2, "0");
-
-  return `${yyyy}-${mm}-${dd}`;
-}
+export const getUTCDate = (dateStr) =>
+  new Date(dateStr).toISOString().split("T")[0];
 
 export function calculateAgeInDays(createdDate, updatedDate) {
   const created = new Date(createdDate);
