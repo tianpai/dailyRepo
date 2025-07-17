@@ -1,3 +1,10 @@
+export function filterLanguage(allTopics: string[]) {
+  return allTopics.filter(
+    (topic) =>
+      !languages.some((lang) => lang.toLowerCase() === topic.toLowerCase()),
+  );
+}
+
 export const languages = [
   "cpp",
   "js",
