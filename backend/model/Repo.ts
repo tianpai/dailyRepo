@@ -11,7 +11,6 @@ const RepoSchema = new mongoose.Schema({
   topics: { type: [String], default: [] },
   createdAt: String,
   lastUpdate: String,
-  age: Number,
   license: String,
   trendingDate: String,
 });

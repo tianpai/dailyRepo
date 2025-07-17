@@ -1,5 +1,5 @@
 import { scrapeTrending, scrapeTrendingDevelopers } from "./repo-scraping";
-import { getTodayUTC, getUTCDate, calculateAgeInDays } from "../../utils/time";
+import { getTodayUTC, getUTCDate } from "../../utils/time";
 import { Repo, StarHistory } from "../../model/Repo";
 import { getRepoStarRecords } from "../fetching-star-history";
 import axios from "axios";
@@ -36,7 +36,6 @@ interface ProcessedRepo {
   topics: string[];
   createdAt: string;
   lastUpdate: string;
-  age: number;
   license: string | null;
   trendingDate: string;
 }
@@ -372,7 +371,6 @@ function transformRepo(
   // Timestamps as Numbers
   const createdAt = getUTCDate(created_at);
   const lastUpdate = getUTCDate(updated_at);
-  const age = calculateAgeInDays(createdAt, lastUpdate);
 
   return {
     fullName: full_name,
@@ -384,7 +382,6 @@ function transformRepo(
     topics,
     createdAt,
     lastUpdate,
-    age,
     license: license?.name || null,
     trendingDate: today,
   } satisfies ProcessedRepo;
