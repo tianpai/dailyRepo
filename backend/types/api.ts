@@ -46,6 +46,16 @@ export function makeError(
   };
 }
 
+import { Response } from "express";
+export function errorResponse(
+  res: Response,
+  statusCode: number,
+  msg: string,
+): void {
+  const today = new Date().toISOString().split("T")[0];
+  res.status(statusCode).json(makeError(today, statusCode, msg));
+}
+
 /* ============================================================================
  *
  *                       GitHub rest API response types
