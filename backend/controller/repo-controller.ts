@@ -1,31 +1,18 @@
 import { Repo, StarHistory } from "../model/Repo";
 import { getCache, setCache, TTL, getTrendCacheKey } from "../utils/caching";
-import { getTodayUTC, isValidDate } from "../utils/time";
+import { getTodayUTC } from "../utils/time";
 import { NextFunction, Request, Response } from "express";
 import { IRepo } from "../types/database";
+import { makeSuccess } from "../types/api";
+import {
+  parsePagination,
+  parseDateParam,
+  withCache,
+  paginateArray,
+} from "../utils/controller-helper";
+import { sendSuccess, handleControllerError } from "../utils/response-handler";
 import dotenv from "dotenv";
 dotenv.config();
-
-interface TrendingQuery {
-  date?: string;
-  page?: string;
-}
-
-interface PaginationMetadata {
-  page: number;
-  limit: number;
-  totalCount: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
-
-interface TrendingResponse {
-  isCached: boolean;
-  date: string;
-  data: any[];
-  pagination: PaginationMetadata;
-}
 
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -35,97 +22,82 @@ const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
  * ?page=N (optional; default 1)
  */
 export async function getTrending(
-  req: Request<{}, TrendingResponse, {}, TrendingQuery>,
-  res: Response<TrendingResponse>,
-  next: NextFunction,
+  req: Request,
+  res: Response,
+  _next: NextFunction,
 ): Promise<void> {
   try {
-    const today = getTodayUTC();
-    const date = req.query.date || today;
-    const page = parseInt((req.query.page as string) ?? "1", 10);
-    const limit = 15;
-    const skip = (page - 1) * limit;
-    if (!isValidDate(date)) {
-      res.status(400).json({
-        data: [],
-        date: today,
-      } as TrendingResponse);
-      return;
-    }
+    const { page, limit } = parsePagination(req, 15, 15);
+    const date = parseDateParam(req, getTodayUTC());
 
     const cacheKey = getTrendCacheKey(date);
-    const cachedRepos: IRepo[] = getCache(cacheKey) as IRepo[];
-    if (cachedRepos) {
-      const totalCount = cachedRepos.length;
-      const paginatedData = cachedRepos.slice(skip, skip + limit);
-      const pagination = {
-        page,
-        limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-        hasNext: page < Math.ceil(totalCount / limit),
-        hasPrev: page > 1,
-      };
-      res
-        .status(200)
-        .json({ isCached: true, date, data: paginatedData, pagination });
-      return;
-    }
+    const { data: repos, fromCache } = await withCache(
+      cacheKey,
+      () => fetchTrendingRepos(date),
+      TTL.HAPPY_HOUR,
+    );
 
-    // cache miss, fetch from database
-    // First try to find repos for the requested date
-    let allDocs: IRepo[] = await Repo.find({ trendingDate: date })
-      .select("-snapshots")
-      .lean();
+    const { items, total, totalPages } = paginateArray(repos, page, limit);
 
-    let actualDate = date;
+    const response = makeSuccess(
+      {
+        data: items,
+        date: repos.length > 0 ? repos[0].trendingDate || date : date,
+        pagination: {
+          page,
+          limit,
+          totalCount: total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      },
+      new Date().toISOString(),
+    );
+    response.isCached = fromCache;
+    res.status(200).json(response);
+  } catch (error) {
+    handleControllerError(res, error);
+  }
+}
 
-    // If no repos found for requested date, fall back to latest date
-    if (!allDocs.length) {
-      const [{ latestDate } = {}] = await Repo.aggregate([
-        { $match: { trendingDate: { $exists: true, $ne: null } } },
-        { $sort: { trendingDate: -1 } },
-        { $limit: 1 },
-        { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
-      ]);
+async function fetchTrendingRepos(date: string): Promise<IRepo[]> {
+  // First try to find repos for the requested date
+  let repos = await Repo.find({ trendingDate: date })
+    .select("-snapshots")
+    .lean();
 
-      allDocs = await Repo.find({ trendingDate: latestDate })
+  // If no repos found for requested date, fall back to latest date
+  if (!repos.length) {
+    const [{ latestDate } = {}] = await Repo.aggregate([
+      { $match: { trendingDate: { $exists: true, $ne: null } } },
+      { $sort: { trendingDate: -1 } },
+      { $limit: 1 },
+      { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
+    ]);
+
+    if (latestDate) {
+      repos = await Repo.find({ trendingDate: latestDate })
         .select("-snapshots")
         .lean();
-
-      actualDate = latestDate;
     }
-    const totalCount = allDocs.length;
-    const paginatedData = allDocs.slice(skip, skip + limit);
-    const pagination = {
-      page,
-      limit,
-      totalCount,
-      totalPages: Math.ceil(totalCount / limit),
-      hasNext: page < Math.ceil(totalCount / limit),
-      hasPrev: page > 1,
-    };
-    res.status(200).json({
-      isCached: false,
-      date: actualDate,
-      data: paginatedData,
-      pagination,
-    });
-
-    // After responding, update the cache using a dual-write strategy.
-    // 1. Cache the data against its actual date (`actualDate`) with a long TTL.
-    //    This is historical data that will not change.
-    setCache(getTrendCacheKey(actualDate), allDocs, TTL.SEMAINE);
-    // 2. If today's data was requested but we served older data, create a
-    //    short-lived alias for `today`. This prevents repeated DB queries
-    //    while waiting for the scraper to provide fresh data for the current day.
-    if (date === today && actualDate !== date) {
-      setCache(cacheKey, allDocs, TTL.HAPPY_HOUR);
-    }
-    return;
-  } catch (err) {
-    next(err);
   }
+
+  // After fetching, update cache with proper strategy
+  if (repos.length > 0) {
+    const actualDate = repos[0].trendingDate;
+    const today = getTodayUTC();
+
+    // Cache the data against its actual date with a long TTL
+    setCache(getTrendCacheKey(actualDate), repos, TTL.SEMAINE);
+
+    // If today's data was requested but we served older data, create a short-lived alias
+    if (date === today && actualDate !== date) {
+      setCache(getTrendCacheKey(date), repos, TTL.HAPPY_HOUR);
+    }
+  }
+
+  return repos;
 }
 
 /**
@@ -135,92 +107,87 @@ export async function getTrending(
 export async function getStarHistoryAllDataPointTrendingData(
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ): Promise<void> {
   try {
-    const today = getTodayUTC();
-    const date = req.query.date || today;
+    const date = parseDateParam(req, getTodayUTC());
 
-    if (!isValidDate(date)) {
-      res
-        .status(400)
-        .json({ error: `Bad date: "${date}" (expected YYYY-MM-DD ≥ 2024)` });
-      return;
-    }
-
-    // Check cache first
     const cacheKey = `star-history-trending:${date}`;
-    const cached = getCache(cacheKey);
-    if (cached) {
-      res.status(200).json({
-        isCached: true,
-        date: date,
-        data: cached,
-      });
-      return;
-    }
+    const { data: starHistoryData, fromCache } = await withCache(
+      cacheKey,
+      () => fetchStarHistoryData(date),
+      TTL.SEMAINE,
+    );
 
-    // Try exact match first
-    let trendingRepos = await Repo.find({ trendingDate: date })
-      .select("_id")
-      .lean();
+    const response = makeSuccess(
+      {
+        data: starHistoryData,
+        date: starHistoryData.actualDate || date,
+      },
+      new Date().toISOString(),
+    );
+    response.isCached = fromCache;
+    res.status(200).json(response);
+  } catch (error) {
+    handleControllerError(res, error);
+  }
+}
 
-    let actualDate = date;
+async function fetchStarHistoryData(date: string): Promise<any> {
+  // Try exact match first
+  let trendingRepos = await Repo.find({ trendingDate: date })
+    .select("_id")
+    .lean();
 
-    // If no repos found for exact date, fallback to latest date
-    if (!trendingRepos.length) {
-      const [{ latestDate } = {}] = await Repo.aggregate([
-        { $match: { trendingDate: { $exists: true, $ne: null } } },
-        { $sort: { trendingDate: -1 } },
-        { $limit: 1 },
-        { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
-      ]);
+  let actualDate = date;
 
+  // If no repos found for exact date, fallback to latest date
+  if (!trendingRepos.length) {
+    const [{ latestDate } = {}] = await Repo.aggregate([
+      { $match: { trendingDate: { $exists: true, $ne: null } } },
+      { $sort: { trendingDate: -1 } },
+      { $limit: 1 },
+      { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
+    ]);
+
+    if (latestDate) {
       trendingRepos = await Repo.find({ trendingDate: latestDate })
         .select("_id")
         .lean();
-
       actualDate = latestDate;
     }
-
-    const repoIds = trendingRepos.map((repo) => repo._id);
-
-    // Find star history records for these repos
-    const starHistoryRecords = await StarHistory.find({
-      repoId: { $in: repoIds },
-    })
-      .populate("repoId", "fullName name")
-      .lean();
-
-    // Group star history data by repo fullName
-    const groupedStarHistory = {};
-    starHistoryRecords.forEach((record) => {
-      const repoName =
-        (record.repoId as any).fullName || (record.repoId as any).name;
-      groupedStarHistory[repoName] = record.history.map((historyPoint) => ({
-        date: historyPoint.date,
-        count: historyPoint.count,
-      }));
-    });
-
-    // Cache the results with proper date-based cache key
-    const actualCacheKey = `star-history-trending:${actualDate}`;
-    setCache(actualCacheKey, groupedStarHistory, TTL.SEMAINE);
-
-    // If we used fallback date, also cache with requested date key for short time
-    if (actualDate !== date) {
-      setCache(cacheKey, groupedStarHistory, TTL.SEMAINE);
-    }
-
-    res.status(200).json({
-      isCached: false,
-      date: actualDate,
-      data: groupedStarHistory,
-    });
-    return;
-  } catch (err) {
-    next(err);
   }
+
+  const repoIds = trendingRepos.map((repo) => repo._id);
+
+  // Find star history records for these repos
+  const starHistoryRecords = await StarHistory.find({
+    repoId: { $in: repoIds },
+  })
+    .populate("repoId", "fullName name")
+    .lean();
+
+  // Group star history data by repo fullName
+  const groupedStarHistory = {};
+  starHistoryRecords.forEach((record) => {
+    const repoName =
+      (record.repoId as any).fullName || (record.repoId as any).name;
+    groupedStarHistory[repoName] = record.history.map((historyPoint) => ({
+      date: historyPoint.date,
+      count: historyPoint.count,
+    }));
+  });
+
+  // Cache the results with proper date-based cache key
+  const actualCacheKey = `star-history-trending:${actualDate}`;
+  setCache(actualCacheKey, groupedStarHistory, TTL.SEMAINE);
+
+  // If we used fallback date, also cache with requested date key for short time
+  if (actualDate !== date) {
+    setCache(`star-history-trending:${date}`, groupedStarHistory, TTL.SEMAINE);
+  }
+
+  return { ...groupedStarHistory, actualDate };
 }
 
 import { getRepoStarRecords } from "../services/fetching-star-history";
@@ -230,118 +197,64 @@ import { getRepoStarRecords } from "../services/fetching-star-history";
 export async function getStarHistory(
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ): Promise<void> {
   try {
     const { owner, repo } = req.params;
     const fname = `${owner}/${repo}`;
 
-    // Check cache first
     const cacheKey = `star-history:${fname}`;
-    const cached = getCache(cacheKey);
-    if (cached) {
-      res
-        .status(200)
-        .json({ isCached: true, date: getTodayUTC(), data: cached });
-      return;
-    }
+    const { data: starHistory, fromCache } = await withCache(
+      cacheKey,
+      () => fetchRepoStarHistory(fname),
+      TTL.THIRTY_FLIRTY,
+    );
 
-    // Check database for existing star history
-    const repoDoc = await Repo.findOne({ fullName: fname })
-      .select("_id")
-      .lean();
-    if (!repoDoc) {
-      res.status(404).json({
-        error: "Repo not found",
-        msg: "Try use 'Star History'",
-      });
-      return;
-    }
-
-    // Check if we have recent star history data
-    const existingHistory = await StarHistory.findOne({
-      repoId: repoDoc._id,
-    }).sort({ saveDate: -1 });
-
-    // If we have recent data (within 1 month), return it
-    if (
-      existingHistory &&
-      new Date().getTime() - existingHistory.saveDate.getTime() < ONE_MONTH_MS
-    ) {
-      setCache(cacheKey, existingHistory.history, TTL.SEMAINE);
-      res.status(200).json({
-        isCached: false,
+    const response = makeSuccess(
+      {
+        data: starHistory,
         date: getTodayUTC(),
-        data: existingHistory.history,
-      });
-      return;
-    }
-
-    // Fetch from GitHub API
-    const data = await getRepoStarRecords(fname);
-
-    // Save to StarHistory collection
-    await StarHistory.create({
-      repoId: repoDoc._id,
-      history: data,
-    });
-
-    setCache(cacheKey, data, TTL.THIRTY_FLIRTY);
-    res.status(200).json({ isCached: false, data: data });
-    return;
-  } catch (err) {
-    next(err);
+      },
+      new Date().toISOString(),
+    );
+    response.isCached = fromCache;
+    res.status(200).json(response);
+  } catch (error) {
+    handleControllerError(res, error);
   }
 }
 
-/**
- * GET /repos/ranking
- * ?top=N (optional, default 10, max 100)
- */
-export async function getRanking(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    let top = parseInt((req.query.top as string) ?? "10", 10);
-    if (isNaN(top) || top <= 0) top = 10;
-    // If top is greater than 100, it will be set to 100
-    top = Math.min(top, 100);
+async function fetchRepoStarHistory(fname: string): Promise<any[]> {
+  // Check database for existing star history
+  const repoDoc = await Repo.findOne({ fullName: fname }).select("_id").lean();
 
-    // Try cache first
-    const cacheKey = `ranking:${top}`;
-    const cachedData = getCache(cacheKey);
-    if (cachedData) {
-      res.json(cachedData);
-      return;
-    }
-
-    const ranking = await Repo.aggregate([
-      {
-        $project: {
-          name: 1,
-          fullName: 1,
-          description: 1,
-          url: 1,
-          language: 1,
-          topics: 1,
-          "stats.trends": 1,
-          "stats.category": 1,
-          latestStars: { $last: "$snapshots.stars" },
-        },
-      },
-      { $sort: { "stats.trends": -1 } },
-      { $limit: top },
-    ]);
-
-    // Cache the results
-    setCache(cacheKey, ranking, TTL.SEMAINE);
-    res.json(ranking);
-    return;
-  } catch (err) {
-    next(err);
+  if (!repoDoc) {
+    throw new Error("Repo not found - Try use 'Star History'");
   }
+
+  // Check if we have recent star history data
+  const existingHistory = await StarHistory.findOne({
+    repoId: repoDoc._id,
+  }).sort({ saveDate: -1 });
+
+  // If we have recent data (within 1 month), return it
+  if (
+    existingHistory &&
+    new Date().getTime() - existingHistory.saveDate.getTime() < ONE_MONTH_MS
+  ) {
+    return existingHistory.history;
+  }
+
+  // Fetch from GitHub API
+  const data = await getRepoStarRecords(fname);
+
+  // Save to StarHistory collection
+  await StarHistory.create({
+    repoId: repoDoc._id,
+    history: data,
+  });
+
+  return data;
 }
 
 /**
@@ -351,99 +264,117 @@ export async function getRanking(
 export async function getStarHistoryForRepos(
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ): Promise<void> {
   try {
-    console.log("Raw request body:", req.body);
     const { repoNames } = req.body;
-    if (!Array.isArray(repoNames) || repoNames.length === 0) {
-      res.status(400).json({ error: "repoNames must be a non-empty array" });
-      return;
-    }
-    const validRepoNames = repoNames.filter(
-      (name) =>
-        typeof name === "string" &&
-        name.includes("/") &&
-        name.split("/").length === 2,
-    );
-    if (validRepoNames.length === 0) {
-      res
-        .status(400)
-        .json({ error: "No valid repo names provided (format: owner/repo)" });
-      return;
-    }
+    const validRepoNames = validateRepoNames(repoNames);
 
-    const result = {};
-    const cacheHits = [];
-    const dbHits = [];
-    const skipped = [];
+    const { data, metadata } =
+      await fetchMultipleRepoStarHistory(validRepoNames);
 
-    // Check cache for each repo
-    for (const repoName of validRepoNames) {
-      const cacheKey = `star-history:${repoName}`;
-      const cached = getCache(cacheKey);
-      if (cached) {
-        result[repoName] = cached;
-        cacheHits.push(repoName);
-      }
-    }
-
-    // Query database for repos not in cache
-    const uncachedRepos = validRepoNames.filter(
-      (name) => !cacheHits.includes(name),
-    );
-
-    // Find repos in database
-    if (uncachedRepos.length > 0) {
-      // Just get the IDs
-      const repoIds = await Repo.find({
-        fullName: { $in: uncachedRepos },
-      }).distinct("_id"); // returns ObjectId[] directly
-
-      // Query StarHistory and populate repo.fullName
-      const starHistoryRecords = await StarHistory.find({
-        repoId: { $in: repoIds },
-      })
-        // pulls fullName from Repo automatically
-        .populate("repoId", "fullName")
-        .lean();
-
-      // Process star history records
-      for (const record of starHistoryRecords) {
-        const repoName = (record.repoId as any).fullName;
-        const starHistory = record.history.map((point) => ({
-          date: point.date,
-          count: point.count,
-        }));
-
-        result[repoName] = starHistory;
-        dbHits.push(repoName);
-
-        // Cache the result
-        const cacheKey = `star-history:${repoName}`;
-        setCache(cacheKey, starHistory, TTL.TWO_DAYS);
-      }
-
-      // Track skipped repos (not found in database)
-      skipped.push(
-        ...uncachedRepos.filter(
-          (name) => !dbHits.includes(name) && !cacheHits.includes(name),
-        ),
-      );
-    }
-
-    res.status(200).json({
-      data: result,
-      metadata: {
-        requested: validRepoNames.length,
-        returned: Object.keys(result).length,
-        cacheHits: cacheHits.length,
-        dbHits: dbHits.length,
-        skipped: skipped.length,
-      },
-    });
-    return;
-  } catch (err) {
-    next(err);
+    sendSuccess(res, { data, metadata });
+  } catch (error) {
+    handleControllerError(res, error);
   }
+}
+
+function validateRepoNames(repoNames: any): string[] {
+  if (!Array.isArray(repoNames) || repoNames.length === 0) {
+    throw new Error("repoNames must be a non-empty array");
+  }
+
+  const validRepoNames = repoNames.filter(
+    (name) =>
+      typeof name === "string" &&
+      name.includes("/") &&
+      name.split("/").length === 2,
+  );
+
+  if (validRepoNames.length === 0) {
+    throw new Error("No valid repo names provided (format: owner/repo)");
+  }
+
+  return validRepoNames;
+}
+
+async function fetchMultipleRepoStarHistory(validRepoNames: string[]): Promise<{
+  data: Record<string, any>;
+  metadata: {
+    requested: number;
+    returned: number;
+    cacheHits: number;
+    dbHits: number;
+    skipped: number;
+  };
+}> {
+  const result = {};
+  const cacheHits = [];
+  const dbHits = [];
+  const skipped = [];
+
+  // Check cache for each repo
+  for (const repoName of validRepoNames) {
+    const cacheKey = `star-history:${repoName}`;
+    const cached = getCache(cacheKey);
+    if (cached) {
+      result[repoName] = cached;
+      cacheHits.push(repoName);
+    }
+  }
+
+  // Query database for repos not in cache
+  const uncachedRepos = validRepoNames.filter(
+    (name) => !cacheHits.includes(name),
+  );
+
+  // Find repos in database
+  if (uncachedRepos.length > 0) {
+    // Just get the IDs
+    const repoIds = await Repo.find({
+      fullName: { $in: uncachedRepos },
+    }).distinct("_id"); // returns ObjectId[] directly
+
+    // Query StarHistory and populate repo.fullName
+    const starHistoryRecords = await StarHistory.find({
+      repoId: { $in: repoIds },
+    })
+      // pulls fullName from Repo automatically
+      .populate("repoId", "fullName")
+      .lean();
+
+    // Process star history records
+    for (const record of starHistoryRecords) {
+      const repoName = (record.repoId as any).fullName;
+      const starHistory = record.history.map((point) => ({
+        date: point.date,
+        count: point.count,
+      }));
+
+      result[repoName] = starHistory;
+      dbHits.push(repoName);
+
+      // Cache the result
+      const cacheKey = `star-history:${repoName}`;
+      setCache(cacheKey, starHistory, TTL.TWO_DAYS);
+    }
+
+    // Track skipped repos (not found in database)
+    skipped.push(
+      ...uncachedRepos.filter(
+        (name) => !dbHits.includes(name) && !cacheHits.includes(name),
+      ),
+    );
+  }
+
+  return {
+    data: result,
+    metadata: {
+      requested: validRepoNames.length,
+      returned: Object.keys(result).length,
+      cacheHits: cacheHits.length,
+      dbHits: dbHits.length,
+      skipped: skipped.length,
+    },
+  };
 }
