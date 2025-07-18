@@ -1,27 +1,20 @@
-import chalk from "chalk";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import {
   prepTrendingData,
   saveTrendingData,
   prepTrendingDevelopers,
   saveTrendingDevelopers,
 } from "./services/scraping-services/repo-data";
-import {
-  saveStarHistoryBatched,
-  estimateStarHistoryProcessing,
-} from "./services/scraping-services/batched-star-history";
-import { logCyan, logGreen, logYellow } from "./utils/coloredConsoleLog";
-import { getRateLimit } from "./tests/rate-limit-consumption-star-history";
+import { saveStarHistory } from "./services/scraping-services/batched-star-history";
+import { logCyan, logYellow } from "./utils/coloredConsoleLog";
 import { formatDuration } from "./utils/time";
-import { runScrapeJob } from "./scheduler";
-import { scrapeTrending } from "./services/scraping-services/repo-scraping";
 import {
   connectToDatabase,
   isConnectedToDatabase,
 } from "./services/db-connection";
 
 dotenv.config();
-const LOG = console.log;
 
 /**
  * Ensure a database connection is established.
@@ -55,86 +48,53 @@ async function processRepositories() {
  * Process and save trending developers
  */
 async function processDevelopers() {
-  console.log("Waiting 3 seconds before collecting developer data...");
   await new Promise((resolve) => setTimeout(resolve, 3000));
-
   const developers = await prepTrendingDevelopers();
-  console.log(
-    `Prepared ${developers.length} developers at ${new Date().toISOString()}`,
-  );
-
   await saveTrendingDevelopers(developers);
-  console.log(
-    `\nSaved ${developers.length} developers to database at ${new Date().toISOString()}`,
-  );
 }
 
 /**
- * Process star history for repositories using batched approach
+ * Process star history for repositories
  */
-async function processStarHistoryBatched(repoNames: string[]) {
-  console.log("Waiting 3 seconds before star history collection...");
+async function processStarHistory(repoNames: string[]) {
   await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  // First, show the estimation
-  logCyan("\n📊 Estimating star history processing requirements...");
-  estimateStarHistoryProcessing(repoNames);
-
-  LOG(
-    `\nStarting batched star history collection for ${repoNames.length} repos...`,
-  );
-  const starHistoryResult = await saveStarHistoryBatched(repoNames);
-
-  LOG(chalk.green("Batched processing completed:"));
-  LOG(
-    chalk.green(`successful ${starHistoryResult.successful}\n`),
-    chalk.bgRed(`failed     ${starHistoryResult.failed} \n`),
-    chalk.bgGray(`skipped    ${starHistoryResult.skipped}`),
-    `Total batches ${starHistoryResult.batchInfo.totalBatches}`,
-  );
-
-  return starHistoryResult;
+  await saveStarHistory(repoNames);
 }
 
 /**
- * The main scraping job with batched star history processing
+ * The main scraping job with star history processing
  */
 export async function runBatchedScrapeJob() {
   const jobStartTime = performance.now();
-  const timestamp = new Date().toISOString();
+  const MAX_RUNTIME = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
 
-  console.log("\n" + "=".repeat(60));
-  console.log(`[${timestamp}] BATCHED GITHUB SCRAPING JOB STARTED`);
-  console.log("=".repeat(60));
+  const timeout = setTimeout(async () => {
+    console.error("Job exceeded maximum runtime of 4 hours. Terminating...");
+    if (isConnectedToDatabase()) {
+      await mongoose.disconnect();
+      console.log("Database connection closed due to timeout.");
+    }
+    process.exit(1);
+  }, MAX_RUNTIME);
 
   try {
     await ensureDatabaseConnected();
-    /*
-     * step 1 and 2 comsume very minimal rate limits
-     * around 2-4 API calss per repo
-     */
 
-    // Step 1: Process repositories
     logYellow("\n[1/3] PROCESSING REPOSITORIES");
-    console.log("-".repeat(40));
     const repoStartTime = performance.now();
     const repos = await processRepositories();
     logCyan(`Step 1 completed in ${formatDuration(repoStartTime)}\n`);
 
-    // Step 2: Process developers
     logYellow("[2/3] PROCESSING DEVELOPERS");
-    console.log("-".repeat(40));
     const devStartTime = performance.now();
     await processDevelopers();
     logCyan(`Step 2 completed in ${formatDuration(devStartTime)}\n`);
 
-    // Step 3: Process star history with batching
-    logYellow("[3/3] PROCESSING STAR HISTORY (BATCHED)");
-    console.log("-".repeat(40));
+    logYellow("[3/3] PROCESSING STAR HISTORY");
     const repoNames = repos.map((r) => r.fullName);
     const starHistoryStartTime = performance.now();
-    const starHistoryResult = await processStarHistoryBatched(repoNames);
-    logCyan(`Step 3 initiated in ${formatDuration(starHistoryStartTime)}\n`);
+    await processStarHistory(repoNames);
+    logCyan(`Step 3 completed in ${formatDuration(starHistoryStartTime)}\n`);
 
     process.exitCode = 0;
   } catch (err) {
@@ -144,6 +104,7 @@ export async function runBatchedScrapeJob() {
     console.log("!".repeat(60));
     process.exitCode = 1;
   } finally {
+    clearTimeout(timeout);
     const totalDuration = formatDuration(jobStartTime);
     const status = process.exitCode === 0 ? "SUCCESS" : "FAILED";
 
@@ -155,64 +116,12 @@ export async function runBatchedScrapeJob() {
   }
 }
 
-/**
- * Estimation-only function to see what the processing would look like
- */
-export async function estimateBatchedJob() {
-  console.log("\n" + "=".repeat(60));
-  console.log("BATCHED SCRAPING JOB ESTIMATION");
-  console.log("=".repeat(60));
-
-  try {
-    // Get repository list
-    const repos = await scrapeTrending();
-    console.log(repos);
-    console.log(`\n📊 Found ${repos.length} repositories to process`);
-
-    // Show estimation
-    estimateStarHistoryProcessing(repos);
-
-    console.log(
-      "\n✅ Estimation complete. Use --run-batched to start actual processing.",
-    );
-  } catch (err) {
-    console.error("Error during estimation:", err);
-  } finally {
-    await getRateLimit();
-  }
-}
-
-// CLI handling
-if (process.argv.includes("--estimate")) {
-  estimateBatchedJob().finally(() => {
-    console.log("Estimation completed.");
-    process.exit(process.exitCode || 0);
-  });
-} else if (process.argv.includes("--run-batched")) {
+if (process.argv.includes("--run-batched")) {
   runBatchedScrapeJob().finally(() => {
-    console.log("Batched scraping job initiated.");
-    process.exit(0);
-  });
-} else if (process.argv.includes("--run-now")) {
-  runScrapeJob().finally(() => {
-    console.log("Original scraping job completed.");
     process.exit(0);
   });
 } else {
-  // Default: show help
-  console.log("\nBatched GitHub Scraper");
-  console.log("=====================");
-  console.log("Options:");
-  console.log("  --estimate      Show processing estimation without running");
-  console.log("  --run-batched   Run the batched scraping job");
-  console.log(
-    "  --run-now       Run the original scraping job (may hit rate limits)",
-  );
-  console.log("");
-  console.log("Example usage:");
-  console.log("  bun run dev:scraper --estimate");
-  console.log("  bun run dev:scraper --run-batched");
-  process.exit(0);
+  console.log("no flag");
 }
 
 // Catch unhandled promise rejections

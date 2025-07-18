@@ -3,8 +3,8 @@ import {
   logRateLimitStatus,
   handleRateLimitExceeded,
   withRateLimitRetry,
-} from "../utils/rate-limit-checker";
-import { getRepoStargazersCount } from "../services/fetching-star-history";
+} from "../services/scraping-services/rate-limit-checker";
+import { getRepoStargazersCount } from "../services/scraping-services/fetching-star-history";
 import chalk from "chalk";
 
 async function testRateLimitHandling() {
@@ -49,7 +49,9 @@ async function testRateLimitHandling() {
       console.log(chalk.yellow(`API calls consumed: ${callsUsed}`));
     }
 
-    console.log(chalk.green("\nRate limit handling test completed successfully"));
+    console.log(
+      chalk.green("\nRate limit handling test completed successfully"),
+    );
   } catch (error) {
     console.error(chalk.red("Test failed:"), error.message);
   }

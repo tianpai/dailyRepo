@@ -2,7 +2,7 @@ import axios from "axios";
 import { Repo } from "../model/Repo";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { getRepoStarRecords } from "../services/fetching-star-history";
+import { getRepoStarRecords } from "../services/scraping-services/fetching-star-history";
 import chalk from "chalk";
 dotenv.config();
 
@@ -117,7 +117,10 @@ export async function getRateLimit() {
     displayRateLimit(rateLimitData);
     return rateLimitData;
   } catch (error) {
-    console.error(chalk.red("Error fetching GitHub rate limit:"), error.message);
+    console.error(
+      chalk.red("Error fetching GitHub rate limit:"),
+      error.message,
+    );
     return null;
   }
 }

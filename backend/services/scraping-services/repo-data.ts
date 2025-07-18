@@ -1,7 +1,7 @@
 import { scrapeTrending, scrapeTrendingDevelopers } from "./repo-scraping";
 import { getTodayUTC, getUTCDate } from "../../utils/time";
 import { Repo, StarHistory } from "../../model/Repo";
-import { getRepoStarRecords } from "../fetching-star-history";
+import { getRepoStarRecords } from "./fetching-star-history";
 import axios from "axios";
 import { TrendingDeveloper } from "../../model/TrendingDeveloper";
 import { GithubUser } from "../../types/api";
@@ -345,7 +345,7 @@ async function fetchLanguages(url: string): Promise<LanguageData> {
 /**
  * Turn the full GitHub repo payload + languages into your DB object.
  *
- * @param {Object} data           The raw repo JSON from getRepo()
+ * @param {Object} rawdata           The raw repo JSON from getRepo()
  * @param {Object} languages      The object from fetchLanguages()
  * @param {string} today          A date string like "2025-05-04"
  * @returns {Object}              Cleaned-up repo document ready to save
