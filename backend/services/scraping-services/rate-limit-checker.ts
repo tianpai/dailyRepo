@@ -1,6 +1,5 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import chalk from "chalk";
 
 dotenv.config();
 
@@ -81,7 +80,7 @@ export async function getCurrentRateLimit(
 
     return response.data;
   } catch (error) {
-    console.log(chalk.red(`Error fetching rate limit: ${error.message}`));
+    console.log(`Error fetching rate limit: ${error.message}`);
     return null;
   }
 }
@@ -126,14 +125,13 @@ export function logRateLimitStatus(rateLimit: GitHubRateLimit): void {
   const { rate } = rateLimit;
   const resetDate = new Date(rate.reset * 1000);
   const timeUntilReset = getTimeUntilReset(rateLimit);
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  console.log(chalk.cyan(`GitHub API Rate Limit Status:`));
-  console.log(chalk.cyan(`   Used: ${rate.used}/${rate.limit}`));
-  console.log(chalk.cyan(`   Remaining: ${rate.remaining}`));
-  console.log(chalk.cyan(`   Resets at: ${resetDate.toISOString()}`));
-  console.log(
-    chalk.cyan(`   Time until reset: ${formatDuration(timeUntilReset)}`),
-  );
+  console.log(`GitHub API Rate Limit Status:`);
+  console.log(`   Used: ${rate.used}/${rate.limit}`);
+  console.log(`   Remaining: ${rate.remaining}`);
+  console.log(`   Resets at: ${resetDate.toLocaleString()} ${timezone}`);
+  console.log(`   Time until reset: ${formatDuration(timeUntilReset)}`);
 }
 
 /**
@@ -145,7 +143,7 @@ export async function handleRateLimitExceeded(token?: string): Promise<void> {
   const rateLimit = await getCurrentRateLimit(token);
 
   if (!rateLimit) {
-    console.log(chalk.red("Could not fetch rate limit, waiting 5 seconds..."));
+    console.log("Could not fetch rate limit, waiting 5 seconds...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
     return;
   }
@@ -157,21 +155,22 @@ export async function handleRateLimitExceeded(token?: string): Promise<void> {
   // If we're at the maximum limit (5000), wait for reset
   if (rate.remaining === 0 || rate.used >= 5000) {
     const waitTime = getTimeUntilReset(rateLimit);
+    const resetDate = new Date(rate.reset * 1000);
     console.log(
-      chalk.yellow(
-        `Rate limit exhausted (${rate.used}/${rate.limit}). Waiting ${formatDuration(waitTime)} for reset...`,
-      ),
+      `Rate limit exhausted (${
+        rate.used
+      }/${rate.limit}). Waiting ${formatDuration(
+        waitTime,
+      )} for reset at ${resetDate.toLocaleString()}...`,
     );
 
     // Add a small buffer to ensure reset has occurred
     await new Promise((resolve) => setTimeout(resolve, waitTime + 10000));
-    console.log(chalk.green("Rate limit should be reset, continuing..."));
+    console.log("Rate limit should be reset, continuing...");
   } else {
     // If we're not at max limit, something else caused the 403, wait briefly
     console.log(
-      chalk.yellow(
-        `Got 403 but rate limit not exhausted (${rate.used}/${rate.limit}). Waiting 5 seconds...`,
-      ),
+      `Got 403 but rate limit not exhausted (${rate.used}/${rate.limit}). Waiting 5 seconds...`,
     );
     await new Promise((resolve) => setTimeout(resolve, 5000));
   }
@@ -196,22 +195,16 @@ export async function withRateLimitRetry<T>(
       // Check if it's a 403 (rate limit) error
       if (error.response?.status === 403) {
         console.log(
-          chalk.yellow(
-            `Attempt ${attempt}: Got 403 error, checking rate limit...`,
-          ),
+          `Attempt ${attempt}: Got 403 error, checking rate limit...`,
         );
 
         if (attempt < maxRetries) {
           await handleRateLimitExceeded(token);
           console.log(
-            chalk.cyan(
-              `Retrying API call (attempt ${attempt + 1}/${maxRetries})...`,
-            ),
+            `Retrying API call (attempt ${attempt + 1}/${maxRetries})...`,
           );
         } else {
-          console.log(
-            chalk.red(`Max retries (${maxRetries}) reached for API call`),
-          );
+          console.log(`Max retries (${maxRetries}) reached for API call`);
           throw error;
         }
       } else {

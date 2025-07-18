@@ -190,7 +190,7 @@ async function fetchStarHistoryData(date: string): Promise<any> {
   return { ...groupedStarHistory, actualDate };
 }
 
-import { getRepoStarRecords } from "../services/fetching-star-history";
+import { getRepoStarRecords } from "../services/scraping-services/fetching-star-history";
 /**
  * GET /repos/:name/:repo/star-history
  */
