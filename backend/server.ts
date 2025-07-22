@@ -5,7 +5,6 @@ import rateLimit from "express-rate-limit";
 import apiRouterV1 from "./routes/main-routes";
 // import compression from "compression";
 import helmet from "helmet";
-import { logVisitor } from "./middleware/visitor-logger";
 import { connectToDatabase } from "./services/db-connection";
 
 dotenv.config();
@@ -50,7 +49,6 @@ if (process.argv.includes("--debug")) {
 } else {
   // Trust Vercel's proxy, ensure rate limiting to work correctly
   app.set("trust proxy", 1);
-  app.use(logVisitor);
   app.use(limiter);
 }
 

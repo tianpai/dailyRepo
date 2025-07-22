@@ -47,8 +47,7 @@ export async function getLanguagesList(
 /**
  * GET /languages/:language/trending
  * Retrieves trending repositories for a specific language.
- * Supports optional ?date=YYYY-MM-DD query parameter.
- * Example: GET /languages/javascript/trending?date=2023-06-15
+ * Example: GET /languages/
  */
 export async function getLanguageTrendingRepos(
   _req: Request,
