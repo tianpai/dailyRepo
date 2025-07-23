@@ -17,7 +17,7 @@ export interface analyzeKeywordOutput {
   };
 }
 
-export async function fetchAnalyzeKeywords(
+export async function fetchClusteredKeywords(
   requestBody: analyzeKeywordInput,
 ): Promise<analyzeKeywordOutput> {
   let mlServerUrl = process.env.ML_SERVER_PRIVATE;

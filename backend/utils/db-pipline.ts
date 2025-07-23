@@ -107,3 +107,21 @@ export const language_list_top = (limit: number) => [
     },
   },
 ];
+
+export const topicLangPipeline = [
+  {
+    $match: {
+      $and: [
+        { language: { $exists: true, $not: { $size: 0 } } },
+        { topics: { $exists: true, $not: { $size: 0 } } },
+      ],
+    },
+  },
+  {
+    $project: {
+      fullName: 1,
+      topics: 1,
+      language: "$language",
+    },
+  },
+];

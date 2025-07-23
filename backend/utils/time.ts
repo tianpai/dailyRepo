@@ -90,3 +90,23 @@ export function formatDuration(startTime: number): string {
   }
   return `${seconds.toFixed(2)} seconds`;
 }
+
+/**
+ * Get the week number for a given date
+ * Week 1 starts on January 1st, Week 2 starts on January 8th, etc.
+ */
+export function getWeekNumber(date: Date): { year: number; week: number } {
+  const year = date.getFullYear();
+  const startOfYear = new Date(year, 0, 1);
+  const daysSinceStart = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  const weekNumber = Math.floor(daysSinceStart / 7) + 1;
+  
+  return { year, week: weekNumber };
+}
+
+/**
+ * Get current week number
+ */
+export function getCurrentWeekNumber(): { year: number; week: number } {
+  return getWeekNumber(new Date());
+}
