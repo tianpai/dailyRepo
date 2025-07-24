@@ -1,5 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { COLORS } from "@/lib/color.ts";
 
 import { useMemo } from "react";
@@ -72,44 +73,53 @@ function KeywordsDisplay({
   error: string | null;
   className?: string;
 }) {
-  return (
-    <div className={`rounded-lg shadow-md p-6 ${className}`}>
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-1">Top Keywords</h2>
-        <p className="text-sm text-gray-400">
-          {data?.topKeywords?.length || 0} trending topics
-        </p>
-        {error ? (
-          <div className="text-center text-red-500">
-            Error: Can't fetch keywords
-          </div>
-        ) : null}
-      </div>
-      <div className="flex flex-wrap gap-2 justify-items-center w-5xl">
-        {loading ? (
-          <>
-            {Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={index} className="h-6 w-20 rounded-full" />
-            ))}
-          </>
-        ) : (
-          data?.topKeywords?.map((keyword: string, index: number) => {
-            const bgColor = getKeywordColor(index);
-            const textColor = getOptimalForegroundColor(bgColor);
-            return (
-              <Badge
-                key={index}
-                variant="outline"
-                className="text-xs px-3 py-1 border-0 hover:opacity-80 transition-opacity"
-                style={{ backgroundColor: bgColor, color: textColor }}
-              >
-                {keyword}
-              </Badge>
-            );
-          })
-        )}
-      </div>
+  const renderStateMessage = (message: string) => (
+    <div className="flex items-center justify-center h-full text-center text-red-500">
+      {message}
     </div>
+  );
+
+  return (
+    <Card className={className}>
+      <CardHeader className="pb-2">
+        <div>
+          <h3 className="text-lg font-semibold">Top Keywords</h3>
+          <p className="text-sm text-gray-400">
+            {data?.topKeywords?.length || 0} trending topics
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {error ? (
+          renderStateMessage("Error: Can't fetch keywords")
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {loading ? (
+              <>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Skeleton key={index} className="h-6 w-20 rounded-full" />
+                ))}
+              </>
+            ) : (
+              data?.topKeywords?.map((keyword: string, index: number) => {
+                const bgColor = getKeywordColor(index);
+                const textColor = getOptimalForegroundColor(bgColor);
+                return (
+                  <Badge
+                    key={index}
+                    variant="outline"
+                    className="text-xs px-3 py-1 border-0 hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: bgColor, color: textColor }}
+                  >
+                    {keyword}
+                  </Badge>
+                );
+              })
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

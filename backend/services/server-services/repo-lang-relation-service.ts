@@ -27,23 +27,25 @@ interface LanguageTopicMap {
 
 async function getTopicsLanguage(): Promise<RepoTopicLanguage[]> {
   const repos: TopicLanguage[] = await Repo.aggregate(topicLangPipeline);
-  return repos.map((repo) => {
-    let mainLanguage = "Unknown";
-    let maxCount = 0;
+  return repos
+    .map((repo) => {
+      let mainLanguage = "Unknown";
+      let maxCount = 0;
 
-    for (const [lang, count] of Object.entries(repo.language)) {
-      if (count > maxCount) {
-        maxCount = count;
-        mainLanguage = lang;
+      for (const [lang, count] of Object.entries(repo.language)) {
+        if (count > maxCount) {
+          maxCount = count;
+          mainLanguage = lang;
+        }
       }
-    }
 
-    return {
-      fullname: repo.fullName,
-      main_language: mainLanguage,
-      topics: repo.topics,
-    };
-  });
+      return {
+        fullname: repo.fullName,
+        main_language: mainLanguage,
+        topics: repo.topics,
+      };
+    })
+    .filter((repo) => repo.main_language !== "Unknown");
 }
 
 /*
@@ -100,7 +102,47 @@ function findCluster(
   return null;
 }
 
-async function calculateTopicsByLanguage(): Promise<LanguageTopicMap> {
+function filterAndSortClusters(
+  langTopicMap: LanguageTopicMap,
+): LanguageTopicMap {
+  const filteredLangTopicMap: LanguageTopicMap = {};
+  for (const [lang, clusters] of Object.entries(langTopicMap)) {
+    if (Object.keys(clusters).length > 0) {
+      // Sort clusters by count (highest first)
+      const sortedClusters = Object.entries(clusters)
+        .sort(([, a], [, b]) => b - a)
+        .reduce(
+          (acc, [cluster, count]) => {
+            acc[cluster] = count;
+            return acc;
+          },
+          {} as { [cluster: string]: number },
+        );
+
+      filteredLangTopicMap[lang] = sortedClusters;
+    }
+  }
+  return filteredLangTopicMap;
+}
+
+function filterLanguagesByTopicCount(
+  langTopicMap: LanguageTopicMap,
+  minTopics: number = 3,
+): LanguageTopicMap {
+  const finalLangTopicMap: LanguageTopicMap = {};
+  for (const [lang, clusters] of Object.entries(langTopicMap)) {
+    const totalTopics = Object.values(clusters).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+    if (totalTopics >= minTopics) {
+      finalLangTopicMap[lang] = clusters;
+    }
+  }
+  return finalLangTopicMap;
+}
+
+async function senetizeTopicLangMap(): Promise<LanguageTopicMap> {
   const repos = await getTopicsLanguage();
   const allTopics = await getAllTopics();
   const clusteredTopics = await clusterTopicsWithML(allTopics);
@@ -131,29 +173,13 @@ async function calculateTopicsByLanguage(): Promise<LanguageTopicMap> {
     }
   }
 
-  // Filter out languages with empty clusters and sort clusters by count
-  const filteredLangTopicMap: LanguageTopicMap = {};
-  for (const [lang, clusters] of Object.entries(langTopicMap)) {
-    if (Object.keys(clusters).length > 0) {
-      // Sort clusters by count (highest first)
-      const sortedClusters = Object.entries(clusters)
-        .sort(([, a], [, b]) => b - a)
-        .reduce(
-          (acc, [cluster, count]) => {
-            acc[cluster] = count;
-            return acc;
-          },
-          {} as { [cluster: string]: number },
-        );
+  const filteredAndSortedMap = filterAndSortClusters(langTopicMap);
+  const finalMap = filterLanguagesByTopicCount(filteredAndSortedMap);
 
-      filteredLangTopicMap[lang] = sortedClusters;
-    }
-  }
-
-  return filteredLangTopicMap;
+  return finalMap;
 }
 
-async function groupTopicsByLanguage(): Promise<LanguageTopicMap> {
+export async function groupTopicsByLanguage(): Promise<LanguageTopicMap> {
   const { year, week } = getCurrentWeekNumber();
 
   // Try to get from database first
@@ -163,7 +189,7 @@ async function groupTopicsByLanguage(): Promise<LanguageTopicMap> {
   }
 
   // Calculate new findings and save to database
-  const languageTopicMap = await calculateTopicsByLanguage();
+  const languageTopicMap = await senetizeTopicLangMap();
 
   try {
     await WeeklyTopicFindings.create({
@@ -177,12 +203,3 @@ async function groupTopicsByLanguage(): Promise<LanguageTopicMap> {
 
   return languageTopicMap;
 }
-
-export {
-  getTopicsLanguage,
-  getAllTopics,
-  clusterTopicsWithML,
-  findCluster,
-  groupTopicsByLanguage,
-  calculateTopicsByLanguage,
-};

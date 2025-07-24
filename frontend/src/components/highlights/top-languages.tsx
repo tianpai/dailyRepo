@@ -1,20 +1,21 @@
 "use client";
 
 import type { LanguageMap } from "@/interface/repository";
-import { Pie, PieChart, Cell } from "recharts";
-import { toChartData, languageColors } from "@/lib/pie-chart-data";
+import {
+  Pie,
+  PieChart,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from "recharts";
+import { toChartData } from "@/lib/pie-chart-data";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useApi, env } from "@/hooks/useApi";
 import { type Query } from "@/lib/url-builder";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 
 type TopLangResponse = { data: LanguageMap; count?: number };
 
@@ -53,34 +54,12 @@ function useLanguageChartData(numberOfLanguages: number = 10) {
   const data = useMemo(() => raw?.data ?? {}, [raw]);
   const error = useMemo(() => apiError?.error?.message ?? null, [apiError]);
 
-  // Create dynamic chart configuration based on the language data
-  const chartConfig = useMemo(() => {
-    if (!data) return { count: { label: "Count" } } satisfies ChartConfig;
-
-    const config: ChartConfig = {
-      count: {
-        label: "Count",
-      },
-    };
-
-    // Add configuration for each language with its color
-    Object.keys(data).forEach((language) => {
-      config[language] = {
-        label: language,
-        color: languageColors[language] || "#000000",
-      };
-    });
-
-    return config;
-  }, [data]);
-
   const chartData = useMemo(() => {
     return data ? toChartData(data as LanguageMap) : [];
   }, [data]);
 
   return {
     data: chartData,
-    chartConfig,
     loading,
     error,
   };
@@ -89,37 +68,17 @@ function useLanguageChartData(numberOfLanguages: number = 10) {
 // Presentational component for the language chart
 function LanguagesChartBarMixed({
   data,
-  chartConfig,
   loading,
   error,
   topN,
   onTopNChange,
 }: {
   data: ReturnType<typeof toChartData>;
-  chartConfig: ChartConfig;
   loading: boolean;
   error: string | null;
   topN: string;
   onTopNChange: (value: string) => void;
 }) {
-  const [windowWidth, setWindowWidth] = useState(0);
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    handleResize(); // Set initial value
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const getRadiusValues = () => {
-    if (windowWidth <= 393) return { inner: 10, outer: 50 };
-    if (windowWidth <= 440) return { inner: 20, outer: 70 };
-    if (windowWidth <= 900) return { inner: 30, outer: 120 };
-    return { inner: 50, outer: 150 };
-  };
-
-  const { inner, outer } = getRadiusValues();
-
   const renderStateMessage = (message: string) => (
     <div className="flex items-center justify-center h-full">{message}</div>
   );
@@ -128,7 +87,7 @@ function LanguagesChartBarMixed({
   if (error) return renderStateMessage("Error: Fetching language");
 
   const header = (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
       <div>
         <h3 className="text-lg font-semibold">Programming Languages</h3>
         <p className="text-sm text-gray-400">
@@ -146,7 +105,7 @@ function LanguagesChartBarMixed({
           max="10"
           value={topN}
           onChange={(e) => onTopNChange(e.target.value)}
-          className="w-16 h-8"
+          className="w-20 h-8"
           inputMode="numeric"
           pattern="[0-9]*"
         />
@@ -160,35 +119,58 @@ function LanguagesChartBarMixed({
       cx="50%"
       cy="50%"
       labelLine={false}
-      label={({ language, count }) => `${language}: ${count}%`}
-      innerRadius={inner}
-      outerRadius={outer}
+      innerRadius={30}
+      outerRadius={120}
       dataKey="count"
     >
       {data.map((entry, index) => (
-        <Cell key={`cell-${index}`} fill={entry.fill} />
+        <Cell
+          key={`cell-${index}`}
+          fill={entry.fill}
+          name={`${entry.language} (${entry.count}%)`}
+        />
       ))}
     </Pie>
-  );
-
-  const tooltip = (
-    <ChartTooltip
-      content={
-        <ChartTooltipContent hideLabel formatter={(value) => `${value}%`} />
-      }
-    />
   );
 
   return (
     <Card>
       <CardHeader className="pb-2">{header}</CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <PieChart>
-            {pieChart}
-            {tooltip}
-          </PieChart>
-        </ChartContainer>
+      <CardContent className="flex justify-center">
+        <div className="h-[400px] sm:h-[500px] w-full max-w-md">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              {pieChart}
+              <Tooltip
+                formatter={(value, _name, props) => [
+                  `${props?.payload?.language || "Unknown"} ${value}%`,
+                  "",
+                ]}
+                contentStyle={{
+                  backgroundColor: "rgba(30, 30, 30, 0.9)",
+                  border: "1px solid #444",
+                  borderRadius: "8px",
+                  padding: "10px 12px",
+                }}
+                itemStyle={{
+                  color: "#f0f0f0",
+                  fontSize: "0.8em",
+                }}
+              />
+              <Legend
+                verticalAlign="bottom"
+                height={80}
+                iconType="circle"
+                wrapperStyle={{
+                  paddingTop: "10px",
+                  fontSize: "12px",
+                  maxHeight: "80px",
+                  overflow: "hidden",
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );
@@ -198,7 +180,7 @@ function LanguagesChartBarMixed({
 export function LanguagesContainer() {
   const [topN, setTopN] = useState(5);
   const [topNInput, setTopNInput] = useState("5");
-  const { data, chartConfig, loading, error } = useLanguageChartData(topN);
+  const { data, loading, error } = useLanguageChartData(topN);
 
   const handleTopNChange = (value: string) => {
     setTopNInput(value);
@@ -211,7 +193,6 @@ export function LanguagesContainer() {
   return (
     <LanguagesChartBarMixed
       data={data}
-      chartConfig={chartConfig}
       loading={loading}
       error={error}
       topN={topNInput}
