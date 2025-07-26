@@ -11,6 +11,16 @@ interface ApiBase {
   isSuccess: boolean;
 }
 
+// Pagination is encapsulated in data in ApiResponse
+export interface Pagination {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export interface ApiSuccess<T> extends ApiBase {
   isSuccess: true;
   data: T;

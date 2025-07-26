@@ -16,3 +16,13 @@ export interface ApiError extends ApiBase {
   data?: never;
 }
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
+
+// Pagination is encapsulated in data in ApiResponse
+export interface Pagination {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}

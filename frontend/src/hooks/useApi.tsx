@@ -9,21 +9,21 @@ export const env = (key: string) => {
   return v as string;
 };
 
-type FetchRequest = {
-  method?: string;
+export type FetchRequest = {
+  method?: "GET" | "POST" | (string & {});
   headers?: HeadersInit;
   body?: BodyInit | null;
   signal?: AbortSignal;
 };
 
-type UrlArgs = {
+export type UrlArgs = {
   baseUrl: string | URL;
   endpoint?: string | string[];
   query?: Query;
   debug?: boolean;
 };
 
-type UseApiParams = {
+export type UseApiParams = {
   urlArgs: UrlArgs;
   fetchOptions?: FetchRequest;
   dependencies?: DependencyList;

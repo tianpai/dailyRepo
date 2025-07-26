@@ -1,19 +1,72 @@
-import type {
-  RawStarHistoryApiResponse,
-  NormalizedDayData,
-  starDataPoint,
-} from "@/interface/repository.tsx";
+import { useMemo } from "react";
+import { useApi, env } from "@/hooks/useApi";
 
-function convertToNormalizedDays(
-  starHistory: RawStarHistoryApiResponse,
+export interface StarDataPoint {
+  date: string;
+  count: number;
+}
+export type RepoStarHistory = Record<string, StarDataPoint[]>;
+
+// old
+// export type StarHistoryData = Record<string, starDataPoint[]>;
+
+export function useBulkStarHistory(repoNames: string[]) {
+  const base_url = env("VITE_DATABASE_REPOS");
+  const token = env("VITE_DEV_AUTH");
+
+  const urlArgs = useMemo(() => {
+    return {
+      baseUrl: base_url,
+      endpoint: "star-history",
+    };
+  }, [base_url]);
+
+  const fetchOptions = useMemo(
+    () => ({
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      method: "POST",
+      body: JSON.stringify({ repoNames: repoNames }),
+    }),
+    [token, repoNames],
+  );
+
+  const {
+    data: response,
+    loading,
+    error,
+    refetch,
+  } = useApi<RepoStarHistory>({
+    urlArgs,
+    fetchOptions,
+  });
+
+  return {
+    data: response || {},
+    pagination: response?.pagination || null,
+    loading,
+    error: error?.error?.message || "",
+    refetch,
+  };
+}
+
+export interface NormalizedDayData {
+  day: number;
+  [repoName: string]: number; // repo names as keys with star counts as values
+}
+
+export function convertToNormalizedDays(
+  starHistory: RepoStarHistory,
 ): NormalizedDayData[] {
-  const repoNames = Object.keys(starHistory.data);
+  const repoNames = Object.keys(starHistory);
 
   // Find the earliest date across all repositories
   let earliestDate = new Date("9999-12-31");
 
   repoNames.forEach((repoName) => {
-    const repoData = starHistory.data[repoName];
+    const repoData = starHistory[repoName];
     if (repoData.length > 0) {
       const firstDate = new Date(repoData[0].date);
       if (firstDate < earliestDate) {
@@ -26,10 +79,10 @@ function convertToNormalizedDays(
   const dayDataMap = new Map<number, NormalizedDayData>();
 
   repoNames.forEach((repoName) => {
-    const repoData = starHistory.data[repoName];
+    const repoData = starHistory[repoName];
     const shortRepoName = repoName.split("/")[1]; // Get repo name without owner
 
-    repoData.forEach((entry: starDataPoint) => {
+    repoData.forEach((entry) => {
       const entryDate = new Date(entry.date);
       const daysDiff = Math.floor(
         (entryDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24),
@@ -59,7 +112,7 @@ function convertToNormalizedDays(
     const shortName = repoName.split("/")[1];
     const dataMap = new Map<number, number>();
 
-    starHistory.data[repoName].forEach((entry) => {
+    starHistory[repoName].forEach((entry) => {
       const entryDate = new Date(entry.date);
       const daysDiff = Math.floor(
         (entryDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24),
@@ -141,6 +194,3 @@ function convertToNormalizedDays(
 
   return filledResult;
 }
-
-export { convertToNormalizedDays };
-export type { NormalizedDayData };

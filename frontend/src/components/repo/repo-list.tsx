@@ -8,13 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useRepoDataContext } from "@/components/repo/repo-data-provider";
 import { ChartPieDonut } from "@/components/repo/lang-pie-chart.tsx";
-import { lazy, Suspense } from "react";
 
-const RepoStarGraph = lazy(() =>
-  import("@/components/repo/repo-star-graph.tsx").then((module) => ({
-    default: module.RepoStarGraph,
-  })),
-);
 import { RepoPagination } from "@/components/repo/repo-pagination";
 import type { RepoCardProps, RepoData } from "@/interface/repository.tsx";
 import { COLORS } from "@/lib/color";
@@ -45,11 +39,6 @@ export function RepoList() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Daily Repo List</h1>
-      <Suspense
-        fallback={<div className="h-96 bg-gray-100 rounded-lg animate-pulse" />}
-      >
-        <RepoStarGraph />
-      </Suspense>
       {data.map((repo: RepoData, i: number) => (
         <RepoCard
           key={repo.url}

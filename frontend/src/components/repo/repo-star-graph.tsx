@@ -16,13 +16,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useBulkStarHistory } from "@/hooks/repo-data";
-import { convertToNormalizedDays } from "@/components/repo/star-history-data";
+import {
+  useBulkStarHistory,
+  convertToNormalizedDays,
+} from "@/hooks/useStarHistory";
 import { useRepoDataContext } from "@/components/repo/repo-data-provider";
-import { useDateContext } from "@/components/date-provider";
 
 export function RepoStarGraph() {
-  const { selectedDate } = useDateContext();
   const { data: repoData } = useRepoDataContext();
 
   // Extract repo names from current repo data for bulk star history fetch
@@ -54,17 +54,8 @@ export function RepoStarGraph() {
     );
   }
 
-  // Convert the star history data to normalized format using selected date
-  const apiResponse = {
-    isCached: false,
-    date:
-      selectedDate?.toISOString().split("T")[0] ||
-      new Date().toISOString().split("T")[0],
-    data: starHistoryData,
-  };
-
   // Get repository names (short names without owner prefix)
-  const normalizedData = convertToNormalizedDays(apiResponse);
+  const normalizedData = convertToNormalizedDays(starHistoryData);
   const repoNames = Object.keys(starHistoryData).map(
     (fullName) => fullName.split("/")[1],
   );

@@ -3,14 +3,13 @@ import { getCache, setCache, TTL, getTrendCacheKey } from "../utils/caching";
 import { getTodayUTC } from "../utils/time";
 import { NextFunction, Request, Response } from "express";
 import { IRepo } from "../types/database";
-import { makeSuccess } from "../types/api";
+import { makeSuccess, makeError } from "../types/api";
 import {
   parsePagination,
   parseDateParam,
   withCache,
   paginateArray,
 } from "../utils/controller-helper";
-import { sendSuccess, handleControllerError } from "../utils/response-handler";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -31,18 +30,21 @@ export async function getTrending(
     const date = parseDateParam(req, getTodayUTC());
 
     const cacheKey = getTrendCacheKey(date);
-    const { data: repos, fromCache } = await withCache(
+    const { data: repoList, fromCache } = await withCache(
       cacheKey,
       () => fetchTrendingRepos(date),
       TTL.HAPPY_HOUR,
     );
 
-    const { items, total, totalPages } = paginateArray(repos, page, limit);
+    const {
+      items: repos,
+      total,
+      totalPages,
+    } = paginateArray(repoList, page, limit);
 
     const response = makeSuccess(
       {
-        data: items,
-        date: repos.length > 0 ? repos[0].trendingDate || date : date,
+        repos,
         pagination: {
           page,
           limit,
@@ -52,12 +54,14 @@ export async function getTrending(
           hasPrev: page > 1,
         },
       },
-      new Date().toISOString(),
+      repoList.length > 0 ? repoList[0].trendingDate || date : date,
     );
     response.isCached = fromCache;
     res.status(200).json(response);
   } catch (error) {
-    handleControllerError(res, error);
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch trending repos";
+    res.status(400).json(makeError(new Date().toISOString(), 400, message));
   }
 }
 
@@ -100,96 +104,6 @@ async function fetchTrendingRepos(date: string): Promise<IRepo[]> {
   return repos;
 }
 
-/**
- * GET /repos/star-history
- * ?date=YYYY-MM-DD  (optional; empty → latest date)
- */
-export async function getStarHistoryAllDataPointTrendingData(
-  req: Request,
-  res: Response,
-  _next: NextFunction,
-): Promise<void> {
-  try {
-    const date = parseDateParam(req, getTodayUTC());
-
-    const cacheKey = `star-history-trending:${date}`;
-    const { data: starHistoryData, fromCache } = await withCache(
-      cacheKey,
-      () => fetchStarHistoryData(date),
-      TTL.SEMAINE,
-    );
-
-    const response = makeSuccess(
-      {
-        data: starHistoryData,
-        date: starHistoryData.actualDate || date,
-      },
-      new Date().toISOString(),
-    );
-    response.isCached = fromCache;
-    res.status(200).json(response);
-  } catch (error) {
-    handleControllerError(res, error);
-  }
-}
-
-async function fetchStarHistoryData(date: string): Promise<any> {
-  // Try exact match first
-  let trendingRepos = await Repo.find({ trendingDate: date })
-    .select("_id")
-    .lean();
-
-  let actualDate = date;
-
-  // If no repos found for exact date, fallback to latest date
-  if (!trendingRepos.length) {
-    const [{ latestDate } = {}] = await Repo.aggregate([
-      { $match: { trendingDate: { $exists: true, $ne: null } } },
-      { $sort: { trendingDate: -1 } },
-      { $limit: 1 },
-      { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
-    ]);
-
-    if (latestDate) {
-      trendingRepos = await Repo.find({ trendingDate: latestDate })
-        .select("_id")
-        .lean();
-      actualDate = latestDate;
-    }
-  }
-
-  const repoIds = trendingRepos.map((repo) => repo._id);
-
-  // Find star history records for these repos
-  const starHistoryRecords = await StarHistory.find({
-    repoId: { $in: repoIds },
-  })
-    .populate("repoId", "fullName name")
-    .lean();
-
-  // Group star history data by repo fullName
-  const groupedStarHistory = {};
-  starHistoryRecords.forEach((record) => {
-    const repoName =
-      (record.repoId as any).fullName || (record.repoId as any).name;
-    groupedStarHistory[repoName] = record.history.map((historyPoint) => ({
-      date: historyPoint.date,
-      count: historyPoint.count,
-    }));
-  });
-
-  // Cache the results with proper date-based cache key
-  const actualCacheKey = `star-history-trending:${actualDate}`;
-  setCache(actualCacheKey, groupedStarHistory, TTL.SEMAINE);
-
-  // If we used fallback date, also cache with requested date key for short time
-  if (actualDate !== date) {
-    setCache(`star-history-trending:${date}`, groupedStarHistory, TTL.SEMAINE);
-  }
-
-  return { ...groupedStarHistory, actualDate };
-}
-
 import { getRepoStarRecords } from "../services/scraping-services/fetching-star-history";
 /**
  * GET /repos/:name/:repo/star-history
@@ -210,17 +124,15 @@ export async function getStarHistory(
       TTL.THIRTY_FLIRTY,
     );
 
-    const response = makeSuccess(
-      {
-        data: starHistory,
-        date: getTodayUTC(),
-      },
-      new Date().toISOString(),
-    );
+    const response = makeSuccess({ data: starHistory }, getTodayUTC());
     response.isCached = fromCache;
     res.status(200).json(response);
   } catch (error) {
-    handleControllerError(res, error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch repo star history";
+    res.status(400).json(makeError(new Date().toISOString(), 400, message));
   }
 }
 
@@ -270,12 +182,16 @@ export async function getStarHistoryForRepos(
     const { repoNames } = req.body;
     const validRepoNames = validateRepoNames(repoNames);
 
-    const { data, metadata } =
-      await fetchMultipleRepoStarHistory(validRepoNames);
+    const { data } = await fetchMultipleRepoStarHistory(validRepoNames);
 
-    sendSuccess(res, { data, metadata });
+    const response = makeSuccess(data, new Date().toISOString());
+    res.status(200).json(response);
   } catch (error) {
-    handleControllerError(res, error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch bulk star history";
+    res.status(400).json(makeError(new Date().toISOString(), 400, message));
   }
 }
 
@@ -298,20 +214,16 @@ function validateRepoNames(repoNames: any): string[] {
   return validRepoNames;
 }
 
+export interface starDataPoint {
+  date: string;
+  count: number;
+}
+
 async function fetchMultipleRepoStarHistory(validRepoNames: string[]): Promise<{
-  data: Record<string, any>;
-  metadata: {
-    requested: number;
-    returned: number;
-    cacheHits: number;
-    dbHits: number;
-    skipped: number;
-  };
+  data: Record<string, starDataPoint[]>;
 }> {
   const result = {};
   const cacheHits = [];
-  const dbHits = [];
-  const skipped = [];
 
   // Check cache for each repo
   for (const repoName of validRepoNames) {
@@ -352,29 +264,12 @@ async function fetchMultipleRepoStarHistory(validRepoNames: string[]): Promise<{
       }));
 
       result[repoName] = starHistory;
-      dbHits.push(repoName);
 
       // Cache the result
       const cacheKey = `star-history:${repoName}`;
       setCache(cacheKey, starHistory, TTL.TWO_DAYS);
     }
-
-    // Track skipped repos (not found in database)
-    skipped.push(
-      ...uncachedRepos.filter(
-        (name) => !dbHits.includes(name) && !cacheHits.includes(name),
-      ),
-    );
   }
 
-  return {
-    data: result,
-    metadata: {
-      requested: validRepoNames.length,
-      returned: Object.keys(result).length,
-      cacheHits: cacheHits.length,
-      dbHits: dbHits.length,
-      skipped: skipped.length,
-    },
-  };
+  return { data: result };
 }
