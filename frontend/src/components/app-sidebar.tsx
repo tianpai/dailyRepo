@@ -1,4 +1,4 @@
-import { Home, SquareUserRound, Info, Flame } from "lucide-react";
+import { Home, SquareUserRound, Info, Flame, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   SidebarHeader,
@@ -28,6 +28,11 @@ const items = [
     title: "Repos",
     url: "/repos",
     icon: Home,
+  },
+  {
+    title: "Search",
+    url: "/search",
+    icon: Search,
   },
   {
     title: "Developers",

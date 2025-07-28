@@ -125,3 +125,88 @@ export const topicLangPipeline = [
     },
   },
 ];
+
+export const searchReposPipeline = (
+  searchTerms: string[],
+  language?: string,
+  page: number = 1,
+  limit: number = 15,
+): any[] => {
+  // Build match conditions for each search term
+  const searchConditions = searchTerms.map((term) => ({
+    $or: [
+      { name: { $regex: term, $options: "i" } },
+      { owner: { $regex: term, $options: "i" } },
+      { topics: { $regex: term, $options: "i" } },
+    ],
+  }));
+
+  // Add language filter if provided
+  const matchStage: any = {
+    $and: searchConditions,
+  };
+
+  if (language) {
+    matchStage.$and.push({
+      $expr: {
+        $in: [
+          { $toLower: language },
+          { $map: { 
+            input: { $objectToArray: "$language" }, 
+            in: { $toLower: "$$this.k" } 
+          }}
+        ]
+      }
+    });
+  }
+
+  // Build scoring for all search terms
+  const scoreConditions = searchTerms.flatMap((term) => [
+    {
+      $cond: [
+        { $regexMatch: { input: "$name", regex: term, options: "i" } },
+        15,
+        0,
+      ],
+    },
+    {
+      $cond: [
+        { $regexMatch: { input: "$owner", regex: term, options: "i" } },
+        10,
+        0,
+      ],
+    },
+    {
+      $cond: [
+        {
+          $in: [
+            term.toLowerCase(),
+            { $map: { input: "$topics", in: { $toLower: "$$this" } } },
+          ],
+        },
+        20,
+        0,
+      ],
+    },
+  ]);
+
+  return [
+    { $match: matchStage },
+    {
+      $addFields: {
+        searchScore: { $add: scoreConditions },
+      },
+    },
+    { $sort: { searchScore: -1 as const, trendingDate: -1 as const } },
+    {
+      $facet: {
+        data: [
+          { $skip: (page - 1) * limit },
+          { $limit: limit },
+          { $project: { searchScore: 0 } }, // Remove searchScore from final results
+        ],
+        totalCount: [{ $count: "count" }],
+      },
+    },
+  ];
+};

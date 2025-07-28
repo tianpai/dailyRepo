@@ -2,6 +2,7 @@ import { setCache, TTL, getTrendCacheKey } from "@utils/caching";
 import { IRepo } from "@/interfaces/database";
 import { Repo } from "@model/Repo";
 import { getTodayUTC } from "@/utils/time";
+import { searchReposPipeline } from "@/utils/db-pipline";
 
 export async function fetchTrendingRepos(date: string): Promise<IRepo[]> {
   // First try to find repos for the requested date
@@ -31,13 +32,36 @@ export async function fetchTrendingRepos(date: string): Promise<IRepo[]> {
     const today = getTodayUTC();
 
     // Cache the data against its actual date with a long TTL
-    setCache(getTrendCacheKey(actualDate), repos, TTL.SEMAINE);
+    setCache(getTrendCacheKey(actualDate), repos, TTL._1_WEEK);
 
     // If today's data was requested but we served older data, create a short-lived alias
     if (date === today && actualDate !== date) {
-      setCache(getTrendCacheKey(date), repos, TTL.HAPPY_HOUR);
+      setCache(getTrendCacheKey(date), repos, TTL._1_HOUR);
     }
   }
 
   return repos;
+}
+
+export async function fetchSearchedRepos(
+  query: string,
+  language?: string,
+  page: number = 1,
+  limit: number = 15,
+): Promise<{ repos: IRepo[]; totalCount: number }> {
+  const searchTerms = query
+    .trim()
+    .split(/\s+/)
+    .filter((term) => term.length > 0);
+
+  if (searchTerms.length === 0) {
+    return { repos: [], totalCount: 0 };
+  }
+
+  const pipeline = searchReposPipeline(searchTerms, language, page, limit);
+  const [result] = await Repo.aggregate(pipeline);
+  const repos = result.data || [];
+  const totalCount = result.totalCount[0]?.count || 0;
+
+  return { repos, totalCount };
 }

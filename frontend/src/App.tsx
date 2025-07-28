@@ -10,6 +10,7 @@ import { RepoPage } from "./components/repo/repo-page.tsx";
 import { DeveloperPage } from "./components/developers/developer-page.tsx";
 import { SidebarLayout } from "./components/app-sidebar.tsx";
 import { DailyHighlight } from "./components/highlights/highlight-page.tsx";
+import { SearchPage } from "./components/search/search-page.tsx";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
             <Routes>
               <Route path="/repos" element={<RepoPage />} />
               <Route path="/" element={<DailyHighlight />} />
+              <Route path="/search" element={<SearchPage />} />
               <Route
                 path="/about"
                 element={

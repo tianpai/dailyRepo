@@ -1,11 +1,11 @@
 import React, { createContext, useContext } from "react";
-import { useTrendingRepos, type RepoProp } from "@/hooks/useTrendingRepos";
+import { useTrendingRepos, type RepoProps } from "@/hooks/useTrendingRepos";
 import { useDateContext } from "@/components/date-provider";
 import type { Pagination } from "@/interface/endpoint";
 
 // Define the type for the context value
 type RepoDataContextType = {
-  data: RepoProp[] | [];
+  data: RepoProps[] | [];
   loading: boolean;
   error: string | "";
   currentPage: number;

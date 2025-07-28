@@ -60,41 +60,55 @@ function generatePageNumbers(
   return { pages: range, showPrevEllipsis: false, showNextEllipsis: false };
 }
 
-export function RepoPagination() {
-  const { currentPage, setCurrentPage, pagination, loading } =
-    useRepoDataContext();
+// Generic reusable pagination component
+interface GenericPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  isLoading?: boolean;
+  onPageChange: (page: number) => void;
+}
 
-  // Scroll to top when page changes and data has loaded
+export function GenericPagination({
+  currentPage,
+  totalPages,
+  hasNext,
+  hasPrev,
+  isLoading = false,
+  onPageChange,
+}: GenericPaginationProps) {
+  // Scroll to top when page changes and not loading
   useEffect(() => {
-    if (!loading && pagination) {
+    if (!isLoading) {
       // Small delay to ensure content is rendered
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }, 100);
     }
-  }, [currentPage, loading, pagination]);
+  }, [currentPage, isLoading]);
 
-  // Don't render if no pagination data or loading
-  if (loading || !pagination || pagination.totalPages <= 1) {
+  // Don't render if no pagination data, loading, or only one page
+  if (isLoading || totalPages <= 1) {
     return null;
   }
 
-  const { pages } = generatePageNumbers(currentPage, pagination.totalPages);
+  const { pages } = generatePageNumbers(currentPage, totalPages);
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= pagination.totalPages && page !== currentPage) {
-      setCurrentPage(page);
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      onPageChange(page);
     }
   };
 
   const handlePrevious = () => {
-    if (pagination.hasPrev) {
+    if (hasPrev) {
       handlePageChange(currentPage - 1);
     }
   };
 
   const handleNext = () => {
-    if (pagination.hasNext) {
+    if (hasNext) {
       handlePageChange(currentPage + 1);
     }
   };
@@ -108,7 +122,7 @@ export function RepoPagination() {
             <PaginationPrevious
               onClick={handlePrevious}
               className={
-                !pagination.hasPrev
+                !hasPrev
                   ? "pointer-events-none opacity-50"
                   : "cursor-pointer"
               }
@@ -137,7 +151,7 @@ export function RepoPagination() {
             <PaginationNext
               onClick={handleNext}
               className={
-                !pagination.hasNext
+                !hasNext
                   ? "pointer-events-none opacity-50"
                   : "cursor-pointer"
               }
@@ -146,5 +160,25 @@ export function RepoPagination() {
         </PaginationContent>
       </Pagination>
     </div>
+  );
+}
+
+export function RepoPagination() {
+  const { currentPage, setCurrentPage, pagination, loading } =
+    useRepoDataContext();
+
+  if (!pagination) {
+    return null;
+  }
+
+  return (
+    <GenericPagination
+      currentPage={currentPage}
+      totalPages={pagination.totalPages}
+      hasNext={pagination.hasNext}
+      hasPrev={pagination.hasPrev}
+      isLoading={loading}
+      onPageChange={setCurrentPage}
+    />
   );
 }

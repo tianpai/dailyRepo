@@ -8,7 +8,9 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@hooks*": ["./src/hooks*"],
+      "@interface*": ["./src/interface*"]
     },
     /* Bundler mode */
     "moduleResolution": "bundler",

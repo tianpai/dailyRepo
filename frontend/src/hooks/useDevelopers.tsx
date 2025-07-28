@@ -15,7 +15,11 @@ export interface Developer extends DeveloperProps {
   _id: string;
 }
 
+<<<<<<<< HEAD:frontend/src/hooks/useDevelopers.tsx.tsx
 export interface TrendingDevelopersResponse {
+========
+export interface Developers {
+>>>>>>>> dev:frontend/src/hooks/useDevelopers.tsx
   developers: Developer[];
   pagination: Pagination;
 }
@@ -62,21 +66,30 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
     data: response,
     loading,
     error,
-  } = useApi<TrendingDevelopersResponse>({
+  } = useApi<Developers>({
     urlArgs,
     fetchOptions,
   });
 
   return {
+<<<<<<<< HEAD:frontend/src/hooks/useDevelopers.tsx.tsx
     data: response ? processTrendingDevelopers(response) : [],
+========
+    data: response ? processDevelopers(response) : [],
+>>>>>>>> dev:frontend/src/hooks/useDevelopers.tsx
     pagination: response?.pagination || null,
     loading,
     error: error?.error?.message || "",
   };
 }
 
+<<<<<<<< HEAD:frontend/src/hooks/useDevelopers.tsx.tsx
 function processTrendingDevelopers(
   data: TrendingDevelopersResponse,
+========
+function processDevelopers(
+  data: Developers,
+>>>>>>>> dev:frontend/src/hooks/useDevelopers.tsx
 ): DeveloperProps[] {
   const mapped: DeveloperProps[] = data.developers.map(
     (dev: Developer): DeveloperProps => ({

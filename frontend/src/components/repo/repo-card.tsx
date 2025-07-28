@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChartPieDonut } from "@/components/repo/lang-pie-chart.tsx";
-import { getOptimalForegroundColor } from "../../lib/fg-color.ts";
+import { getOptimalForegroundColor } from "@/lib/fg-color.ts";
 import { COLORS } from "@/lib/color";
-import type { RepoProp } from "@/hooks/useTrendingRepos.tsx";
+import type { RepoProps } from "@/hooks/useTrendingRepos.tsx";
 
 // Get color for a repository based on its index (matching star graph logic)
 function getColor(index: number): string {
@@ -36,7 +36,7 @@ export function RepoCard({
   topics,
   language,
   colorIndex = 0,
-}: RepoProp & { colorIndex?: number }) {
+}: RepoProps & { colorIndex?: number }) {
   const repoColor = getColor(colorIndex);
   return (
     <Card

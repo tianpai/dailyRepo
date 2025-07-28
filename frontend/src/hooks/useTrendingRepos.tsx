@@ -20,12 +20,12 @@ export interface Repo {
   trendingDate: string;
 }
 
-interface TrendingRepos {
+interface Repos {
   repos: Repo[];
   pagination: Pagination;
 }
 
-export interface RepoProp {
+export interface RepoProps {
   name: string;
   owner: string;
   description: string;
@@ -70,13 +70,13 @@ export function useTrendingRepos(selectedDate?: Date, page?: number) {
     loading,
     error,
     refetch,
-  } = useApi<TrendingRepos>({
+  } = useApi<Repos>({
     urlArgs,
     fetchOptions,
   });
 
   return {
-    data: response?.repos ? processTrendingRepo(response) : [],
+    data: response?.repos ? processRepos(response) : [],
     pagination: response?.pagination || null,
     loading,
     error: error?.error?.message || "",
@@ -84,8 +84,8 @@ export function useTrendingRepos(selectedDate?: Date, page?: number) {
   };
 }
 
-export function processTrendingRepo(data: TrendingRepos): RepoProp[] {
-  const processedTrendingRepos = data.repos.map((r: Repo) => {
+export function processRepos(data: Repos): RepoProps[] {
+  const processedRepos = data.repos.map((r: Repo) => {
     return {
       name: r.name,
       owner: r.owner,
@@ -95,5 +95,5 @@ export function processTrendingRepo(data: TrendingRepos): RepoProp[] {
       language: r.language,
     };
   });
-  return processedTrendingRepos;
+  return processedRepos;
 }

@@ -27,6 +27,7 @@ export async function withCache<T>(
   cacheKey: string,
   fetchFn: () => Promise<T>,
   ttl: number,
+  shouldCache?: (data: T) => boolean,
 ): Promise<{ data: T; fromCache: boolean }> {
   const cached = getCache(cacheKey) as T;
   if (cached) {
@@ -34,7 +35,12 @@ export async function withCache<T>(
   }
 
   const data = await fetchFn();
-  setCache(cacheKey, data, ttl);
+
+  // Only cache if shouldCache function returns true (defaults to true if not provided)
+  if (!shouldCache || shouldCache(data)) {
+    setCache(cacheKey, data, ttl);
+  }
+
   return { data, fromCache: false };
 }
 

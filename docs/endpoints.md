@@ -9,6 +9,14 @@ All endpoints are relative to `/api/v1/`.
   - Query Parameters: `?date=YYYY-MM-DD` (Optional: specific date for trending
     data), `?page=N` (Optional: page number, default 1), `?limit=N` (Optional:
     items per page, default 15)
+- `GET /repos/search`
+  - Description: Search repositories by name, owner, or topics with optional language filtering.
+  - Query Parameters: 
+    - `?q=search terms` (Required: search query, supports multiple terms)
+    - `?language=JavaScript` (Optional: filter by programming language)
+    - `?page=N` (Optional: page number, default 1)
+    - `?limit=N` (Optional: items per page, default 15, max 50)
+  - Example: `/repos/search?q=react video-editor&language=TypeScript`
 - `POST /repos/star-history`
   - Description: Retrieves star history for a list of repositories.
   - Request Body: `{ repoNames: string[] }` (Array of repository names in

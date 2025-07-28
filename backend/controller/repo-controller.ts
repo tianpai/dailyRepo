@@ -8,7 +8,10 @@ import {
   withCache,
   paginateArray,
 } from "../utils/controller-helper";
-import { fetchTrendingRepos } from "@/services/repo-service";
+import {
+  fetchTrendingRepos,
+  fetchSearchedRepos,
+} from "@/services/repo-service";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -59,5 +62,75 @@ export async function getTrending(
     const message =
       error instanceof Error ? error.message : "Failed to fetch trending repos";
     res.status(400).json(makeError(new Date().toISOString(), 400, message));
+  }
+}
+
+/**
+ * GET /repos/search
+ * ?q=search terms (required)
+ * ?language=JavaScript (optional)
+ * ?page=N ?limit=N (optional; pagination)
+ */
+export async function searchRepos(
+  req: Request,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> {
+  try {
+    const query = req.query.q as string;
+    const language = req.query.language as string | undefined;
+    const { page, limit } = parsePagination(req, 15, 50);
+
+    if (!query || query.trim().length === 0) {
+      res
+        .status(400)
+        .json(
+          makeError(
+            new Date().toISOString(),
+            400,
+            "Search query 'q' is required",
+          ),
+        );
+      return;
+    }
+
+    // Create cache key based on search parameters
+    const cacheKey = `search:${query}:${language || "all"}:${page}:${limit}`;
+
+    const { data: searchResult, fromCache } = await withCache(
+      cacheKey,
+      () => fetchSearchedRepos(query, language, page, limit),
+      TTL._1_HOUR,
+      (result) => result.totalCount > 0, // Only cache if results found
+    );
+
+    const { repos, totalCount } = searchResult;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const response = makeSuccess(
+      {
+        repos,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+        searchInfo: {
+          query: query.trim(),
+          language: language || null,
+          resultsFound: totalCount,
+        },
+      },
+      new Date().toISOString(),
+    );
+    response.isCached = fromCache;
+    res.status(200).json(response);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to search repositories";
+    res.status(500).json(makeError(new Date().toISOString(), 500, message));
   }
 }
