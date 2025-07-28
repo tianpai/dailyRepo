@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getDevelopersList,
   getTrendingDevelopers,
-} from "../controller/developer-controller";
+} from "@controller/developer-controller";
 
 const devRouter = Router();
 

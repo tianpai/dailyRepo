@@ -40,9 +40,22 @@ app.get("/health", (_, res) => {
 
 if (process.argv.includes("--debug")) {
   app.use((req, _res, next) => {
-    console.log(
-      `Incoming request: ${req.method} ${req.path}\n${JSON.stringify(req.params)}\n${JSON.stringify(req.headers)}`,
-    );
+    const logParts = [`${req.method} ${req.path}`];
+
+    if (Object.keys(req.params).length > 0) {
+      logParts.push(`params: ${JSON.stringify(req.params)}`);
+    }
+
+    if (Object.keys(req.query).length > 0) {
+      logParts.push(`query: ${JSON.stringify(req.query)}`);
+    }
+
+    console.log(logParts.join(" "));
+
+    if (req.body && Object.keys(req.body).length > 0) {
+      console.log(`   body: ${JSON.stringify(req.body)}`);
+    }
+
     next();
   });
   console.log("Debug mode enabled");

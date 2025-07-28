@@ -98,9 +98,11 @@ export function formatDuration(startTime: number): string {
 export function getWeekNumber(date: Date): { year: number; week: number } {
   const year = date.getFullYear();
   const startOfYear = new Date(year, 0, 1);
-  const daysSinceStart = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  const daysSinceStart = Math.floor(
+    (date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000),
+  );
   const weekNumber = Math.floor(daysSinceStart / 7) + 1;
-  
+
   return { year, week: weekNumber };
 }
 

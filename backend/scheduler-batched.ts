@@ -5,8 +5,8 @@ import {
   saveTrendingData,
   prepTrendingDevelopers,
   saveTrendingDevelopers,
-} from "./services/scraping-services/repo-data";
-import { saveStarHistory } from "./services/scraping-services/batched-star-history";
+} from "./scraping/repo-data";
+import { saveStarHistory } from "./scraping/batched-star-history";
 import { logCyan, logYellow } from "./utils/coloredConsoleLog";
 import { formatDuration } from "./utils/time";
 import {

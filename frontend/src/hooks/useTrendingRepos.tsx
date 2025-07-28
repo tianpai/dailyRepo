@@ -25,6 +25,19 @@ interface TrendingRepos {
   pagination: Pagination;
 }
 
+export interface RepoProp {
+  name: string;
+  owner: string;
+  description: string;
+  url: string;
+  language: LanguageMap;
+  topics: string[];
+}
+
+export interface RepoCardProps extends Repo {
+  rank: number;
+}
+
 export function useTrendingRepos(selectedDate?: Date, page?: number) {
   const base_url = env("VITE_DATABASE_REPOS");
   const token = env("VITE_DEV_AUTH");
@@ -71,16 +84,6 @@ export function useTrendingRepos(selectedDate?: Date, page?: number) {
   };
 }
 
-export interface RepoProp {
-  name: string;
-  owner: string;
-  description: string;
-  url: string;
-  language: LanguageMap;
-  trendingDate: string;
-  topics: string[];
-}
-
 export function processTrendingRepo(data: TrendingRepos): RepoProp[] {
   const processedTrendingRepos = data.repos.map((r: Repo) => {
     return {
@@ -89,7 +92,6 @@ export function processTrendingRepo(data: TrendingRepos): RepoProp[] {
       description: r.description,
       url: r.url,
       topics: r.topics,
-      trendingDate: r.trendingDate,
       language: r.language,
     };
   });

@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { setCache, getCache, TTL } from "../utils/caching";
-import { Repo } from "../model/Repo";
-import { makeSuccess, makeError } from "../types/api";
-import { getTodayUTC } from "../utils/time";
+import { setCache, getCache, TTL } from "@utils/caching";
+import { Repo } from "@model/Repo";
+import { makeSuccess, makeError } from "@/interfaces/api";
+import { getTodayUTC } from "@utils/time";
 
 /**
  * Languages currently handled by the scraper.
@@ -59,7 +59,7 @@ export async function getLanguageTrendingRepos(
   return;
 }
 
-import { language_list_top } from "../utils/db-pipline";
+import { language_list_top } from "@utils/db-pipline";
 /*
  * params: topN (optional, default 5, max 15)
  *
@@ -67,7 +67,7 @@ import { language_list_top } from "../utils/db-pipline";
 export async function getTopLang(
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ): Promise<void> {
   try {
     let top = parseInt((req.query.top as string) ?? "5", 10);
@@ -93,7 +93,7 @@ export async function getTopLang(
     }
     const topLangs: TopLangsResponse[] = dbResult[0] || [];
 
-    setCache(cacheKey, topLangs, TTL.ONE_EARTH_ROTATION);
+    setCache(cacheKey, topLangs, TTL._1_DAY);
 
     res.status(200).json(makeSuccess({ data: topLangs }, getTodayUTC()));
     return;

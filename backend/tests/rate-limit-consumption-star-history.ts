@@ -1,8 +1,8 @@
 import axios from "axios";
-import { Repo } from "../model/Repo";
+import { Repo } from "@model/Repo";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { getRepoStarRecords } from "../services/scraping-services/fetching-star-history";
+import { getRepoStarRecords } from "../scraping/fetching-star-history";
 import chalk from "chalk";
 dotenv.config();
 

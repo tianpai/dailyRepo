@@ -13,9 +13,6 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-// Normalized day-based data point
-export type RawRepoApiResponse = ApiResponse<RawRepoData[]>;
-
 // ================ UI PROPS ========================
 
 // the `language` field is just a map from language name → bytes (or whatever unit)
@@ -25,44 +22,7 @@ export interface LanguageTableProps {
   language: LanguageMap; // e.g., { "TypeScript": 642272, "JavaScript": 123456 }
 }
 
-// Raw data shape exactly as returned by the API
-export interface RawRepoData {
-  _id: string;
-  __v: number;
-  fullName: string; // e.g. "codexu/note-gen"
-  name: string; // repo name, e.g. "note-gen"
-  owner: string; // e.g. "codexu"
-  description: string;
-  url: string; // full URL to GitHub
-  language: LanguageMap; // e.g. { "TypeScript": 642272, ... }
-  topics: string[]; // e.g. ["assistant", "chatbot", …]
-  createdAt: string; //
-  lastUpdate: string; // e.g. "2025-06-09"
-  age: number; // in days
-  license: string; // e.g. "MIT"
-  trendingDate: string; // e.g. "2025-06-09"
-}
-
-// ================ UI PROPS ========================
-export interface RepoData {
-  name: string;
-  owner: string;
-  description: string;
-  url: string;
-  language: LanguageMap;
-  trendingDate: string;
-  topics: string[]; // optional, not always present
-}
-
-// export interface GraphData {
-//
-// }
-
 export interface StatsProps {
   stars: number;
   fork: number;
-}
-
-export interface RepoCardProps extends RepoData {
-  rank: number;
 }

@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from "react";
 import { useTrendingRepos, type RepoProp } from "@/hooks/useTrendingRepos";
+import { useDateContext } from "@/components/date-provider";
 import type { Pagination } from "@/interface/endpoint";
 
 // Define the type for the context value
@@ -7,8 +8,6 @@ type RepoDataContextType = {
   data: RepoProp[] | [];
   loading: boolean;
   error: string | "";
-  selectedDate: Date | undefined;
-  setSelectedDate: (date: Date | undefined) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   pagination: Pagination | null;
@@ -17,9 +16,7 @@ type RepoDataContextType = {
 const RepoDataContext = createContext<RepoDataContextType | null>(null);
 
 export function RepoDataProvider({ children }: { children: React.ReactNode }) {
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
-    undefined,
-  );
+  const { selectedDate } = useDateContext();
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const { data, pagination, loading, error } = useTrendingRepos(
     selectedDate,
@@ -37,8 +34,6 @@ export function RepoDataProvider({ children }: { children: React.ReactNode }) {
         data,
         loading,
         error,
-        selectedDate,
-        setSelectedDate,
         currentPage,
         setCurrentPage,
         pagination,

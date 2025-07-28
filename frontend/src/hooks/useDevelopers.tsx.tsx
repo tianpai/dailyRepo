@@ -1,11 +1,24 @@
 import { useMemo } from "react";
 import { useApi, env } from "@/hooks/useApi";
-import type {
-  TrendingDevelopersResponse,
-  RawDeveloperData,
-  DeveloperData,
-  UseTrendingDevelopersResult,
-} from "@/interface/developer.tsx";
+import { type Pagination } from "@/interface/endpoint";
+
+export interface DeveloperProps {
+  username: string;
+  repositoryPath: string;
+  profileUrl: string;
+  trendingDate: string;
+  location?: string;
+  avatar_url?: string;
+}
+
+export interface Developer extends DeveloperProps {
+  _id: string;
+}
+
+export interface TrendingDevelopersResponse {
+  developers: Developer[];
+  pagination: Pagination;
+}
 
 /**
  * Custom hook for fetching trending developers data with pagination
@@ -18,14 +31,10 @@ import type {
  * const { data, pagination, loading, error } = useTrendingDevelopers();
  * const { data, pagination, loading, error } = useTrendingDevelopers(new Date(), 2);
  */
-export function useTrendingDevelopers(
-  selectedDate?: Date,
-  page?: number,
-): UseTrendingDevelopersResult {
+export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
   const base_url = env("VITE_DATABASE_DEVS");
   const token = env("VITE_DEV_AUTH");
 
-  // Memoize URL args to prevent unnecessary re-fetches
   const urlArgs = useMemo(() => {
     const query: Record<string, string> = {};
     if (selectedDate) {
@@ -42,7 +51,6 @@ export function useTrendingDevelopers(
     };
   }, [base_url, selectedDate, page]);
 
-  // Memoize fetch options
   const fetchOptions = useMemo(
     () => ({
       headers: { Authorization: `Bearer ${token}` },
@@ -59,31 +67,26 @@ export function useTrendingDevelopers(
     fetchOptions,
   });
 
-  // Transform the response data
-  const transformedData = useMemo(() => {
-    if (!response) return { data: [], pagination: null };
-
-    const mapped: DeveloperData[] = response.developers.map(
-      (dev: RawDeveloperData) => ({
-        username: dev.username,
-        repositoryPath: dev.repositoryPath,
-        profileUrl: dev.profileUrl,
-        trendingDate: dev.trendingDate,
-        location: dev.location,
-        avatar_url: dev.avatar_url,
-      }),
-    );
-
-    return {
-      data: mapped,
-      pagination: response.pagination,
-    };
-  }, [response]);
-
   return {
-    data: transformedData.data,
-    pagination: transformedData.pagination,
+    data: response ? processTrendingDevelopers(response) : [],
+    pagination: response?.pagination || null,
     loading,
     error: error?.error?.message || "",
   };
+}
+
+function processTrendingDevelopers(
+  data: TrendingDevelopersResponse,
+): DeveloperProps[] {
+  const mapped: DeveloperProps[] = data.developers.map(
+    (dev: Developer): DeveloperProps => ({
+      username: dev.username,
+      repositoryPath: dev.repositoryPath,
+      profileUrl: dev.profileUrl,
+      trendingDate: dev.trendingDate,
+      location: dev.location,
+      avatar_url: dev.avatar_url,
+    }),
+  );
+  return mapped;
 }

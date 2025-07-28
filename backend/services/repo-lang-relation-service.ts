@@ -1,8 +1,8 @@
-import { Repo } from "../../model/Repo";
-import { WeeklyTopicFindings } from "../../model/WeeklyTopicFindings";
-import { topicLangPipeline } from "../../utils/db-pipline";
-import { filterLanguage } from "../../utils/language-list";
-import { getCurrentWeekNumber } from "../../utils/time";
+import { Repo } from "@model/Repo";
+import { WeeklyTopicFindings } from "@model/WeeklyTopicFindings";
+import { topicLangPipeline } from "@utils/db-pipline";
+import { filterLanguage } from "@utils/language-list";
+import { getCurrentWeekNumber } from "@utils/time";
 import {
   fetchClusteredKeywords,
   analyzeKeywordOutput,

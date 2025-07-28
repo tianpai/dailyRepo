@@ -1,6 +1,5 @@
 import { Document, ObjectId } from "mongoose";
 
-// Language map type from frontend
 export type LanguageMap = Record<string, number>;
 
 export interface IRepo extends Document {
@@ -29,14 +28,6 @@ export interface IStarHistory extends Document {
   repoId: ObjectId;
   saveDate: Date;
   history: IStarHistoryEntry[];
-}
-
-export interface IVisitorLog extends Document {
-  ip: string;
-  userAgent: string;
-  timestamp: Date;
-  path: string;
-  method: string;
 }
 
 export interface ITrendingDeveloper extends Document {

@@ -2,7 +2,7 @@ name: Daily Repo Scrape
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+    - cron: "20 15 * * *"
   workflow_dispatch:
 
 jobs:
@@ -19,32 +19,12 @@ jobs:
         with:
           bun-version: 1.2.17
 
-      # (optional) restore bun cache
-      # - name: Bun cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.bun/install/cache
-      #     key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
-      #     restore-keys: bun-${{ runner.os }}-
-
       - name: Get runner public IP
         id: get_ip
         run: |
           IP=$(curl -s https://ipinfo.io/ip)
           echo "Runner public IP: $IP"
           echo "ip=$IP" >> $GITHUB_OUTPUT
-
-      - name: Add runner IP to MongoDB Atlas (project level)
-        run: |
-          IP=${{ steps.get_ip.outputs.ip }}
-          echo "Adding $IP to project access list"
-          curl --digest \
-            -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
-            -H "Accept: application/json" \
-            -H "Content-Type: application/json" \
-            -X POST "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.ATLAS_PROJECT_ID }}/accessList" \
-            -d "[{ \"ipAddress\": \"$IP\", \"comment\": \"gha runner\" }]" \
-            -v
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -59,20 +39,8 @@ jobs:
           MONGO: ${{ secrets.MONGO }}
 
       - name: Run scraper
-        run: bun scheduler.ts --run-now
+        run: bun scheduler-batched.ts --run-batched
         env:
           MONGO: ${{ secrets.MONGO }}
           PORT: ${{ secrets.PORT }}
-          CACHE_KEY_TRENDING: ${{ secrets.CACHE_KEY_TRENDING }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Remove runner IP from MongoDB Atlas (project level)
-        if: always()
-        run: |
-          IP=${{ steps.get_ip.outputs.ip }}
-          echo "Removing $IP from project access list"
-          curl --digest \
-            -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
-            -H "Accept: application/json" \
-            -X DELETE "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.ATLAS_PROJECT_ID }}/accessList/$IP" \
-            -v

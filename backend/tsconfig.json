@@ -17,7 +17,16 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": false,
     "sourceMap": true,
-    "types": ["bun-types"]
+    "types": ["bun-types"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@services/*": ["./services/*"],
+      "@utils/*": ["./utils/*"],
+      "@model/*": ["./model/*"],
+      "@controller/*": ["./controller/*"],
+      "@interfaces/*": ["interfaces/*"]
+    }
   },
   "include": ["**/*.ts", "**/*.js"],
   "exclude": ["node_modules", "dist"]

@@ -1,5 +1,5 @@
 import { getRepoStarRecords } from "./fetching-star-history";
-import { Repo, StarHistory } from "../../model/Repo";
+import { Repo, StarHistory } from "@model/Repo";
 
 // Type definitions to match repo-data.ts
 interface StarHistoryProcessResult {

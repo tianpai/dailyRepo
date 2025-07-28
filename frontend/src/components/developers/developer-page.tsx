@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { PageContainer } from "@/components/page-container";
 import { SidebarLayout } from "@/components/app-sidebar";
-import { useTrendingDevelopers } from "@/hooks/developer-data";
+import {
+  useTrendingDevelopers,
+  type DeveloperProps,
+} from "@/hooks/useDevelopers.tsx";
 import { useDateContext } from "@/components/date-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -14,7 +17,7 @@ import {
   PaginationNext,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import type { DeveloperData, PaginationMetadata } from "@/interface/developer";
+import type { Pagination as PaginationMetadata } from "@/interface/endpoint";
 
 export function DeveloperPage() {
   return (
@@ -44,7 +47,7 @@ function DeveloperPageContent() {
 
   return (
     <div className="p-6">
-      <DeveloperPageHeader total={pagination?.total || 0} />
+      <DeveloperPageHeader total={pagination?.totalCount || 0} />
       <DeveloperGrid developers={data} />
       <DeveloperPagination
         currentPage={currentPage}
@@ -64,7 +67,7 @@ function DeveloperPageHeader({ total }: { total: number }) {
   );
 }
 
-function DeveloperGrid({ developers }: { developers: DeveloperData[] }) {
+function DeveloperGrid({ developers }: { developers: DeveloperProps[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
       {developers.map((dev) => (
@@ -74,7 +77,7 @@ function DeveloperGrid({ developers }: { developers: DeveloperData[] }) {
   );
 }
 
-function DeveloperCard({ developer }: { developer: DeveloperData }) {
+function DeveloperCard({ developer }: { developer: DeveloperProps }) {
   return (
     <Card className="flex flex-col items-center text-center">
       <CardContent className="flex flex-col items-center space-y-3 w-full">
@@ -87,7 +90,7 @@ function DeveloperCard({ developer }: { developer: DeveloperData }) {
   );
 }
 
-function DeveloperName({ developer }: { developer: DeveloperData }) {
+function DeveloperName({ developer }: { developer: DeveloperProps }) {
   return (
     <a
       href={developer.profileUrl}
@@ -101,7 +104,7 @@ function DeveloperName({ developer }: { developer: DeveloperData }) {
   );
 }
 
-function DeveloperAvatar({ developer }: { developer: DeveloperData }) {
+function DeveloperAvatar({ developer }: { developer: DeveloperProps }) {
   return (
     <Avatar className="w-16 h-16">
       <AvatarImage src={developer.avatar_url} alt={developer.username} />
@@ -110,7 +113,7 @@ function DeveloperAvatar({ developer }: { developer: DeveloperData }) {
   );
 }
 
-function DeveloperRepository({ developer }: { developer: DeveloperData }) {
+function DeveloperRepository({ developer }: { developer: DeveloperProps }) {
   return (
     <a
       href={`https://github.com/${developer.repositoryPath}`}
@@ -124,7 +127,7 @@ function DeveloperRepository({ developer }: { developer: DeveloperData }) {
   );
 }
 
-function DeveloperLocation({ developer }: { developer: DeveloperData }) {
+function DeveloperLocation({ developer }: { developer: DeveloperProps }) {
   if (!developer.location) return null;
 
   return (

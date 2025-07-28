@@ -2,7 +2,7 @@
  * to get list of strings from the topics field of repos
  * always on the latest trending date
  */
-export const PIPELINE = [
+export const latestRepoTopicsPipeline = [
   {
     $group: {
       _id: null,

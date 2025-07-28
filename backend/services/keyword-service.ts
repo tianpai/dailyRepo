@@ -1,12 +1,12 @@
 import { analyzeKeywordInput } from "./ml-keyword-service";
-import { Repo } from "../../model/Repo";
-import { Keywords } from "../../model/Keywords";
-import { PIPELINE } from "../../utils/db-pipline";
-import { filterLanguage } from "../../utils/language-list";
+import { Repo } from "@model/Repo";
+import { Keywords } from "@model/Keywords";
+import { latestRepoTopicsPipeline } from "@utils/db-pipline";
+import { filterLanguage } from "@utils/language-list";
 import {
   fetchClusteredKeywords,
   analyzeKeywordOutput,
-} from "../../services/server-services/ml-keyword-service";
+} from "./ml-keyword-service";
 
 export function clusterRequestBody(topics: string[]): analyzeKeywordInput {
   return {
@@ -30,7 +30,7 @@ export async function fetchKeywordAnalysis(
   }
 
   // If not in DB, fetch from ML service
-  const repoTopicsResult = await Repo.aggregate(PIPELINE);
+  const repoTopicsResult = await Repo.aggregate(latestRepoTopicsPipeline);
   const allTopics: string[] = repoTopicsResult[0]?.topics || [];
   const topics: string[] = filterLanguage(allTopics);
 

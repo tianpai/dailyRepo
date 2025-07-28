@@ -1,15 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { getTodayUTC } from "../utils/time";
-import { TrendingDeveloper } from "../model/TrendingDeveloper";
-import { TTL, getTrendCacheKey } from "../utils/caching";
-import { ITrendingDeveloper } from "../types/database";
-import { makeSuccess, makeError } from "../types/api";
+import { getTodayUTC } from "@utils/time";
+import { TTL, getTrendCacheKey } from "@utils/caching";
+import { makeSuccess, makeError } from "@/interfaces/api";
 import {
   parsePagination,
   parseDateParam,
   withCache,
   paginateArray,
 } from "../utils/controller-helper";
+import { fetchTrendingDevelopers } from "@/services/developer-service";
 
 /**
  * GET /developers
@@ -46,13 +45,23 @@ export async function getTrendingDevelopers(
     const { data: developers, fromCache } = await withCache(
       cacheKey,
       () => fetchTrendingDevelopers(date),
-      TTL.HAPPY_HOUR,
+      TTL._1_HOUR,
     );
 
     const { items, total, totalPages } = paginateArray(developers, page, limit);
 
     const response = makeSuccess(
-      { developers: items, pagination: { page, limit, total, totalPages } },
+      {
+        developers: items,
+        pagination: {
+          page,
+          limit,
+          totalCount: total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      },
       new Date().toISOString(),
     );
     response.isCached = fromCache;
@@ -62,29 +71,4 @@ export async function getTrendingDevelopers(
       error instanceof Error ? error.message : "Failed to fetch developers";
     res.status(400).json(makeError(new Date().toISOString(), 400, message));
   }
-}
-
-async function fetchTrendingDevelopers(
-  date: string,
-): Promise<ITrendingDeveloper[]> {
-  let developers = await TrendingDeveloper.find({ trendingDate: date })
-    .select("-trendingDate")
-    .sort({ username: 1 });
-
-  if (!developers.length) {
-    const [{ latestDate } = {}] = await TrendingDeveloper.aggregate([
-      { $match: { trendingDate: { $exists: true, $ne: null } } },
-      { $sort: { trendingDate: -1 } },
-      { $limit: 1 },
-      { $group: { _id: null, latestDate: { $first: "$trendingDate" } } },
-    ]);
-
-    if (latestDate) {
-      developers = await TrendingDeveloper.find({ trendingDate: latestDate })
-        .select("-trendingDate")
-        .sort({ username: 1 });
-    }
-  }
-
-  return developers;
 }

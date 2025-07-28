@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IRepo, IStarHistory } from "../types/database";
+import { IRepo, IStarHistory } from "@interfaces/database";
 
 const RepoSchema = new mongoose.Schema({
   fullName: String,

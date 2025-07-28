@@ -1,13 +1,13 @@
 import { Router } from "express";
-import {
-  getTrending,
-  getStarHistory,
-  getStarHistoryForRepos,
-} from "../controller/repo-controller";
+import { getTrending } from "@controller/repo-controller";
 import {
   getTrendingkeywords,
   getTopicByLanguage,
-} from "../controller/keyword-controller";
+} from "@controller/keyword-controller";
+import {
+  getStarHistory,
+  getStarHistoryForRepos,
+} from "@controller/star-history-controller";
 
 const repoRouter = Router();
 

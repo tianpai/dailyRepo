@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { makeSuccess, makeError } from "../types/api";
+import { makeSuccess, makeError } from "@interfaces/api";
 
 export function sendSuccess<T>(
   res: Response,

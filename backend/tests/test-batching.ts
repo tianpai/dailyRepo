@@ -1,7 +1,7 @@
 import {
   calculateBatchSizes,
   estimateProcessingTime,
-} from "../services/scraping-services/batch-processor";
+} from "../scraping/batch-processor";
 import chalk from "chalk";
 
 // Test with a sample of 150 repositories

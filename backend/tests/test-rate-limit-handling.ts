@@ -1,10 +1,8 @@
 import {
   getCurrentRateLimit,
   logRateLimitStatus,
-  handleRateLimitExceeded,
-  withRateLimitRetry,
-} from "../services/scraping-services/rate-limit-checker";
-import { getRepoStargazersCount } from "../services/scraping-services/fetching-star-history";
+} from "../scraping/rate-limit-checker";
+import { getRepoStargazersCount } from "../scraping/fetching-star-history";
 import chalk from "chalk";
 
 async function testRateLimitHandling() {

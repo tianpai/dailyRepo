@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import { TTL, getTrendCacheKey } from "../utils/caching";
-import { getTodayUTC } from "../utils/time";
-import { makeSuccess, errorResponse } from "../types/api";
-import { withCache } from "../utils/controller-helper";
-import { fetchKeywordAnalysis } from "../services/server-services/keyword-service";
-import { groupTopicsByLanguage } from "../services/server-services/repo-lang-relation-service";
+import { TTL, getTrendCacheKey } from "@utils/caching";
+import { getTodayUTC } from "@utils/time";
+import { makeSuccess, errorResponse } from "@/interfaces/api";
+import { withCache } from "@utils/controller-helper";
+import { fetchKeywordAnalysis } from "@/services/keyword-service";
+import { groupTopicsByLanguage } from "@/services/repo-lang-relation-service";
 
 export async function getTrendingkeywords(
   _req: Request,
@@ -47,7 +47,7 @@ export async function getTopicByLanguage(
     const { data: topicLanguageData, fromCache } = await withCache(
       cacheKey,
       () => groupTopicsByLanguage(),
-      TTL.SEMAINE,
+      TTL._1_WEEK,
     );
 
     const response = makeSuccess(topicLanguageData, today);
