@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { LuChartArea } from "react-icons/lu";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
-import { COLORS } from "@/lib/color";
+import { COLORS } from "@/data/color";
 import {
   Card,
   CardContent,

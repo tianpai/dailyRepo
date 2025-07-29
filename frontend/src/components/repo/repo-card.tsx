@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ChartPieDonut } from "@/components/repo/lang-pie-chart.tsx";
 import { getOptimalForegroundColor } from "@/lib/fg-color.ts";
-import { COLORS } from "@/lib/color";
+import { COLORS } from "@/data/color";
 import type { RepoProps } from "@/hooks/useTrendingRepos.tsx";
 
 // Get color for a repository based on its index (matching star graph logic)

@@ -4,8 +4,6 @@ import {
   SidebarHeader,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -20,6 +18,11 @@ import { RepoDatePicker } from "@/components/date-picker";
 // Menu items.
 const items = [
   {
+    title: "Search",
+    url: "/search",
+    icon: Search,
+  },
+  {
     title: "Highlights",
     url: "/",
     icon: Flame,
@@ -28,11 +31,6 @@ const items = [
     title: "Repos",
     url: "/repos",
     icon: Home,
-  },
-  {
-    title: "Search",
-    url: "/search",
-    icon: Search,
   },
   {
     title: "Developers",

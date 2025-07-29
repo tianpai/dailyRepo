@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getOptimalForegroundColor } from "@/lib/fg-color.ts";
-import { COLORS } from "@/lib/color.ts";
+import { COLORS } from "@/data/color";
 import { useKeywords, type Keywords } from "@/hooks/useKeywords";
 
 // Get color for a keyword based on its index

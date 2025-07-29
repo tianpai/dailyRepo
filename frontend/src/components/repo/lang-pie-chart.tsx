@@ -4,11 +4,8 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { type LanguageMap } from "@/interface/repository";
-import {
-  toChartData,
-  type PieDatum,
-  languageColors,
-} from "@/lib/pie-chart-data";
+import { toChartData, type PieDatum } from "@/lib/pie-chart-data";
+import { languageColors } from "@/data/language-color";
 import { getOptimalForegroundColor } from "@/lib/fg-color";
 
 interface ChartPieDonutProps {

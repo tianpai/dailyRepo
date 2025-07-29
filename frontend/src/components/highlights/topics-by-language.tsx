@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { languageColors } from "@/lib/pie-chart-data";
+import { languageColors } from "@/data/language-color";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 // ==================== Type Definitions ====================
