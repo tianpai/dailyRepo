@@ -11,7 +11,7 @@ interface SearchFormProps {
 
 export function SearchButton() {
   return (
-    <button type="submit" className="btn btn-primary">
+    <button type="submit" className="btn btn-outline">
       Search
     </button>
   );

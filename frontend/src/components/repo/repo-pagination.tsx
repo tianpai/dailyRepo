@@ -122,9 +122,7 @@ export function GenericPagination({
             <PaginationPrevious
               onClick={handlePrevious}
               className={
-                !hasPrev
-                  ? "pointer-events-none opacity-50"
-                  : "cursor-pointer"
+                !hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"
               }
             />
           </PaginationItem>
@@ -151,9 +149,7 @@ export function GenericPagination({
             <PaginationNext
               onClick={handleNext}
               className={
-                !hasNext
-                  ? "pointer-events-none opacity-50"
-                  : "cursor-pointer"
+                !hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"
               }
             />
           </PaginationItem>
