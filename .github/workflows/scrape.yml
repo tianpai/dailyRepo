@@ -29,15 +29,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Verify MongoDB connection (Node.js)
-        run: >
-          node -e "import('mongodb')
-            .then(({MongoClient}) =>
-              MongoClient.connect(process.env.MONGO)
-                .then(c => c.close()))"
-        env:
-          MONGO: ${{ secrets.MONGO }}
-
       - name: Run scraper
         run: bun scheduler-batched.ts --run-batched
         env:
