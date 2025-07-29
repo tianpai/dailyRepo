@@ -15,9 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: 1.2.17
+          node-version: '20'
 
       - name: Get runner public IP
         id: get_ip
@@ -27,11 +27,14 @@ jobs:
           echo "ip=$IP" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm install
 
       - name: Run scraper
-        run: bun scheduler-batched.ts --run-batched
+        run: npx tsx scheduler-batched.ts --run-batched
         env:
           MONGO: ${{ secrets.MONGO }}
           PORT: ${{ secrets.PORT }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          ATLAS_PRIVATE_KEY: ${{ secrets.ATLAS_PRIVATE_KEY }}
+          ATLAS_PUBLIC_KEY: ${{ secrets.ATLAS_PUBLIC_KEY }}
+          ATLAS_PROJECT_ID: ${{ secrets.ATLAS_PROJECT_ID }}

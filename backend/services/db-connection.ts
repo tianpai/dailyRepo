@@ -11,10 +11,8 @@ let isCleanupRegistered = false;
 const mongooseOptions = {
   serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
-  tls: true,
-  tlsAllowInvalidCertificates: false,
-  tlsAllowInvalidHostnames: false,
   bufferCommands: false,
+  // Minimal options to avoid Bun TLS issues
 };
 
 async function getCurrentIP(): Promise<string> {
