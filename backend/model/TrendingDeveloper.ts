@@ -8,8 +8,7 @@ const TrendingDeveloperSchema = new mongoose.Schema({
   avatar_url: { type: String, required: false }, // URL to the developer's avatar
   trendingDate: { type: String, required: true }, // format: YYYY-MM-DD
   location: { type: String, required: false }, // developer's location from GitHub profile
-  // mostUsedLang
-  // timezone
+  trendingRecord: { type: [String], default: [] }, // array of YYYY-MM-DD strings when developer was trending
 });
 
 // Index for efficient queries

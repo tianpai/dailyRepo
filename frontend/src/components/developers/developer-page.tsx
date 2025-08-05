@@ -85,6 +85,7 @@ function DeveloperCard({ developer }: { developer: DeveloperProps }) {
         <DeveloperAvatar developer={developer} />
         <DeveloperRepository developer={developer} />
         <DeveloperLocation developer={developer} />
+        <DeveloperTrendingHistory developer={developer} />
       </CardContent>
     </Card>
   );
@@ -137,6 +138,25 @@ function DeveloperLocation({ developer }: { developer: DeveloperProps }) {
     >
       {developer.location}
     </p>
+  );
+}
+
+function DeveloperTrendingHistory({ developer }: { developer: DeveloperProps }) {
+  if (!developer.trendingRecord || developer.trendingRecord.length === 0) {
+    return null;
+  }
+
+  const trendingCount = developer.trendingRecord.length;
+  const sortedDates = [...developer.trendingRecord].sort((a, b) => b.localeCompare(a));
+  const displayDates = sortedDates.slice(0, 2);
+  const hasMoreDates = sortedDates.length > 2;
+
+  return (
+    <div className="text-xs text-gray-500 text-center px-2">
+      Previously trending {trendingCount} time{trendingCount > 1 ? 's' : ''} on{' '}
+      {displayDates.join(', ')}
+      {hasMoreDates && ` and ${sortedDates.length - 2} more dates`}
+    </div>
   );
 }
 

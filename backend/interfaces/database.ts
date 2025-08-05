@@ -38,4 +38,5 @@ export interface ITrendingDeveloper extends Document {
   trendingDate: string;
   location?: string;
   avatar_url?: string;
+  trendingRecord: string[];
 }

@@ -9,6 +9,7 @@ export interface DeveloperProps {
   trendingDate: string;
   location?: string;
   avatar_url?: string;
+  trendingRecord: string[];
 }
 
 export interface Developer extends DeveloperProps {
@@ -86,6 +87,7 @@ function processDevelopers(
       trendingDate: dev.trendingDate,
       location: dev.location,
       avatar_url: dev.avatar_url,
+      trendingRecord: dev.trendingRecord || [],
     }),
   );
   return mapped;

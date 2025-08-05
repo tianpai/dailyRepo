@@ -470,8 +470,11 @@ export async function saveTrendingDevelopers(
 
   const ops = developers.map((dev) => ({
     updateOne: {
-      filter: { username: dev.username, trendingDate: dev.trendingDate },
-      update: { $set: dev },
+      filter: { username: dev.username },
+      update: { 
+        $set: dev,
+        $addToSet: { trendingRecord: dev.trendingDate }
+      },
       upsert: true,
     },
   }));
