@@ -18,6 +18,7 @@ export interface Repo {
   age: number;
   license: string;
   trendingDate: string;
+  trendingRecord: string[];
 }
 
 interface Repos {
@@ -32,6 +33,7 @@ export interface RepoProps {
   url: string;
   language: LanguageMap;
   topics: string[];
+  trendingRecord: string[];
 }
 
 export interface RepoCardProps extends Repo {
@@ -93,6 +95,7 @@ export function processRepos(data: Repos): RepoProps[] {
       url: r.url,
       topics: r.topics,
       language: r.language,
+      trendingRecord: r.trendingRecord || [],
     };
   });
   return processedRepos;

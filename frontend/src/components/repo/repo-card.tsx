@@ -35,6 +35,7 @@ export function RepoCard({
   url,
   topics,
   language,
+  trendingRecord,
   colorIndex = 0,
 }: RepoProps & { colorIndex?: number }) {
   const repoColor = getColor(colorIndex);
@@ -50,6 +51,7 @@ export function RepoCard({
           </CardTitle>
           <CardDescription>
             <RepoTopics topics={topics}></RepoTopics>
+            <TrendingHistory trendingRecord={trendingRecord} />
           </CardDescription>
         </div>
       </CardHeader>
@@ -123,5 +125,24 @@ export function RepoName({
     <a href={url} rel="noopener noreferrer" target="_blank">
       {owner + "/" + name}
     </a>
+  );
+}
+
+export function TrendingHistory({ trendingRecord }: { trendingRecord: string[] }) {
+  if (!trendingRecord || trendingRecord.length === 0) {
+    return null;
+  }
+
+  const trendingCount = trendingRecord.length;
+  const sortedDates = [...trendingRecord].sort((a, b) => b.localeCompare(a));
+  const displayDates = sortedDates.slice(0, 3);
+  const hasMoreDates = sortedDates.length > 3;
+
+  return (
+    <div className="text-xs text-gray-500 mt-1">
+      Previously trending {trendingCount} time{trendingCount > 1 ? 's' : ''} on{' '}
+      {displayDates.join(', ')}
+      {hasMoreDates && ` and ${sortedDates.length - 3} more dates`}
+    </div>
   );
 }
