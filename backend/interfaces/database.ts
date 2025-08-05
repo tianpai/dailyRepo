@@ -17,6 +17,7 @@ export interface IRepo extends Document {
   age: number;
   license: string;
   trendingDate: string;
+  trendingRecord: string[];
 }
 
 export interface IStarHistoryEntry {

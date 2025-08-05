@@ -13,6 +13,7 @@ const RepoSchema = new mongoose.Schema({
   lastUpdate: String,
   license: String,
   trendingDate: String,
+  trendingRecord: { type: [String], default: [] },
 });
 
 const StarHistorySchema = new mongoose.Schema({

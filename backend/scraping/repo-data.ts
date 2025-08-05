@@ -121,7 +121,10 @@ export async function saveTrendingData(repos: ProcessedRepo[]): Promise<void> {
   const ops = repos.map((repo) => ({
     updateOne: {
       filter: { owner: repo.owner, name: repo.name },
-      update: { $set: repo },
+      update: { 
+        $set: repo,
+        $addToSet: { trendingRecord: repo.trendingDate }
+      },
       upsert: true,
     },
   }));
