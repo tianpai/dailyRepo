@@ -1,0 +1,19 @@
+name: Pre-warm GitHub API Rate Limit
+
+on:
+  schedule:
+    - cron: "10 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  prewarm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pre-warm GitHub API rate limit
+        run: |
+          echo "Pre-warming GitHub API rate limit at $(date)"
+          curl -H "Authorization: token ${{ github.token }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/user
+          echo "Pre-warm complete. Rate limit window reset."
