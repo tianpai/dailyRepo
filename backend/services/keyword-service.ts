@@ -3,17 +3,15 @@ import { Repo } from "@model/Repo";
 import { Keywords } from "@model/Keywords";
 import { latestRepoTopicsPipeline } from "@utils/db-pipline";
 import { filterLanguage } from "@utils/language-list";
-import {
-  fetchClusteredKeywords,
-  analyzeKeywordOutput,
-} from "./ml-keyword-service";
+import { analyzeKeywordOutput } from "./ml-keyword-service";
+import { fetchClusteredKeywordsHF } from "./hf-clustering-service";
 
-export function clusterRequestBody(topics: string[]): analyzeKeywordInput {
+export function clusterRequestBody(topics: string[], includeRelated: boolean = true): analyzeKeywordInput {
   return {
     topics: topics,
     topN: 15,
-    includeRelated: true,
-    distance_threshold: 0.25,
+    includeRelated,
+    distance_threshold: 0.25, // Same as Python ML service
     includeClusterSizes: true,
     batchSize: 64,
   };
@@ -22,6 +20,7 @@ export function clusterRequestBody(topics: string[]): analyzeKeywordInput {
 // Extract keyword analysis logic to a simple function
 export async function fetchKeywordAnalysis(
   today: string,
+  includeRelated: boolean = true,
 ): Promise<analyzeKeywordOutput> {
   // Check the database first
   const dbResult = await Keywords.findOne({ date: today }).sort({ date: -1 });
@@ -42,8 +41,17 @@ export async function fetchKeywordAnalysis(
     };
   }
 
-  const requestBody = clusterRequestBody(topics);
-  const keywordData = await fetchClusteredKeywords(requestBody);
+  const requestBody = clusterRequestBody(topics, includeRelated);
+
+  // Use Hugging Face clustering
+  console.log("[KEYWORDS] Using Hugging Face clustering...");
+  const keywordData = await fetchClusteredKeywordsHF(requestBody);
+  console.log("[KEYWORDS] Successfully used Hugging Face clustering");
+
+  // If includeRelated is false, remove the related data
+  if (!includeRelated) {
+    keywordData.related = {};
+  }
 
   // Save to database
   try {

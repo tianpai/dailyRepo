@@ -27,6 +27,7 @@ export function RepoList() {
           url={repo.url}
           topics={repo.topics}
           language={repo.language}
+          trendingRecord={repo.trendingRecord}
           colorIndex={i}
         />
       ))}
