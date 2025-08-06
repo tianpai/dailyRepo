@@ -52,6 +52,12 @@ export async function getTopicByLanguage(
 
     const response = makeSuccess(topicLanguageData, today);
     response.isCached = fromCache;
+    
+    // If data is empty, don't let browser cache the response
+    if (!topicLanguageData || Object.keys(topicLanguageData).length === 0) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+    
     res.status(200).json(response);
   } catch (err) {
     console.error("[KEYWORD] Error fetching topics by language:", err);
