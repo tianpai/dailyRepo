@@ -12,8 +12,8 @@ dotenv.config();
 const app = express();
 const port = parseInt(process.env.PORT || "3000", 10);
 const limiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 min
-  max: 50, // limit each IP
+  windowMs: 2 * 60 * 1000, // 2 min
+  max: 100, // limit each IP
   message: "Too many requests, try again later.",
   skip: (req) => {
     const whitelist = [process.env.WHITELIST_IP];
@@ -28,7 +28,12 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://daily-repo.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://daily-repo.vercel.app",
+      "https://dailyrepo.tianpai.io",
+      "https://www.dailyrepo.tianpai.io",
+    ],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
