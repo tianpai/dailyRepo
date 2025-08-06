@@ -7,17 +7,18 @@ import { fetchKeywordAnalysis } from "@/services/keyword-service";
 import { groupTopicsByLanguage } from "@/services/repo-lang-relation-service";
 
 export async function getTrendingkeywords(
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): Promise<void> {
   try {
     const today = getTodayUTC();
-    const cacheKey = getTrendCacheKey(`trending-keywords:${today}`);
+    const includeRelated = req.query.includeRelated === 'true';
+    const cacheKey = getTrendCacheKey(`trending-keywords:${today}:${includeRelated}`);
 
     const { data: keywordData, fromCache } = await withCache(
       cacheKey,
-      () => fetchKeywordAnalysis(today),
+      () => fetchKeywordAnalysis(today, includeRelated),
       TTL._12_HOUR,
     );
 

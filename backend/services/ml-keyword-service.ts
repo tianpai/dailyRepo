@@ -17,6 +17,7 @@ export interface analyzeKeywordOutput {
   };
 }
 
+// Legacy ML service function - kept as fallback
 export async function fetchClusteredKeywords(
   requestBody: analyzeKeywordInput,
 ): Promise<analyzeKeywordOutput> {

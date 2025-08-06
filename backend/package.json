@@ -22,7 +22,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "needle": "^3.3.1",
+    "@huggingface/inference": "^4.6.1",
     "axios": "^1.11.0",
     "chalk": "^5.4.1",
     "cheerio": "^1.1.2",
@@ -33,6 +33,7 @@
     "express-rate-limit": "^7.5.1",
     "helmet": "^8.1.0",
     "mongoose": "^8.16.5",
+    "needle": "^3.3.1",
     "node-cache": "^5.1.2",
     "node-cron": "^3.0.3"
   },

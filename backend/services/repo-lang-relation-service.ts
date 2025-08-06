@@ -3,10 +3,8 @@ import { WeeklyTopicFindings } from "@model/WeeklyTopicFindings";
 import { topicLangPipeline } from "@utils/db-pipline";
 import { filterLanguage } from "@utils/language-list";
 import { getCurrentWeekNumber } from "@utils/time";
-import {
-  fetchClusteredKeywords,
-  analyzeKeywordOutput,
-} from "./ml-keyword-service";
+import { analyzeKeywordOutput } from "./ml-keyword-service";
+import { fetchClusteredKeywordsHF } from "./hf-clustering-service";
 
 interface TopicLanguage {
   _id: string;
@@ -65,13 +63,14 @@ async function getAllTopics(): Promise<string[]> {
 }
 
 /*
- * just make a request ml ml-keyword-service
+ * Use Hugging Face clustering only
  */
-async function clusterTopicsWithML(
+async function clusterTopicsWithHF(
   allTopics: string[],
 ): Promise<analyzeKeywordOutput | null> {
   try {
-    const mlResult = await fetchClusteredKeywords({
+    console.log("[CLUSTERING] Using Hugging Face clustering...");
+    const hfResult = await fetchClusteredKeywordsHF({
       topics: allTopics,
       topN: 100,
       includeRelated: true,
@@ -80,12 +79,10 @@ async function clusterTopicsWithML(
       batchSize: 64,
     });
 
-    return mlResult;
+    console.log("[CLUSTERING] Successfully used Hugging Face clustering");
+    return hfResult;
   } catch (error) {
-    console.error(
-      "ML clustering failed, falling back to simple clustering:",
-      error,
-    );
+    console.error("[CLUSTERING] Hugging Face clustering failed:", error);
     return null;
   }
 }
@@ -145,7 +142,7 @@ function filterLanguagesByTopicCount(
 async function senetizeTopicLangMap(): Promise<LanguageTopicMap> {
   const repos = await getTopicsLanguage();
   const allTopics = await getAllTopics();
-  const clusteredTopics = await clusterTopicsWithML(allTopics);
+  const clusteredTopics = await clusterTopicsWithHF(allTopics);
   const langTopicMap: LanguageTopicMap = {};
 
   // Handle case where ML clustering failed
@@ -185,9 +182,11 @@ export async function groupTopicsByLanguage(): Promise<LanguageTopicMap> {
   // Try to get from database first
   const existingFindings = await WeeklyTopicFindings.findOne({ year, week });
   if (existingFindings) {
+    console.log(`[TOPIC_LANG] Found cached data for week ${year}-W${week}`);
     return existingFindings.languageTopicMap;
   }
 
+  console.log(`[TOPIC_LANG] No cached data found, computing new data for week ${year}-W${week}`);
   // Calculate new findings and save to database
   const languageTopicMap = await senetizeTopicLangMap();
 
