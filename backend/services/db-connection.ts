@@ -177,6 +177,9 @@ async function connectToDatabaseDebug(): Promise<void> {
       }
     });
   } catch (error) {
+    //TODO:
+    // prob need to handle MongodbServerSelectionError due to Ip change
+    // right after the whitelist IP step (happens rarely but it happended)
     console.error("Database connection failed:", error);
     process.exit(1);
   }

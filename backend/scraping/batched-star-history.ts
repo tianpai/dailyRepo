@@ -82,12 +82,20 @@ async function saveStarHistoryResults(
     return;
   }
 
-  await StarHistory.insertMany(
-    results.map(({ repoId, history }) => ({
-      repoId,
-      history,
-    })),
-  );
+  // Use upsert operations to prevent duplicates
+  const upsertOperations = results.map(({ repoId, history }) => ({
+    updateOne: {
+      filter: { repoId },
+      update: {
+        repoId,
+        saveDate: new Date(),
+        history,
+      },
+      upsert: true,
+    },
+  }));
+
+  await StarHistory.bulkWrite(upsertOperations);
 
   console.log(`Successfully saved star history for ${results.length} repos`);
 }

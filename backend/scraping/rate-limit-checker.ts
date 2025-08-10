@@ -1,5 +1,7 @@
 import axios from "axios";
 import dotenv from "dotenv";
+import { connectToDatabase, isConnectedToDatabase } from "../services/db-connection";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -135,9 +137,36 @@ export function logRateLimitStatus(rateLimit: GitHubRateLimit): void {
 }
 
 /**
+ * Disconnects from database to free resources during long waits
+ */
+async function disconnectDatabase(): Promise<void> {
+  if (isConnectedToDatabase()) {
+    console.log("Disconnecting from database during long wait...");
+    await mongoose.disconnect();
+  }
+}
+
+/**
+ * Reconnects to database after long wait period
+ */
+async function reconnectDatabase(): Promise<void> {
+  if (!isConnectedToDatabase()) {
+    console.log("Reconnecting to database after wait period...");
+    try {
+      await connectToDatabase();
+      console.log("Database reconnected successfully");
+    } catch (error) {
+      console.error("Failed to reconnect to database:", error);
+      throw new Error(`Database reconnection failed: ${error.message}`);
+    }
+  }
+}
+
+/**
  * Intelligent wait strategy for rate limit handling
  * If rate limit is at max (5000), wait for reset
  * If rate limit is below max, wait 5 seconds and retry
+ * For long waits (>5 mins), disconnect DB to free resources
  */
 export async function handleRateLimitExceeded(token?: string): Promise<void> {
   const rateLimit = await getCurrentRateLimit(token);
@@ -164,8 +193,19 @@ export async function handleRateLimitExceeded(token?: string): Promise<void> {
       )} for reset at ${resetDate.toLocaleString()}...`,
     );
 
-    // Add a small buffer to ensure reset has occurred
-    await new Promise((resolve) => setTimeout(resolve, waitTime + 10000));
+    // For long waits (>5 minutes), disconnect DB to save resources
+    if (waitTime > 300000) {
+      await disconnectDatabase();
+      
+      // Add a small buffer to ensure reset has occurred
+      await new Promise((resolve) => setTimeout(resolve, waitTime + 10000));
+      
+      await reconnectDatabase();
+    } else {
+      // Add a small buffer to ensure reset has occurred
+      await new Promise((resolve) => setTimeout(resolve, waitTime + 10000));
+    }
+    
     console.log("Rate limit should be reset, continuing...");
   } else {
     // If we're not at max limit, something else caused the 403, wait briefly

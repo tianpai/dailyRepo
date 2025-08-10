@@ -28,11 +28,19 @@ export async function fetchRepoStarHistory(fname: string): Promise<any[]> {
   // Fetch from GitHub API
   const data = await getRepoStarRecords(fname);
 
-  // Save to StarHistory collection
-  await StarHistory.create({
-    repoId: repoDoc._id,
-    history: data,
-  });
+  // Update existing document or create new one
+  if (existingHistory) {
+    // Update the existing document with new data
+    existingHistory.history = data;
+    existingHistory.saveDate = new Date();
+    await existingHistory.save();
+  } else {
+    // Create new document only if none exists
+    await StarHistory.create({
+      repoId: repoDoc._id,
+      history: data,
+    });
+  }
 
   return data;
 }

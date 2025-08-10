@@ -161,14 +161,27 @@ export async function getRepoStarRecords(
     // Fetch all pages if under the request limit
     requestPages = range(1, pageCount);
   } else {
-    // Sample pages evenly across the total range
-    requestPages = range(1, maxRequestAmount).map((i) =>
-      Math.max(1, Math.round((i * pageCount) / maxRequestAmount) - 1),
-    );
-    // Ensure first page is always included
-    if (!requestPages.includes(1)) {
-      requestPages[0] = 1;
-    }
+    // Always include first 3 pages for better early-stage resolution (for 100-star analysis)
+    const earlyPages = [1, 2, 3].filter((page) => page <= pageCount);
+    requestPages = [...earlyPages];
+
+    // Add maxRequestAmount spread-out pages starting from page 4
+    const startPage = 4;
+    const spreadPages = range(1, maxRequestAmount)
+      .map((i) =>
+        Math.max(
+          startPage,
+          Math.round(
+            startPage + (i * (pageCount - startPage + 1)) / maxRequestAmount,
+          ),
+        ),
+      )
+      .filter((page) => page <= pageCount && !requestPages.includes(page));
+
+    requestPages = [...requestPages, ...spreadPages];
+
+    // Sort all pages
+    requestPages.sort((a, b) => a - b);
   }
 
   // Fetch all selected pages concurrently
@@ -191,14 +204,38 @@ export async function getRepoStarRecords(
       starMap.set(date, count);
     }
   } else {
-    // Low-resolution sampling: use first star from each sampled page for approximation
+    // Enhanced sampling with dense early data points for 100-star analysis
+    const earlyPagesSet = new Set([1, 2, 3]);
+
     responses.forEach((res, idx) => {
       const data = res.data;
+      const pageNum = requestPages[idx];
+
       if (Array.isArray(data) && data.length > 0) {
-        const firstStar = data[0];
-        const date = getDateString(firstStar.starred_at);
-        const countApprox = DEFAULT_PER_PAGE * (requestPages[idx] - 1);
-        starMap.set(date, countApprox);
+        if (earlyPagesSet.has(pageNum)) {
+          // For early pages (1-3), add multiple data points for granular early history
+          const baseCount = DEFAULT_PER_PAGE * (pageNum - 1);
+          data.forEach((star, starIdx) => {
+            const count = baseCount + starIdx + 1;
+            // Add every 5th star for first 100 stars, then every 10th
+            if (
+              count <= 100 &&
+              (count % 5 === 0 || count === 1 || count === 100)
+            ) {
+              const date = getDateString(star.starred_at);
+              starMap.set(date, count);
+            } else if (count > 100 && count % 10 === 0) {
+              const date = getDateString(star.starred_at);
+              starMap.set(date, count);
+            }
+          });
+        } else {
+          // For later pages, use existing approximation logic
+          const firstStar = data[0];
+          const date = getDateString(firstStar.starred_at);
+          const countApprox = DEFAULT_PER_PAGE * (pageNum - 1);
+          starMap.set(date, countApprox);
+        }
       }
     });
   }

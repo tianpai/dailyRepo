@@ -65,3 +65,32 @@ export async function fetchSearchedRepos(
 
   return { repos, totalCount };
 }
+
+export async function fetchTimeToFirstHundredStars() {
+  // TODO: Re-implement after repopulating star history with granular early data
+  // const pipeline = timeToFirstHundredStarsPipeline();
+  // const results = await Repo.aggregate(pipeline);
+  return null;
+  
+  /*
+  const formattedResults = {
+    summary: {
+      totalAnalyzedRepos: results.reduce((sum, cat) => sum + cat.totalRepos, 0),
+      categories: results.map(cat => ({
+        ageCategory: cat.ageCategory,
+        totalRepos: cat.totalRepos,
+        averageDays: cat.averageDays
+      }))
+    },
+    reposByCategory: results.reduce((acc, cat) => {
+      acc[cat.ageCategory] = cat.repos.map(repo => ({
+        ...repo,
+        starVelocity: repo.daysToHundredStars > 0 ? Math.round(100 / repo.daysToHundredStars * 10) / 10 : 0
+      }));
+      return acc;
+    }, {} as Record<string, any[]>)
+  };
+
+  return formattedResults;
+  */
+}
