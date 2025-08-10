@@ -2,6 +2,7 @@
 node_modules/
 **/plan/
 **/.env
+**/backup/
 .env
 .env.staging
 
