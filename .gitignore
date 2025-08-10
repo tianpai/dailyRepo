@@ -9,3 +9,5 @@ node_modules/
 .DS_Store
 backend/dist
 CLAUDE.md
+backend/completed-repos.txt
+backend/failed-repos.txt
