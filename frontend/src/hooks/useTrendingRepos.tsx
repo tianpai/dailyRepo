@@ -34,6 +34,8 @@ export interface RepoProps {
   language: LanguageMap;
   topics: string[];
   trendingRecord: string[];
+  license: string;
+  createdAt: string;
 }
 
 export interface RepoCardProps extends Repo {
@@ -96,6 +98,8 @@ export function processRepos(data: Repos): RepoProps[] {
       topics: r.topics,
       language: r.language,
       trendingRecord: r.trendingRecord || [],
+      license: r.license || "",
+      createdAt: r.createdAt || "",
     };
   });
   return processedRepos;

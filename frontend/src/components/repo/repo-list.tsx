@@ -17,8 +17,8 @@ export function RepoList() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Daily Repo List</h1>
-      {data.map((repo, i: number) => (
+      <h1 className="text-2xl font-bold mb-4">Daily Trending</h1>
+      {data.map((repo) => (
         <RepoCard
           key={repo.url}
           owner={repo.owner}
@@ -28,7 +28,8 @@ export function RepoList() {
           topics={repo.topics}
           language={repo.language}
           trendingRecord={repo.trendingRecord}
-          colorIndex={i}
+          license={repo.license}
+          createdAt={repo.createdAt}
         />
       ))}
       <RepoPagination />
