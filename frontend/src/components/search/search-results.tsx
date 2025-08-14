@@ -88,12 +88,8 @@ export function SearchResults({
       </div>
 
       <div className="space-y-4">
-        {data.map((repo, index) => (
-          <RepoCard
-            key={`${repo.name}-${repo.owner}`}
-            {...repo}
-            colorIndex={index}
-          />
+        {data.map((repo) => (
+          <RepoCard key={`${repo.name}-${repo.owner}`} {...repo} />
         ))}
       </div>
 

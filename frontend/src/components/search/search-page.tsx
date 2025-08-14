@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PageContainer } from "@/components/page-container";
 import { SidebarLayout } from "@/components/app-sidebar";
 import { useSearch } from "@/hooks/useSearch";
-import { SearchHeader } from "./search-header";
+import { PageTitle } from "@/components/page-title";
 import { SearchForm } from "./search-form";
 import { SearchResults } from "./search-results";
 
@@ -31,25 +31,31 @@ export function SearchPage() {
   return (
     <PageContainer>
       <SidebarLayout>
-        <div className="container mx-auto p-6 space-y-6">
-          <SearchHeader />
-
-          <SearchForm
-            onSearch={handleSearch}
-            onLanguageFilter={handleLanguageFilter}
-            initialQuery={query}
-            initialLanguage={language}
+        <div className="w-full flex flex-col justify-center items-center mx-auto p-4 sm:p-6 md:p-8">
+          <PageTitle 
+            title="Search Repositories"
+            description="Search for repositories by name, owner, or topics"
           />
+          <div className="w-full max-w-4xl">
+            <div className="space-y-6">
+              <SearchForm
+                onSearch={handleSearch}
+                onLanguageFilter={handleLanguageFilter}
+                initialQuery={query}
+                initialLanguage={language}
+              />
 
-          <SearchResults
-            data={data}
-            pagination={pagination}
-            searchInfo={searchInfo}
-            isLoading={isLoading}
-            error={error}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />
+              <SearchResults
+                data={data}
+                pagination={pagination}
+                searchInfo={searchInfo}
+                isLoading={isLoading}
+                error={error}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </div>
         </div>
       </SidebarLayout>
     </PageContainer>

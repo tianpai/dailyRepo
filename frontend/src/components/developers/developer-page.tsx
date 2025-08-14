@@ -6,18 +6,16 @@ import {
   type DeveloperProps,
 } from "@/hooks/useDevelopers.tsx";
 import { useDateContext } from "@/components/date-provider";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { GenericPagination } from "@/components/repo/repo-pagination";
+import { PageTitle } from "@/components/page-title";
+import { MapPin, TrendingUp, Box } from "lucide-react";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationPrevious,
-  PaginationNext,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
-import type { Pagination as PaginationMetadata } from "@/interface/endpoint";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function DeveloperPage() {
   return (
@@ -46,30 +44,31 @@ function DeveloperPageContent() {
   if (error) return <p>Error: {error}</p>;
 
   return (
-    <div className="p-6">
-      <DeveloperPageHeader total={pagination?.totalCount || 0} />
-      <DeveloperGrid developers={data} />
-      <DeveloperPagination
-        currentPage={currentPage}
-        pagination={pagination}
-        onPageChange={setCurrentPage}
+    <div className="w-full flex flex-col justify-center items-center mx-auto p-4 sm:p-6 md:p-8">
+      <PageTitle
+        title="Trending Developers"
+        description={`Discover the most active developers - ${pagination?.totalCount || 0} developers`}
       />
+      <div className="w-full max-w-6xl">
+        <DeveloperGrid developers={data} />
+        {pagination && (
+          <GenericPagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            hasNext={pagination.hasNext}
+            hasPrev={pagination.hasPrev}
+            isLoading={loading}
+            onPageChange={setCurrentPage}
+          />
+        )}
+      </div>
     </div>
-  );
-}
-
-function DeveloperPageHeader({ total }: { total: number }) {
-  return (
-    <>
-      <h1 className="text-2xl font-bold mb-4">Trending Developers</h1>
-      <p className="mb-6">Total: {total} developers</p>
-    </>
   );
 }
 
 function DeveloperGrid({ developers }: { developers: DeveloperProps[] }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6">
       {developers.map((dev) => (
         <DeveloperCard key={dev.username} developer={dev} />
       ))}
@@ -79,15 +78,22 @@ function DeveloperGrid({ developers }: { developers: DeveloperProps[] }) {
 
 function DeveloperCard({ developer }: { developer: DeveloperProps }) {
   return (
-    <Card className="flex flex-col items-center text-center">
-      <CardContent className="flex flex-col items-center space-y-3 w-full">
-        <DeveloperName developer={developer} />
+    <div className="flex flex-col items-stretch justify-between border-2 bg-background border-border text-foreground transition-all duration-200 h-full">
+      {/* Main Content */}
+      <div className="flex flex-col items-center flex-grow border-b-2 border-border p-4">
         <DeveloperAvatar developer={developer} />
+        <div className="mt-3 text-center">
+          <DeveloperName developer={developer} />
+        </div>
+      </div>
+
+      {/* Footer Section */}
+      <div className="px-4 py-2 flex flex-col gap-2">
         <DeveloperRepository developer={developer} />
         <DeveloperLocation developer={developer} />
         <DeveloperTrendingHistory developer={developer} />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -97,7 +103,7 @@ function DeveloperName({ developer }: { developer: DeveloperProps }) {
       href={developer.profileUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-lg font-semibold truncate w-full"
+      className="major-mono text-sm font-normal text-foreground truncate"
       title={developer.username}
     >
       {developer.username}
@@ -107,24 +113,32 @@ function DeveloperName({ developer }: { developer: DeveloperProps }) {
 
 function DeveloperAvatar({ developer }: { developer: DeveloperProps }) {
   return (
-    <Avatar className="w-16 h-16">
+    <Avatar className="w-16 h-16 border-2 border-border">
       <AvatarImage src={developer.avatar_url} alt={developer.username} />
-      <AvatarFallback>{developer.username[0].toUpperCase()}</AvatarFallback>
+      <AvatarFallback className="major-mono text-foreground bg-background">
+        {developer.username[0].toUpperCase()}
+      </AvatarFallback>
     </Avatar>
   );
 }
 
 function DeveloperRepository({ developer }: { developer: DeveloperProps }) {
+  const repoName =
+    developer.repositoryPath.split("/")[1] || developer.repositoryPath;
+
   return (
-    <a
-      href={`https://github.com/${developer.repositoryPath}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sm text-pink-300 hover:text-pink-100 w-full px-2"
-      title={developer.repositoryPath}
-    >
-      {developer.repositoryPath.split("/")[1] || developer.repositoryPath}
-    </a>
+    <span className="major-mono text-xs text-description inline-flex items-center gap-1">
+      <Box className="w-3 h-3" />
+      <a
+        href={`https://github.com/${developer.repositoryPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-foreground truncate"
+        title={developer.repositoryPath}
+      >
+        {repoName}
+      </a>
+    </span>
   );
 }
 
@@ -132,157 +146,45 @@ function DeveloperLocation({ developer }: { developer: DeveloperProps }) {
   if (!developer.location) return null;
 
   return (
-    <p
-      className="text-sm text-gray-400 truncate w-full px-2"
-      title={developer.location}
-    >
-      {developer.location}
-    </p>
+    <span className="major-mono text-xs text-description inline-flex items-center gap-1">
+      <MapPin className="w-3 h-3" />
+      <span className="truncate">{developer.location}</span>
+    </span>
   );
 }
 
-function DeveloperTrendingHistory({ developer }: { developer: DeveloperProps }) {
+function DeveloperTrendingHistory({
+  developer,
+}: {
+  developer: DeveloperProps;
+}) {
   if (!developer.trendingRecord || developer.trendingRecord.length === 0) {
     return null;
   }
 
   const trendingCount = developer.trendingRecord.length;
-  const sortedDates = [...developer.trendingRecord].sort((a, b) => b.localeCompare(a));
-  const displayDates = sortedDates.slice(0, 2);
-  const hasMoreDates = sortedDates.length > 2;
+  const sortedDates = [...developer.trendingRecord].sort((a, b) =>
+    b.localeCompare(a),
+  );
+  const displayDates = sortedDates.slice(0, 3);
+  const hasMoreDates = sortedDates.length > 3;
+
+  const tooltipContent = `Previously trending ${trendingCount} time${trendingCount > 1 ? "s" : ""} on ${displayDates.join(", ")}${hasMoreDates ? ` and ${sortedDates.length - 3} more dates` : ""}`;
 
   return (
-    <div className="text-xs text-gray-500 text-center px-2">
-      Previously trending {trendingCount} time{trendingCount > 1 ? 's' : ''} on{' '}
-      {displayDates.join(', ')}
-      {hasMoreDates && ` and ${sortedDates.length - 2} more dates`}
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="major-mono text-xs text-description cursor-help inline-flex items-center gap-1">
+            <TrendingUp className="w-3 h-3" />
+            {trendingCount}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltipContent}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
-function generatePageNumbers(
-  currentPage: number,
-  totalPages: number,
-): (number | "ellipsis")[] {
-  const delta = 2;
-  const range: (number | "ellipsis")[] = [];
-
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) {
-      range.push(i);
-    }
-  } else {
-    range.push(1);
-
-    const start = Math.max(2, currentPage - delta);
-    const end = Math.min(totalPages - 1, currentPage + delta);
-
-    if (start > 2) {
-      range.push("ellipsis");
-    }
-
-    for (let i = start; i <= end; i++) {
-      range.push(i);
-    }
-
-    if (end < totalPages - 1) {
-      range.push("ellipsis");
-    }
-
-    if (totalPages > 1) {
-      range.push(totalPages);
-    }
-  }
-
-  return range;
-}
-
-interface DeveloperPaginationProps {
-  currentPage: number;
-  pagination: PaginationMetadata | null;
-  onPageChange: (page: number) => void;
-}
-
-function DeveloperPagination({
-  currentPage,
-  pagination,
-  onPageChange,
-}: DeveloperPaginationProps) {
-  useEffect(() => {
-    if (pagination) {
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }, 100);
-    }
-  }, [currentPage, pagination]);
-
-  if (!pagination || pagination.totalPages <= 1) {
-    return null;
-  }
-
-  const pages = generatePageNumbers(currentPage, pagination.totalPages);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= pagination.totalPages && page !== currentPage) {
-      onPageChange(page);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      handlePageChange(currentPage - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentPage < pagination.totalPages) {
-      handlePageChange(currentPage + 1);
-    }
-  };
-
-  return (
-    <div className="flex justify-center mt-8 pb-15">
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={handlePrevious}
-              className={
-                currentPage <= 1
-                  ? "pointer-events-none opacity-50"
-                  : "cursor-pointer"
-              }
-            />
-          </PaginationItem>
-
-          {pages.map((page, index) => (
-            <PaginationItem key={index}>
-              {page === "ellipsis" ? (
-                <PaginationEllipsis />
-              ) : (
-                <PaginationLink
-                  onClick={() => handlePageChange(page)}
-                  isActive={page === currentPage}
-                  className="cursor-pointer"
-                >
-                  {page}
-                </PaginationLink>
-              )}
-            </PaginationItem>
-          ))}
-
-          <PaginationItem>
-            <PaginationNext
-              onClick={handleNext}
-              className={
-                currentPage >= pagination.totalPages
-                  ? "pointer-events-none opacity-50"
-                  : "cursor-pointer"
-              }
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    </div>
-  );
-}

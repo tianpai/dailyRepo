@@ -11,9 +11,9 @@ export function PageContainer({
 }: PageContainerProps) {
   return (
     <div
-      className={`px-4 sm:px-6 lg:px-8 pt-25 flex  justify-items-stretch ${className}`}
+      className={`px-4 sm:px-6 lg:px-8 pt-20 w-full ${className}`}
     >
-      <div className="max-w-7xl mx-auto">{children}</div>
+      <div className="max-w-7xl mx-auto w-full">{children}</div>
     </div>
   );
 }

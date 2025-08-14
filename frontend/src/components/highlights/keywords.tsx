@@ -1,29 +1,18 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { getOptimalForegroundColor } from "@/lib/fg-color.ts";
-import { COLORS } from "@/data/color";
 import { useKeywords, type Keywords } from "@/hooks/useKeywords";
+import { CircleHelp } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-// Get color for a keyword based on its index
-function getKeywordColor(index: number): string {
-  const colorKeys = Object.keys(COLORS);
-  const colorKey = colorKeys[index % colorKeys.length];
-  return COLORS[colorKey as keyof typeof COLORS];
-}
-
-function KeywordBadge({ keyword, index }: { keyword: string; index: number }) {
-  const bgColor = getKeywordColor(index);
-  const textColor = getOptimalForegroundColor(bgColor);
-
+function KeywordBadge({ keyword }: { keyword: string }) {
   return (
-    <Badge
-      variant="outline"
-      className="text-xs px-3 py-1 border-0 hover:opacity-80 transition-opacity"
-      style={{ backgroundColor: bgColor, color: textColor }}
-    >
+    <span className="px-3 py-1 border-1 transition-opacity border-border major-mono text-lg text-foreground bg-background hover:opacity-70">
       {keyword}
-    </Badge>
+    </span>
   );
 }
 
@@ -35,16 +24,16 @@ function KeywordsList({
   loading: boolean;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1 m-2 w-full">
       {loading ? (
         <>
           {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="h-6 w-20 rounded-full" />
+            <Skeleton key={index} className="h-8 w-20" />
           ))}
         </>
       ) : (
         keywords?.map((keyword, index) => (
-          <KeywordBadge key={index} keyword={keyword} index={index} />
+          <KeywordBadge key={index} keyword={keyword} />
         ))
       )}
     </div>
@@ -53,9 +42,29 @@ function KeywordsList({
 
 function KeywordsHeader({ keywordCount }: { keywordCount: number }) {
   return (
-    <div>
-      <h3 className="text-lg font-semibold">Top Keywords</h3>
-      <p className="text-sm text-gray-400">{keywordCount} trending topics</p>
+    <div className="p-4 border-b-2 border-border">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="major-mono text-lg font-normal text-foreground">
+            TOP KEYWORDS
+          </h3>
+          <p className="major-mono text-sm text-description mt-1">
+            {keywordCount} trending topics
+          </p>
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <CircleHelp className="w-5 h-5 text-description hover:text-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">
+                Keywords extracted from daily trending repositories. Updates everyday with the most popular topics.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 }
@@ -72,24 +81,22 @@ function KeywordsDisplay({
   className?: string;
 }) {
   const renderStateMessage = (message: string) => (
-    <div className="flex items-center justify-center h-full text-center text-red-500">
-      {message}
+    <div className="flex items-center justify-center h-full text-center p-4">
+      <span className="major-mono text-lg text-foreground">{message}</span>
     </div>
   );
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-2">
-        <KeywordsHeader keywordCount={data?.topKeywords?.length || 0} />
-      </CardHeader>
-      <CardContent>
+    <div className={`flex flex-col items-stretch justify-between mt-4 sm:mt-6 border-2 bg-background border-border text-foreground transition-all duration-200 ${className || ""}`}>
+      <KeywordsHeader keywordCount={data?.topKeywords?.length || 0} />
+      <div className="w-full flex flex-col items-start">
         {error ? (
           renderStateMessage("Error: Can't fetch keywords")
         ) : (
           <KeywordsList keywords={data?.topKeywords || []} loading={loading} />
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

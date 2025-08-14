@@ -17,9 +17,8 @@ import emojiRegex from "emoji-regex";
 import { RepoLanguage } from "@/components/repo/repo-language.tsx";
 import type { RepoProps } from "@/hooks/useTrendingRepos.tsx";
 
-// Our own card components with theme support and improved responsiveness
 const RepoCardContainer = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex flex-col items-stretch justify-between mt-4 sm:mt-6 border-2 bg-background border-foreground text-foreground transition-all duration-200">
+  <div className="flex flex-col items-stretch justify-between mt-4 sm:mt-6 border-2 bg-background border-border text-foreground transition-all duration-200">
     {children}
   </div>
 );
@@ -58,7 +57,7 @@ function RepoTopics({ topics }: { topics: string[] }) {
           <Badge
             key={index}
             variant="outline"
-            className="px-3 py-1 border-1 transition-opacity rounded-none major-mono text-lg"
+            className="px-3 py-1 border-1 transition-opacity rounded-none major-mono text-lg text-description"
           >
             {topic}
           </Badge>
@@ -68,7 +67,7 @@ function RepoTopics({ topics }: { topics: string[] }) {
         <div className="flex-grow flex justify-end">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="px-3 py-1 major-mono text-lg text-foreground hover:opacity-70 transition-opacity inline-flex items-center gap-1"
+            className="px-3 py-1 major-mono text-lg text-description hover:opacity-70 transition-opacity inline-flex items-center gap-1"
           >
             {isExpanded ? (
               <>
@@ -202,7 +201,7 @@ export function RepoCard({
 }: RepoProps) {
   return (
     <RepoCardContainer>
-      <div className="flex flex-col lg:flex-row items-stretch flex-grow border-b-2 border-foreground p-4 sm:p-6 lg:p-10">
+      <div className="flex flex-col lg:flex-row items-stretch flex-grow border-b-2 border-border p-4 sm:p-6 lg:p-10">
         <RepoCardHeader>
           <div className="w-full">
             <RepoCardTitle>
@@ -211,7 +210,7 @@ export function RepoCard({
           </div>
         </RepoCardHeader>
         <RepoCardContent>
-          <div className="line-clamp-3 sm:line-clamp-4 lg:line-clamp-5 major-mono text-base sm:text-lg text-foreground leading-relaxed">
+          <div className="line-clamp-3 sm:line-clamp-4 lg:line-clamp-5 major-mono text-base sm:text-lg text-description leading-relaxed">
             {removeEmojis(description)}
           </div>
         </RepoCardContent>

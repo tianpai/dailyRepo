@@ -26,6 +26,7 @@
     "daisyui": "^5.0.43",
     "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
+    "emoji-regex": "^10.4.0",
     "ldrs": "^1.1.7",
     "lucide-react": "^0.510.0",
     "react": "^19.1.0",

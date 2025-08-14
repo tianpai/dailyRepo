@@ -1,16 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
 import { useApi, env } from "@/hooks/useApi";
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
 import { languageColors } from "@/data/language-color";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CircleHelp } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // ==================== Type Definitions ====================
 interface ClusterCount {
@@ -21,26 +18,58 @@ interface LanguageTopicMap {
   [language: string]: ClusterCount;
 }
 
-interface RadarDataPoint {
-  lang: string;
+interface TopicEntry {
+  topic: string;
   count: number;
-  fullMark: number;
 }
 
-const CHART_CONFIG = {
+const CONFIG = {
   MAX_TOPICS: 6,
-  OUTER_RADIUS: "40%",
-  CHART_MARGINS: { top: 5, right: 5, bottom: 5, left: 5 },
-  SMALL_SCREEN_BREAKPOINT: 376,
-  CHART_HEIGHT: "h-64",
-  TEXT_COLOR: "#666666",
-  TEXT_SIZE: 14,
-  GRID_COLS: {
-    sm: "grid-cols-1",
-    md: "md:grid-cols-1",
-    lg: "lg:grid-cols-2",
-  },
 } as const;
+
+// Hook to get screen width
+function useScreenWidth() {
+  const [screenWidth, setScreenWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 768
+  );
+
+  useEffect(() => {
+    function handleResize() {
+      setScreenWidth(window.innerWidth);
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return screenWidth;
+}
+
+// Get dynamic bar width based on screen width
+function getDynamicBarWidth(screenWidth: number): number {
+  if (screenWidth <= 440) return 12;  // Very small screens
+  if (screenWidth <= 768) return 20;  // Mobile/tablet
+  return 35;                          // Desktop
+}
+
+// Get dynamic topic name width based on screen width  
+function getDynamicTopicWidth(screenWidth: number): string {
+  if (screenWidth <= 440) return "w-14"; // Very small screens (was w-10, +4 chars)
+  if (screenWidth <= 768) return "w-16"; // Mobile/tablet (was w-12, +4 chars)
+  return "w-20";                          // Desktop (was w-16, +4 chars)
+}
+
+/**
+ * Get the current week number of the year
+ * @returns Week number (1-53)
+ */
+function getCurrentWeekNumber(): number {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  const diff = now.getTime() - start.getTime();
+  const oneWeek = 1000 * 60 * 60 * 24 * 7;
+  return Math.ceil(diff / oneWeek);
+}
 
 /**
  * Custom hook to fetch topics grouped by programming language
@@ -86,129 +115,84 @@ function useTopicsByLanguage() {
 }
 
 /**
- * Transform topic counts into radar chart data format
- * Takes the top N topics and prepares them for visualization
+ * Transform topic counts into sorted array for ASCII visualization
+ * Takes the top N topics and prepares them for bar display
  * @param topicCounts - Object mapping topic names to their counts
- * @returns Array of data points formatted for radar chart
+ * @returns Array of topic entries sorted by count
  */
-function transformToRadarData(topicCounts: ClusterCount): RadarDataPoint[] {
-  const entries = Object.entries(topicCounts).slice(0, CHART_CONFIG.MAX_TOPICS);
+function transformToTopicEntries(topicCounts: ClusterCount): TopicEntry[] {
+  const entries = Object.entries(topicCounts)
+    .map(([topic, count]) => ({ topic, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, CONFIG.MAX_TOPICS);
 
-  return entries.map(([topic, count]) => ({
-    lang: topic,
-    count,
-    fullMark: Math.max(...entries.map(([, c]) => c)),
-  }));
-}
-
-interface CustomTickProps {
-  payload: { value: string };
-  x: number;
-  y: number;
-  textAnchor: string;
+  return entries;
 }
 
 /**
- * Custom tick component for radar chart labels
- * Handles text wrapping for hyphenated words to prevent overflow
- * @param props - Contains position, text content, and anchor information
- * @returns SVG text element with optional line wrapping
+ * Create proportional ASCII bar for topic count
+ * @param count - The count for this topic
+ * @param maxCount - The maximum count among all topics
+ * @param barWidth - Dynamic bar width based on screen size
+ * @returns String of dashes representing the proportion
  */
-function CustomTick({ payload, x, y, textAnchor }: CustomTickProps) {
-  const text = payload.value;
-  const parts = text.includes("-") ? text.split("-") : [text];
-
-  // Single line text - no wrapping needed
-  if (parts.length === 1) {
-    return (
-      <text
-        x={x}
-        y={y}
-        textAnchor={textAnchor}
-        fill={CHART_CONFIG.TEXT_COLOR}
-        fontSize={CHART_CONFIG.TEXT_SIZE}
-      >
-        {text}
-      </text>
-    );
-  }
-
-  // Multi-line text - wrap at hyphen
-  return (
-    <text
-      x={x}
-      y={y}
-      textAnchor={textAnchor}
-      fill={CHART_CONFIG.TEXT_COLOR}
-      fontSize={CHART_CONFIG.TEXT_SIZE}
-    >
-      <tspan x={x} dy="-0.1em">
-        {parts[0]}
-      </tspan>
-      <tspan x={x} dy="1.2em">
-        {parts[1]}
-      </tspan>
-    </text>
-  );
+function createTopicBar(count: number, maxCount: number, barWidth: number): string {
+  if (maxCount === 0) return "";
+  const proportion = count / maxCount;
+  const barLength = Math.round(proportion * barWidth);
+  return "─".repeat(Math.max(1, barLength));
 }
 
-interface TopicLanguageChartProps {
+interface TopicLanguageCardProps {
   language: string;
   topicCounts: ClusterCount;
 }
 
 /**
- * Individual radar chart component for a single programming language
- * Displays top topics as a radar/spider chart with customized styling
+ * Individual ASCII card component for a single programming language
+ * Displays top topics as horizontal bars with proportional lengths
  */
-function TopicLanguageChart({
+function TopicLanguageCard({
   language,
   topicCounts,
-}: TopicLanguageChartProps) {
-  const radarData = transformToRadarData(topicCounts);
+}: TopicLanguageCardProps) {
+  const screenWidth = useScreenWidth();
+  const topicEntries = transformToTopicEntries(topicCounts);
   const languageColor = languageColors[language] || "#8884d8";
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const isSmallScreen = windowWidth < CHART_CONFIG.SMALL_SCREEN_BREAKPOINT;
+  const maxCount = Math.max(...topicEntries.map(entry => entry.count));
+  const barWidth = getDynamicBarWidth(screenWidth);
+  const topicWidthClass = getDynamicTopicWidth(screenWidth);
 
   return (
-    <div className="w-full border rounded-2xl">
-      <div className="text-center"></div>
-      <div className={CHART_CONFIG.CHART_HEIGHT}>
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart
-            cx="50%"
-            cy="50%"
-            outerRadius={CHART_CONFIG.OUTER_RADIUS}
-            data={radarData}
-            margin={CHART_CONFIG.CHART_MARGINS}
-          >
-            <PolarGrid />
-            <PolarAngleAxis
-              dataKey="lang"
-              tick={!isSmallScreen ? CustomTick : false}
-            />
-            <PolarRadiusAxis
-              angle={30}
-              domain={[0, "dataMax + 1"]}
-              tick={false}
-            />
-            <Radar
-              name={language}
-              dataKey="count"
-              stroke={languageColor}
-              fill={languageColor}
-              fillOpacity={0.6}
-            />
-            <Legend />
-          </RadarChart>
-        </ResponsiveContainer>
+    <div className="border-2 border-border bg-background text-foreground">
+      {/* Language Header with Color Circle */}
+      <div className="p-2 border-b-2 border-border">
+        <div className="flex items-center gap-2">
+          <div 
+            className="w-3 h-3 rounded-full" 
+            style={{ backgroundColor: languageColor }}
+          ></div>
+          <span className="major-mono text-xs sm:text-sm font-normal text-foreground">
+            {language.toUpperCase()}
+          </span>
+        </div>
+      </div>
+      
+      {/* Topics with ASCII Bars */}
+      <div className="p-2 space-y-1">
+        {topicEntries.map(({ topic, count }) => {
+          const bar = createTopicBar(count, maxCount, barWidth);
+          return (
+            <div key={topic} className="flex items-center">
+              <span className={`major-mono text-xs text-foreground ${topicWidthClass} truncate`}>
+                {topic}
+              </span>
+              <span className="major-mono text-xs text-description mx-1">
+                |{bar} {count}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -216,7 +200,7 @@ function TopicLanguageChart({
 
 /**
  * Container component that fetches and displays topics by language
- * Renders a grid of radar charts, one for each programming language
+ * Renders a grid of ASCII cards, one for each programming language
  */
 export function TopicsByLanguageContainer() {
   const { data, loading, error } = useTopicsByLanguage();
@@ -233,28 +217,46 @@ export function TopicsByLanguageContainer() {
   const languages = Object.keys(data);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div>
-          <h3 className="text-lg font-semibold">
-            Topics by Programming Language
-          </h3>
-          <p className="text-sm text-gray-400">Update weekly</p>
+    <div className="border-2 border-border bg-background text-foreground">
+      {/* ASCII Header */}
+      <div className="p-4 border-b-2 border-border">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="major-mono text-lg font-normal text-foreground">
+              TOPICS BY PROGRAMMING LANGUAGE
+            </h3>
+            <p className="major-mono text-sm text-description mt-1">
+              Update weekly (Week {getCurrentWeekNumber()})
+            </p>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CircleHelp className="w-5 h-5 text-description hover:text-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Numbers represent how many times each topic cluster appears in repositories for that language. 
+                  Topics are grouped from similar keywords using AI clustering.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div
-          className={`grid ${CHART_CONFIG.GRID_COLS.sm} ${CHART_CONFIG.GRID_COLS.md} ${CHART_CONFIG.GRID_COLS.lg} gap-5`}
-        >
+      </div>
+      
+      {/* Language Cards Grid */}
+      <div className="p-2 sm:p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-4">
           {languages.map((language) => (
-            <TopicLanguageChart
+            <TopicLanguageCard
               key={language}
               language={language}
               topicCounts={data[language]}
             />
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

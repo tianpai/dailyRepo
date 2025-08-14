@@ -31,6 +31,8 @@ export interface SearchProps {
   language: LanguageMap;
   topics: string[];
   trendingRecord: string[];
+  license: string;
+  createdAt: string;
 }
 
 export interface UseSearchReturn {
@@ -115,6 +117,8 @@ function processSearchResults(data: Search): SearchProps[] {
       language: repo.language,
       topics: repo.topics,
       trendingRecord: repo.trendingRecord || [],
+      license: repo.license,
+      createdAt: repo.createdAt,
     }),
   );
 }

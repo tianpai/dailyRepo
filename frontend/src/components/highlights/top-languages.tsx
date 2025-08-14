@@ -1,26 +1,16 @@
 "use client";
 
 import type { LanguageMap } from "@/interface/repository";
-import {
-  Pie,
-  PieChart,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
-} from "recharts";
+import { RepoLanguage } from "@/components/repo/repo-language";
 import { toChartData } from "@/lib/pie-chart-data";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useApi, env } from "@/hooks/useApi";
 import { type Query } from "@/lib/url-builder";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 type TopLangResponse = { data: LanguageMap; count?: number };
 
-// fetch data from endpoint and transform it into a format suitable for the chart
-function useLanguageChartData(numberOfLanguages: number = 10) {
+// fetch data from endpoint and transform it into a format suitable for the ASCII bar
+function useLanguageData(numberOfLanguages: number = 10) {
   const baseUrl = env("VITE_DATABASE_LANGUAGES");
   const token = env("VITE_DEV_AUTH");
 
@@ -54,149 +44,118 @@ function useLanguageChartData(numberOfLanguages: number = 10) {
   const data = useMemo(() => raw?.data ?? {}, [raw]);
   const error = useMemo(() => apiError?.error?.message ?? null, [apiError]);
 
-  const chartData = useMemo(() => {
-    return data ? toChartData(data as LanguageMap) : [];
-  }, [data]);
-
   return {
-    data: chartData,
+    data: data as LanguageMap,
     loading,
     error,
   };
 }
 
-// Presentational component for the language chart
-function LanguagesChartBarMixed({
+// Component to show detailed breakdown for programming languages
+function ProgrammingLanguagesBreakdown({ language }: { language: LanguageMap }) {
+  const chartData = toChartData(language);
+  
+  // Get screen width to determine threshold
+  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 768;
+  const threshold = screenWidth <= 440 ? 60 : 80; // Lower threshold for small screens
+  
+  let cumulativePercentage = 0;
+  const displayLanguages: Array<{language: string, count: number}> = [];
+  const otherLanguages: Array<{language: string, count: number}> = [];
+
+  for (const item of chartData) {
+    if (cumulativePercentage < threshold) {
+      displayLanguages.push(item);
+      cumulativePercentage += item.count;
+    } else {
+      otherLanguages.push(item);
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-2">
+      {/* Main languages percentages */}
+      <div className="flex flex-wrap gap-3">
+        {displayLanguages.map((item) => (
+          <span
+            key={item.language}
+            className="major-mono text-sm text-description"
+          >
+            {item.language}: {item.count}%
+          </span>
+        ))}
+      </div>
+      
+      {/* Other languages breakdown */}
+      {otherLanguages.length > 0 && (
+        <div className="space-y-1">
+          <span className="major-mono text-sm text-description">
+            Other ({otherLanguages.reduce((sum, item) => sum + item.count, 0)}%): {otherLanguages.map(item => item.language).join(", ")}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Presentational component for the ASCII language bar
+function LanguagesAsciiBar({
   data,
   loading,
   error,
-  topN,
-  onTopNChange,
 }: {
-  data: ReturnType<typeof toChartData>;
+  data: LanguageMap;
   loading: boolean;
   error: string | null;
-  topN: string;
-  onTopNChange: (value: string) => void;
 }) {
   const renderStateMessage = (message: string) => (
-    <div className="flex items-center justify-center h-full">{message}</div>
+    <div className="flex items-center justify-center h-32">{message}</div>
   );
 
   if (loading) return renderStateMessage("Loading...");
   if (error) return renderStateMessage("Error: Fetching language");
 
-  const header = (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div>
-        <h3 className="text-lg font-semibold">Programming Languages</h3>
-        <p className="text-sm text-gray-400">
-          Distribution of popular languages (max 10 languages)
-        </p>
+  return (
+    <div className="border-2 border-border bg-background text-foreground">
+      {/* ASCII Header */}
+      <div className="border-b-2 border-border p-4">
+        <div>
+          <h3 className="major-mono text-lg font-normal text-foreground">
+            PROGRAMMING LANGUAGES
+          </h3>
+          <p className="major-mono text-sm text-description mt-1">
+            Distribution of popular languages (top 10)
+          </p>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Label htmlFor="topN" className="text-sm font-medium">
-          Top:
-        </Label>
-        <Input
-          id="topN"
-          type="number"
-          min="3"
-          max="10"
-          value={topN}
-          onChange={(e) => onTopNChange(e.target.value)}
-          className="w-20 h-8"
-          inputMode="numeric"
-          pattern="[0-9]*"
+      
+      {/* ASCII Language Bar */}
+      <div className="p-4">
+        <RepoLanguage
+          language={data}
+          threshold={typeof window !== 'undefined' && window.innerWidth <= 440 ? 60 : 80}
+          desktopWidth={50}
+          mobileWidth={30}
+          showPercentages={false}
+          showTitle={false}
+          title=""
         />
+        {/* Custom percentage display always on next line */}
+        <ProgrammingLanguagesBreakdown language={data} />
       </div>
     </div>
-  );
-
-  const pieChart = (
-    <Pie
-      data={data}
-      cx="50%"
-      cy="50%"
-      labelLine={false}
-      innerRadius={30}
-      outerRadius={120}
-      dataKey="count"
-    >
-      {data.map((entry, index) => (
-        <Cell
-          key={`cell-${index}`}
-          fill={entry.fill}
-          name={`${entry.language} (${entry.count}%)`}
-        />
-      ))}
-    </Pie>
-  );
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">{header}</CardHeader>
-      <CardContent className="flex justify-center">
-        <div className="h-[400px] sm:h-[500px] w-full max-w-md">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              {pieChart}
-              <Tooltip
-                formatter={(value, _name, props) => [
-                  `${props?.payload?.language || "Unknown"} ${value}%`,
-                  "",
-                ]}
-                contentStyle={{
-                  backgroundColor: "rgba(30, 30, 30, 0.9)",
-                  border: "1px solid #444",
-                  borderRadius: "8px",
-                  padding: "10px 12px",
-                }}
-                itemStyle={{
-                  color: "#f0f0f0",
-                  fontSize: "0.8em",
-                }}
-              />
-              <Legend
-                verticalAlign="bottom"
-                height={80}
-                iconType="circle"
-                wrapperStyle={{
-                  paddingTop: "10px",
-                  fontSize: "12px",
-                  maxHeight: "80px",
-                  overflow: "hidden",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
 // Container component that combines data and presentation
 export function LanguagesContainer() {
-  const [topN, setTopN] = useState(5);
-  const [topNInput, setTopNInput] = useState("5");
-  const { data, loading, error } = useLanguageChartData(topN);
-
-  const handleTopNChange = (value: string) => {
-    setTopNInput(value);
-    const num = parseInt(value);
-    if (!isNaN(num) && num >= 3 && num <= 10) {
-      setTopN(num);
-    }
-  };
+  const { data, loading, error } = useLanguageData(10);
 
   return (
-    <LanguagesChartBarMixed
+    <LanguagesAsciiBar
       data={data}
       loading={loading}
       error={error}
-      topN={topNInput}
-      onTopNChange={handleTopNChange}
     />
   );
 }

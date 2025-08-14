@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -51,43 +50,37 @@ export function RepoDatePicker() {
 
   return (
     <div className="max-w-full flex items-center gap-1">
-      <Button
-        variant="outline"
-        size="icon"
+      <button
         onClick={() => changeDate(-1)}
-        className="h-10 w-10 shrink-0"
+        className="p-2 text-foreground major-mono hover:opacity-70 transition-all duration-200 shrink-0"
       >
         <ChevronLeft className="h-4 w-4" />
-      </Button>
+      </button>
 
       <div className="flex-1 min-w-0">
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-center font-normal h-10"
-            >
-              <CalendarIcon className="h-4 w-4 mr-2" />
-              <span className="truncate ">{formatDate(displayDate)}</span>
-            </Button>
+            <button className="w-full p-2 border-2 bg-background border-border text-foreground major-mono text-lg hover:bg-foreground hover:text-background transition-all duration-200 flex items-center justify-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span className="truncate">{formatDate(displayDate)}</span>
+            </button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-1">
+          <PopoverContent className="w-auto p-1 border-2 bg-background border-border">
             <Calendar
               mode="single"
               selected={displayDate}
               onSelect={(date) => setSelectedDate(date)}
+              className="major-mono"
             />
           </PopoverContent>
         </Popover>
       </div>
-      <Button
-        variant="outline"
-        size="icon"
+      <button
         onClick={() => changeDate(1)}
-        className="h-10 w-10 shrink-0"
+        className="p-2 text-foreground major-mono hover:opacity-70 transition-all duration-200 shrink-0"
       >
         <ChevronRight className="h-4 w-4" />
-      </Button>
+      </button>
     </div>
   );
 }

@@ -7,13 +7,13 @@ interface SearchInputProps {
 
 export function SearchInput({ value, onChange }: SearchInputProps) {
   return (
-    <div className="flex-1">
-      <div className="flex items-center gap-2 border-b border-gray-300 focus-within:border-gray-600 pb-2">
-        <Search className="h-4 w-4 opacity-70" />
+    <div className="w-full">
+      <div className="flex items-center gap-3 p-4 border-2 bg-background border-border text-foreground transition-all duration-200 focus-within:border-border">
+        <Search className="h-4 w-4 text-foreground flex-shrink-0" />
         <input
           type="search"
           placeholder="Search topics (e.g., react typescript)"
-          className="grow bg-transparent outline-none"
+          className="flex-1 bg-transparent outline-none major-mono text-lg text-foreground placeholder:text-foreground/70"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />

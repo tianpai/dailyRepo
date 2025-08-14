@@ -1,16 +1,4 @@
 export const COLORS = {
-  color1: "#FF6B6B",
-  color2: "#4ECDC4",
-  color3: "#45B7D1",
-  color4: "#96CEB4",
-  color5: "#FFEAA7",
-  color6: "#DDA0DD",
-  color7: "#98D8C8",
-  color8: "#F7DC6F",
-  color9: "#BB8FCE",
-  color10: "#85C1E9",
-  color11: "#F8C471",
-  color12: "#82E0AA",
   color13: "#F1948A",
   color14: "#85C1E9",
   color15: "#F8D7DA",
@@ -29,4 +17,13 @@ export const COLORS = {
   color28: "#EBDEF0",
   color29: "#D6EAF8",
   color30: "#EDBB99",
+};
+
+export const COLOR_PALLET = {
+  ligthtBackground: "#F0F0EB",
+  background: "#000000",
+  silver: "#B4B4B4",
+  lightgray: "#F1FOEC",
+  error: "#E47074",
+  focus: "#6DA9D2",
 };
