@@ -1,11 +1,5 @@
 import { useKeywords, type Keywords } from "@/hooks/useKeywords";
-import { CircleHelp } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { MobilePopup } from "@/components/ui/mobile-popup";
 
 function KeywordBadge({ keyword }: { keyword: string }) {
   return (
@@ -37,6 +31,8 @@ function KeywordsList({
 }
 
 function KeywordsHeader({ keywordCount }: { keywordCount: number }) {
+  const helpText = "Keywords extracted from daily trending repositories. Updates everyday with the most popular topics.";
+
   return (
     <div className="p-4 border-b-2 border-border">
       <div className="flex items-start justify-between">
@@ -48,19 +44,10 @@ function KeywordsHeader({ keywordCount }: { keywordCount: number }) {
             {keywordCount} trending topics
           </p>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <CircleHelp className="w-5 h-5 text-description hover:text-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs">
-                Keywords extracted from daily trending repositories. Updates
-                everyday with the most popular topics.
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <MobilePopup 
+          content={helpText}
+          popupWidth="w-64"
+        />
       </div>
     </div>
   );

@@ -10,8 +10,8 @@ export function DailyHighlight() {
     <PageContainer>
       <SidebarLayout>
         <div className="w-full flex flex-col justify-center items-center mx-auto p-4 sm:p-6 md:p-8">
-          <PageTitle 
-            title="Daily Highlights"
+          <PageTitle
+            title="highlights"
             description="Discover trending topics and programming languages"
           />
           <div className="w-full max-w-4xl">

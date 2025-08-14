@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { MobilePopup } from "@/components/ui/mobile-popup";
 import {
   TrendingUp,
   Scale,
@@ -119,19 +114,16 @@ function TrendingHistory({ trendingRecord }: { trendingRecord: string[] }) {
   const tooltipContent = `Previously trending ${trendingCount} time${trendingCount > 1 ? "s" : ""} on ${displayDates.join(", ")}${hasMoreDates ? ` and ${sortedDates.length - 3} more dates` : ""}`;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="major-mono text-lg text-foreground cursor-help inline-flex items-center gap-1">
-            <TrendingUp className="w-4 h-4" />
-            {trendingCount}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{tooltipContent}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <MobilePopup 
+      content={tooltipContent}
+      popupWidth="w-64"
+      trigger={
+        <span className="major-mono text-lg text-foreground inline-flex items-center gap-1">
+          <TrendingUp className="w-4 h-4" />
+          {trendingCount}
+        </span>
+      }
+    />
   );
 }
 
@@ -172,19 +164,16 @@ function RepoBirthday({ createdAt }: { createdAt: string }) {
   const ageText = `${age.years} year${age.years !== 1 ? "s" : ""}, ${age.days} day${age.days !== 1 ? "s" : ""}`;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="major-mono text-lg text-foreground cursor-help inline-flex items-center gap-1">
-            <Cake className="w-4 h-4" />
-            {createdAt}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{ageText}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <MobilePopup 
+      content={ageText}
+      popupWidth="w-56"
+      trigger={
+        <span className="major-mono text-lg text-foreground inline-flex items-center gap-1">
+          <Cake className="w-4 h-4" />
+          {createdAt}
+        </span>
+      }
+    />
   );
 }
 

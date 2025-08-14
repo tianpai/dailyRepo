@@ -1,13 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useApi, env } from "@/hooks/useApi";
 import { languageColors } from "@/data/language-color";
-import { CircleHelp } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { MobilePopup } from "@/components/ui/mobile-popup";
 
 // ==================== Type Definitions ====================
 interface ClusterCount {
@@ -30,7 +24,7 @@ const CONFIG = {
 // Hook to get screen width
 function useScreenWidth() {
   const [screenWidth, setScreenWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 768
+    typeof window !== "undefined" ? window.innerWidth : 768,
   );
 
   useEffect(() => {
@@ -38,8 +32,8 @@ function useScreenWidth() {
       setScreenWidth(window.innerWidth);
     }
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return screenWidth;
@@ -47,16 +41,16 @@ function useScreenWidth() {
 
 // Get dynamic bar width based on screen width
 function getDynamicBarWidth(screenWidth: number): number {
-  if (screenWidth <= 440) return 12;  // Very small screens
-  if (screenWidth <= 768) return 20;  // Mobile/tablet
-  return 35;                          // Desktop
+  if (screenWidth <= 440) return 12; // Very small screens
+  if (screenWidth <= 768) return 20; // Mobile/tablet
+  return 35; // Desktop
 }
 
-// Get dynamic topic name width based on screen width  
+// Get dynamic topic name width based on screen width
 function getDynamicTopicWidth(screenWidth: number): string {
   if (screenWidth <= 440) return "w-14"; // Very small screens (was w-10, +4 chars)
   if (screenWidth <= 768) return "w-16"; // Mobile/tablet (was w-12, +4 chars)
-  return "w-20";                          // Desktop (was w-16, +4 chars)
+  return "w-20"; // Desktop (was w-16, +4 chars)
 }
 
 /**
@@ -136,7 +130,11 @@ function transformToTopicEntries(topicCounts: ClusterCount): TopicEntry[] {
  * @param barWidth - Dynamic bar width based on screen size
  * @returns String of dashes representing the proportion
  */
-function createTopicBar(count: number, maxCount: number, barWidth: number): string {
+function createTopicBar(
+  count: number,
+  maxCount: number,
+  barWidth: number,
+): string {
   if (maxCount === 0) return "";
   const proportion = count / maxCount;
   const barLength = Math.round(proportion * barWidth);
@@ -152,14 +150,11 @@ interface TopicLanguageCardProps {
  * Individual ASCII card component for a single programming language
  * Displays top topics as horizontal bars with proportional lengths
  */
-function TopicLanguageCard({
-  language,
-  topicCounts,
-}: TopicLanguageCardProps) {
+function TopicLanguageCard({ language, topicCounts }: TopicLanguageCardProps) {
   const screenWidth = useScreenWidth();
   const topicEntries = transformToTopicEntries(topicCounts);
   const languageColor = languageColors[language] || "#8884d8";
-  const maxCount = Math.max(...topicEntries.map(entry => entry.count));
+  const maxCount = Math.max(...topicEntries.map((entry) => entry.count));
   const barWidth = getDynamicBarWidth(screenWidth);
   const topicWidthClass = getDynamicTopicWidth(screenWidth);
 
@@ -168,8 +163,8 @@ function TopicLanguageCard({
       {/* Language Header with Color Circle */}
       <div className="p-2 border-b-2 border-border">
         <div className="flex items-center gap-2">
-          <div 
-            className="w-3 h-3 rounded-full" 
+          <div
+            className="w-3 h-3 rounded-full"
             style={{ backgroundColor: languageColor }}
           ></div>
           <span className="major-mono text-xs sm:text-sm font-normal text-foreground">
@@ -177,14 +172,16 @@ function TopicLanguageCard({
           </span>
         </div>
       </div>
-      
+
       {/* Topics with ASCII Bars */}
       <div className="p-2 space-y-1">
         {topicEntries.map(({ topic, count }) => {
           const bar = createTopicBar(count, maxCount, barWidth);
           return (
             <div key={topic} className="flex items-center">
-              <span className={`major-mono text-xs text-foreground ${topicWidthClass} truncate`}>
+              <span
+                className={`major-mono text-xs text-foreground ${topicWidthClass} truncate`}
+              >
                 {topic}
               </span>
               <span className="major-mono text-xs text-description mx-1">
@@ -215,6 +212,8 @@ export function TopicsByLanguageContainer() {
   if (error) return renderStateMessage(`Error: ${error}`);
 
   const languages = Object.keys(data);
+  const helpText =
+    "Numbers represent how many times each topic cluster appears in repositories for that language. Topics are grouped from similar keywords using AI clustering.";
 
   return (
     <div className="border-2 border-border bg-background text-foreground">
@@ -229,22 +228,10 @@ export function TopicsByLanguageContainer() {
               Update weekly (Week {getCurrentWeekNumber()})
             </p>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <CircleHelp className="w-5 h-5 text-description hover:text-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">
-                  Numbers represent how many times each topic cluster appears in repositories for that language. 
-                  Topics are grouped from similar keywords using AI clustering.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <MobilePopup content={helpText} popupWidth="w-72" />
         </div>
       </div>
-      
+
       {/* Language Cards Grid */}
       <div className="p-2 sm:p-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-4">
