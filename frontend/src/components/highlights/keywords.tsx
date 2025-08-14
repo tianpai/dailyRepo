@@ -1,4 +1,3 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { useKeywords, type Keywords } from "@/hooks/useKeywords";
 import { CircleHelp } from "lucide-react";
 import {
@@ -26,11 +25,8 @@ function KeywordsList({
   return (
     <div className="flex flex-wrap gap-1 m-2 w-full">
       {loading ? (
-        <>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="h-8 w-20" />
-          ))}
-        </>
+        // TODO: add a ascii design skeleton page
+        <>Keyword is loading</>
       ) : (
         keywords?.map((keyword, index) => (
           <KeywordBadge key={index} keyword={keyword} />
@@ -59,7 +55,8 @@ function KeywordsHeader({ keywordCount }: { keywordCount: number }) {
             </TooltipTrigger>
             <TooltipContent>
               <p className="max-w-xs">
-                Keywords extracted from daily trending repositories. Updates everyday with the most popular topics.
+                Keywords extracted from daily trending repositories. Updates
+                everyday with the most popular topics.
               </p>
             </TooltipContent>
           </Tooltip>
@@ -87,7 +84,9 @@ function KeywordsDisplay({
   );
 
   return (
-    <div className={`flex flex-col items-stretch justify-between mt-4 sm:mt-6 border-2 bg-background border-border text-foreground transition-all duration-200 ${className || ""}`}>
+    <div
+      className={`flex flex-col items-stretch justify-between mt-4 sm:mt-6 border-2 bg-background border-border text-foreground transition-all duration-200 ${className || ""}`}
+    >
       <KeywordsHeader keywordCount={data?.topKeywords?.length || 0} />
       <div className="w-full flex flex-col items-start">
         {error ? (

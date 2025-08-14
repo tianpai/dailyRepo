@@ -16,14 +16,11 @@ function generatePageNumbers(
   const range: (number | "ellipsis")[] = [];
 
   if (isSmallScreen) {
-    // Small screen logic: show fewer pages
     if (totalPages <= 4) {
-      // Show all pages if total is very small
       for (let i = 1; i <= totalPages; i++) {
         range.push(i);
       }
     } else {
-      // Show: [1] [2] [///] [last] or similar pattern
       if (currentPage <= 2) {
         range.push(1);
         range.push(2);
@@ -45,11 +42,9 @@ function generatePageNumbers(
       }
     }
   } else {
-    // Original desktop logic
-    const delta = 2; // Number of pages to show on each side of current page
+    const delta = 2;
 
     if (totalPages <= 7) {
-      // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) {
         range.push(i);
       }
@@ -119,7 +114,6 @@ interface AsciiPaginationProps {
   isLoading?: boolean;
   onPageChange: (page: number) => void;
 }
-
 
 export function GenericPagination({
   currentPage,
