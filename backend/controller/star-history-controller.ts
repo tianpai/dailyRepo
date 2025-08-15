@@ -28,7 +28,7 @@ export async function getStarHistory(
       TTL._1_WEEK,
     );
 
-    const response = makeSuccess({ data: starHistory }, getTodayUTC());
+    const response = makeSuccess(starHistory, getTodayUTC());
     response.isCached = fromCache;
     res.status(200).json(response);
   } catch (error) {

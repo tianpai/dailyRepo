@@ -69,9 +69,6 @@ export function SearchResults({
           No repositories found for "{searchInfo.query}"
           {searchInfo.language && ` in ${searchInfo.language}`}
         </p>
-        <p className="text-sm text-gray-500 mt-2">
-          Try different keywords or remove the language filter
-        </p>
       </div>
     );
   }

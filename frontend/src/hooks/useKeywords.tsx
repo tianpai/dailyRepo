@@ -10,7 +10,7 @@ export interface Keywords {
   };
 }
 
-export function useKeywords() {
+export function useKeywords(date?: string) {
   const base_url = env("VITE_DATABASE_REPOS");
   const token = env("VITE_DEV_AUTH");
 
@@ -18,8 +18,9 @@ export function useKeywords() {
     () => ({
       baseUrl: base_url,
       endpoint: "keywords",
+      query: date ? { date } : undefined,
     }),
-    [base_url],
+    [base_url, date],
   );
 
   const fetchOptions = useMemo(

@@ -11,8 +11,8 @@ interface SearchFormProps {
 
 export function SearchButton() {
   return (
-    <button 
-      type="submit" 
+    <button
+      type="submit"
       className="px-6 py-4 border-2 bg-background border-border text-foreground major-mono text-lg transition-all duration-200 hover:bg-foreground hover:text-background"
     >
       Search

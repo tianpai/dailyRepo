@@ -18,16 +18,6 @@ const RepoCardContainer = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-const RepoCardHeader = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex flex-shrink-0 w-full lg:w-1/3">{children}</div>
-);
-
-const RepoCardContent = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex-grow w-full lg:w-2/3 flex items-start lg:items-center mt-3 lg:mt-0">
-    {children}
-  </div>
-);
-
 const RepoCardFooter = ({ children }: { children: React.ReactNode }) => (
   <div className="w-full flex flex-col items-start">{children}</div>
 );
@@ -114,7 +104,7 @@ function TrendingHistory({ trendingRecord }: { trendingRecord: string[] }) {
   const tooltipContent = `Previously trending ${trendingCount} time${trendingCount > 1 ? "s" : ""} on ${displayDates.join(", ")}${hasMoreDates ? ` and ${sortedDates.length - 3} more dates` : ""}`;
 
   return (
-    <MobilePopup 
+    <MobilePopup
       content={tooltipContent}
       popupWidth="w-64"
       trigger={
@@ -164,7 +154,7 @@ function RepoBirthday({ createdAt }: { createdAt: string }) {
   const ageText = `${age.years} year${age.years !== 1 ? "s" : ""}, ${age.days} day${age.days !== 1 ? "s" : ""}`;
 
   return (
-    <MobilePopup 
+    <MobilePopup
       content={ageText}
       popupWidth="w-56"
       trigger={
@@ -190,19 +180,20 @@ export function RepoCard({
 }: RepoProps) {
   return (
     <RepoCardContainer>
-      <div className="flex flex-col lg:flex-row items-stretch flex-grow border-b-2 border-border p-4 sm:p-6 lg:p-10">
-        <RepoCardHeader>
-          <div className="w-full">
-            <RepoCardTitle>
-              <RepoName owner={owner} name={name} url={url} />
-            </RepoCardTitle>
-          </div>
-        </RepoCardHeader>
-        <RepoCardContent>
+      <div className="flex flex-col flex-grow border-b-2 border-border p-4 sm:p-6 lg:p-10">
+        {/* Repo Name - Always on top */}
+        <div className="w-full mb-3">
+          <RepoCardTitle>
+            <RepoName owner={owner} name={name} url={url} />
+          </RepoCardTitle>
+        </div>
+
+        {/* Description - Always below repo name */}
+        <div className="w-full">
           <div className="line-clamp-3 sm:line-clamp-4 lg:line-clamp-5 major-mono text-base sm:text-lg text-description leading-relaxed">
             {removeEmojis(description)}
           </div>
-        </RepoCardContent>
+        </div>
       </div>
       <RepoCardFooter>
         <RepoLanguage language={language} />

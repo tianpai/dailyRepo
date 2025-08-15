@@ -66,3 +66,21 @@ export async function fetchKeywordAnalysis(
 
   return keywordData;
 }
+
+export async function fetchKeywordAnalysisByDate(
+  date: string,
+  includeRelated: boolean = true,
+): Promise<analyzeKeywordOutput> {
+  // Check the database for the specific date
+  const dbResult = await Keywords.findOne({ date }).sort({ date: -1 });
+  if (dbResult) {
+    return dbResult.analysis;
+  }
+
+  // If not in DB, return empty result for historical dates
+  return {
+    topKeywords: [],
+    related: {},
+    clusterSizes: {},
+  };
+}

@@ -52,16 +52,20 @@ function useLanguageData(numberOfLanguages: number = 10) {
 }
 
 // Component to show detailed breakdown for programming languages
-function ProgrammingLanguagesBreakdown({ language }: { language: LanguageMap }) {
+function ProgrammingLanguagesBreakdown({
+  language,
+}: {
+  language: LanguageMap;
+}) {
   const chartData = toChartData(language);
-  
+
   // Get screen width to determine threshold
-  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 768;
+  const screenWidth = typeof window !== "undefined" ? window.innerWidth : 768;
   const threshold = screenWidth <= 440 ? 60 : 80; // Lower threshold for small screens
-  
+
   let cumulativePercentage = 0;
-  const displayLanguages: Array<{language: string, count: number}> = [];
-  const otherLanguages: Array<{language: string, count: number}> = [];
+  const displayLanguages: Array<{ language: string; count: number }> = [];
+  const otherLanguages: Array<{ language: string; count: number }> = [];
 
   for (const item of chartData) {
     if (cumulativePercentage < threshold) {
@@ -85,12 +89,13 @@ function ProgrammingLanguagesBreakdown({ language }: { language: LanguageMap }) 
           </span>
         ))}
       </div>
-      
+
       {/* Other languages breakdown */}
       {otherLanguages.length > 0 && (
         <div className="space-y-1">
           <span className="major-mono text-sm text-description">
-            Other ({otherLanguages.reduce((sum, item) => sum + item.count, 0)}%): {otherLanguages.map(item => item.language).join(", ")}
+            Other ({otherLanguages.reduce((sum, item) => sum + item.count, 0)}
+            %): {otherLanguages.map((item) => item.language).join(", ")}
           </span>
         </div>
       )}
@@ -128,12 +133,14 @@ function LanguagesAsciiBar({
           </p>
         </div>
       </div>
-      
+
       {/* ASCII Language Bar */}
       <div className="p-4">
         <RepoLanguage
           language={data}
-          threshold={typeof window !== 'undefined' && window.innerWidth <= 440 ? 60 : 80}
+          threshold={
+            typeof window !== "undefined" && window.innerWidth <= 440 ? 60 : 80
+          }
           desktopWidth={50}
           mobileWidth={30}
           showPercentages={false}
@@ -151,11 +158,5 @@ function LanguagesAsciiBar({
 export function LanguagesContainer() {
   const { data, loading, error } = useLanguageData(10);
 
-  return (
-    <LanguagesAsciiBar
-      data={data}
-      loading={loading}
-      error={error}
-    />
-  );
+  return <LanguagesAsciiBar data={data} loading={loading} error={error} />;
 }
