@@ -1,6 +1,6 @@
-# 📋 Todos
+# Todos
 
-## ✅ Completed
+## Completed
 
 **Backend Infrastructure:**
 
@@ -27,19 +27,19 @@
 
 ### Near-Term
 
-- [ ] Expand repository details view (description, license, last updated)
+- [x] Expand repository details view (description, license, last updated)
 - [x] Expand scrapping range to include language-specific repositories and developers
 - [ ] Finalize category filtering in UI (backend categorization system is ready)
-- [ ] Implement repository topics and tag cloud for richer filtering
-- [ ] Add hover animations and visual enhancements
+- [x] Implement repository topics and tag cloud for richer filtering
+- [x] Add hover animations and visual enhancements
 - [x] Day picker for historical data selection
-- [ ] Repository search functionality
+- [x] Repository search functionality
 - [ ] Monthly trending top 10 and hottest topics
 - [ ] Exportable reports and visualizations (PDF/CSV) of trending graphs
 
 ### Mid-Term
 
-- [ ] Dynamic background changes based on mouse hover
+- [x] ~~Dynamic background changes based on mouse hover~~
 - [x] Integrate React Router & Vite code splitting for improved SPA navigation
 - [ ] Enhance caching layer: swap in Redis and add TTL tuning
 - [ ] Comprehensive end-to-end and load testing

@@ -26,6 +26,9 @@ All endpoints are relative to `/api/v1/`.
   - Path Parameters: `:owner`, `:repo`
 - `GET /repos/keywords`
   - Description: Retrieves trending keywords analysis for repositories.
+  - Query Parameters: `?date=YYYY-MM-DD` (Optional: get keywords for specific date, must be within past 7 days)
+  - Caching: 7-day cache for historical data, 12-hour cache for current data
+  - Example: `/repos/keywords?date=2025-08-13`
 - `GET /repos/topics-by-language`
   - Description: Retrieves topics grouped by programming language.
 

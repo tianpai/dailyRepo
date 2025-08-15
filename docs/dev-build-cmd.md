@@ -1,4 +1,4 @@
-# 🔧 Development Commands
+# Development Commands
 
 ## Backend (Bun/TypeScript)
 
