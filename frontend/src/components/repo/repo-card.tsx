@@ -26,7 +26,10 @@ const RepoCardTitle = ({ children }: { children: React.ReactNode }) => (
   <div className="flex text-foreground mb-2 lg:mb-0">{children}</div>
 );
 
-function removeEmojis(text: string): string {
+function removeEmojis(text: string | null | undefined): string {
+  if (!text) {
+    return "";
+  }
   return text.replace(emojiRegex(), "").trim();
 }
 
