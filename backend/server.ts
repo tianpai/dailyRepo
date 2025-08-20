@@ -6,6 +6,7 @@ import apiRouterV1 from "./routes/main-routes";
 // import compression from "compression";
 import helmet from "helmet";
 import { connectToDatabase } from "./services/db-connection";
+import { startMainScheduler } from "./schedulers/main-scheduler";
 
 dotenv.config();
 
@@ -74,6 +75,7 @@ app.use(apiRouterV1);
 
 const server = app.listen(port, "::", () => {
   console.log(`Server is running on ${port}`);
+  startMainScheduler();
 });
 
 /* Graceful shutdown */

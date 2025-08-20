@@ -6,7 +6,10 @@ import { filterLanguage } from "@utils/language-list";
 import { analyzeKeywordOutput } from "./ml-keyword-service";
 import { fetchClusteredKeywordsHF } from "./hf-clustering-service";
 
-export function clusterRequestBody(topics: string[], includeRelated: boolean = true): analyzeKeywordInput {
+export function clusterRequestBody(
+  topics: string[],
+  includeRelated: boolean = true,
+): analyzeKeywordInput {
   return {
     topics: topics,
     topN: 15,
@@ -44,7 +47,6 @@ export async function fetchKeywordAnalysis(
   const requestBody = clusterRequestBody(topics, includeRelated);
 
   // Use Hugging Face clustering
-  console.log("[KEYWORDS] Using Hugging Face clustering...");
   const keywordData = await fetchClusteredKeywordsHF(requestBody);
   console.log("[KEYWORDS] Successfully used Hugging Face clustering");
 
@@ -69,7 +71,6 @@ export async function fetchKeywordAnalysis(
 
 export async function fetchKeywordAnalysisByDate(
   date: string,
-  includeRelated: boolean = true,
 ): Promise<analyzeKeywordOutput> {
   // Check the database for the specific date
   const dbResult = await Keywords.findOne({ date }).sort({ date: -1 });
