@@ -24,12 +24,12 @@ export function calculateAgeInDays(createdDate, updatedDate) {
 // utils/validateDate.js
 export function isValidDate(str) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
-  if (!m) return false;
+  if (!m) {return false;}
 
   const y = +m[1],
     mth = +m[2],
     d = +m[3];
-  if (y < 2024 || mth < 1 || mth > 12) return false;
+  if (y < 2024 || mth < 1 || mth > 12) {return false;}
   const days = new Date(y, mth, 0).getDate();
   return d >= 1 && d <= days;
 }
@@ -41,9 +41,9 @@ export function isValidDate(str) {
  */
 export function validateDate(date) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  if (!m) return null;
+  if (!m) {return null;}
 
-  let [_, y, M, d] = m;
+  const [_, y, M, d] = m;
   const year = +y;
   const month = +M;
   const day = +d;
@@ -51,8 +51,8 @@ export function validateDate(date) {
   /*
    * earliest date is 2025-01-01
    */
-  if (year <= 2024) return null;
-  if (month < 1 || month > 12) return null;
+  if (year <= 2024) {return null;}
+  if (month < 1 || month > 12) {return null;}
 
   // days in each month
   const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
@@ -71,7 +71,7 @@ export function validateDate(date) {
     31,
   ];
 
-  if (day < 1 || day > daysInMonth[month - 1]) return null;
+  if (day < 1 || day > daysInMonth[month - 1]) {return null;}
 
   return date;
 }

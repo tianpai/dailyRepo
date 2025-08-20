@@ -23,7 +23,7 @@ export async function getEarlyStarHistory(
   try {
     // Fetch first two pages of stargazers
     const responses = await Promise.all(
-      earlyPages.map((page) => getRepoStargazers(repo, token, page))
+      earlyPages.map((page) => getRepoStargazers(repo, token, page)),
     );
 
     // Combine all early stargazers

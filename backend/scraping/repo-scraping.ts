@@ -156,7 +156,7 @@ async function extractTrendingRepos(url: string): Promise<string[]> {
   const repositories: string[] = [];
 
   $(".Box-row").each((index, element) => {
-    const repoLink = $(element).find('h2 a[href*="/"]');
+    const repoLink = $(element).find("h2 a[href*=\"/\"]");
     if (repoLink.length > 0) {
       const fullName: string = repoLink.text().trim();
       // Remove extra spaces and normalize the format
@@ -329,7 +329,7 @@ async function extractTrendingDevelopers(
     const usernameLink = $(element).find("p.f4 a.Link--secondary");
     const username = usernameLink.text().trim();
     // Try to find popular repository
-    const repoLink = $(element).find('h1.h4 a[href*="/"][href*="/"]');
+    const repoLink = $(element).find("h1.h4 a[href*=\"/\"][href*=\"/\"]");
     // Only include developers who have both username and repository
     if (username && repoLink.length > 0) {
       const href = repoLink.attr("href");

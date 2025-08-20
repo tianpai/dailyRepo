@@ -64,7 +64,7 @@ function saveProgress() {
     fs.writeFileSync(CHECKPOINT_FILE, remaining.join("\n"));
   } else {
     // All done, cleanup
-    if (fs.existsSync(CHECKPOINT_FILE)) fs.unlinkSync(CHECKPOINT_FILE);
+    if (fs.existsSync(CHECKPOINT_FILE)) {fs.unlinkSync(CHECKPOINT_FILE);}
   }
 }
 
@@ -134,9 +134,9 @@ async function main() {
   await updateRemainingWithNewRepos();
 
   // Check for existing checkpoint files
-  let remainingRepoNames = loadRemainingRepos();
-  let alreadyCompleted = loadCompletedRepos();
-  let alreadyFailed = loadFailedRepos();
+  const remainingRepoNames = loadRemainingRepos();
+  const alreadyCompleted = loadCompletedRepos();
+  const alreadyFailed = loadFailedRepos();
   completedRepos = [...alreadyCompleted]; // Load existing completed repos
   failedRepos = [...alreadyFailed]; // Load existing failed repos
   let repos: RepoData[];

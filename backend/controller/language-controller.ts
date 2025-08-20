@@ -71,7 +71,7 @@ export async function getTopLang(
 ): Promise<void> {
   try {
     let top = parseInt((req.query.top as string) ?? "5", 10);
-    if (isNaN(top) || top <= 0) top = 5;
+    if (isNaN(top) || top <= 0) {top = 5;}
     top = Math.min(top, 15);
 
     const cacheKey = `top-languages:${top}`;

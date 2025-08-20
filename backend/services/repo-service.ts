@@ -71,7 +71,7 @@ export async function fetchTimeToFirstHundredStars() {
   // const pipeline = timeToFirstHundredStarsPipeline();
   // const results = await Repo.aggregate(pipeline);
   return null;
-  
+
   /*
   const formattedResults = {
     summary: {

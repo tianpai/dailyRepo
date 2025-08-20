@@ -82,7 +82,7 @@ function performClustering(
 
   // For each topic, find similar topics and group them
   for (let i = 0; i < topics.length; i++) {
-    if (assigned.has(i)) continue;
+    if (assigned.has(i)) {continue;}
 
     const clusterName = topics[i];
     clusters[clusterName] = [topics[i]];
@@ -90,7 +90,7 @@ function performClustering(
 
     // Find similar topics
     for (let j = i + 1; j < topics.length; j++) {
-      if (assigned.has(j)) continue;
+      if (assigned.has(j)) {continue;}
 
       const similarity = cosineSimilarity(embeddings[i], embeddings[j]);
 

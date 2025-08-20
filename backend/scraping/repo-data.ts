@@ -117,13 +117,15 @@ export async function prepTrendingData(): Promise<ProcessedRepo[]> {
  * Upsert an array of already‑prepared repo objects in one bulkWrite.
  */
 export async function saveTrendingData(repos: ProcessedRepo[]): Promise<void> {
-  if (!repos.length) return; // guard against empty ops
+  if (!repos.length) {
+    return;
+  } // guard against empty ops
   const ops = repos.map((repo) => ({
     updateOne: {
       filter: { owner: repo.owner, name: repo.name },
-      update: { 
+      update: {
         $set: repo,
-        $addToSet: { trendingRecord: repo.trendingDate }
+        $addToSet: { trendingRecord: repo.trendingDate },
       },
       upsert: true,
     },
@@ -466,14 +468,16 @@ export async function prepTrendingDevelopers(): Promise<ProcessedDeveloper[]> {
 export async function saveTrendingDevelopers(
   developers: ProcessedDeveloper[],
 ): Promise<void> {
-  if (!developers.length) return;
+  if (!developers.length) {
+    return;
+  }
 
   const ops = developers.map((dev) => ({
     updateOne: {
       filter: { username: dev.username },
-      update: { 
+      update: {
         $set: dev,
-        $addToSet: { trendingRecord: dev.trendingDate }
+        $addToSet: { trendingRecord: dev.trendingDate },
       },
       upsert: true,
     },

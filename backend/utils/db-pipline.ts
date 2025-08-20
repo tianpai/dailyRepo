@@ -153,10 +153,10 @@ export const searchReposPipeline = (
           { $toLower: language },
           { $map: { 
             input: { $objectToArray: "$language" }, 
-            in: { $toLower: "$$this.k" } 
-          }}
-        ]
-      }
+            in: { $toLower: "$$this.k" }, 
+          }},
+        ],
+      },
     });
   }
 
