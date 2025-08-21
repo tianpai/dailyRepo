@@ -11,6 +11,7 @@ import { DeveloperPage } from "./components/developers/developer-page.tsx";
 import { SidebarLayout } from "./components/app-sidebar.tsx";
 import { DailyHighlight } from "./components/highlights/highlight-page.tsx";
 import { SearchPage } from "./components/search/search-page.tsx";
+import { NotFound } from "./components/404.tsx";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
                 }
               />
               <Route path="/developers" element={<DeveloperPage />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>
         </RepoDataProvider>
