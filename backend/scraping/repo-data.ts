@@ -44,7 +44,6 @@ interface ProcessedDeveloper {
   username: string;
   repositoryPath: string;
   profileUrl: string;
-  trendingDate: string;
   location?: string;
   avatar_url: string;
 }
@@ -442,7 +441,6 @@ export async function prepTrendingDevelopers(): Promise<ProcessedDeveloper[]> {
         username: dev.username,
         repositoryPath: dev.repositoryPath,
         profileUrl: `https://github.com/${dev.username}`,
-        trendingDate: today,
         location: userInfo?.location || undefined,
         avatar_url: userInfo?.avatar_url || "",
       };
@@ -472,12 +470,13 @@ export async function saveTrendingDevelopers(
     return;
   }
 
+  const today = getTodayUTC();
   const ops = developers.map((dev) => ({
     updateOne: {
       filter: { username: dev.username },
       update: {
         $set: dev,
-        $addToSet: { trendingRecord: dev.trendingDate },
+        $addToSet: { trendingRecord: today },
       },
       upsert: true,
     },

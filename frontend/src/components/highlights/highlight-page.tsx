@@ -3,6 +3,7 @@ import { PageContainer } from "@/components/page-container.tsx";
 import { SidebarLayout } from "@/components/app-sidebar.tsx";
 import { KeywordsContainer } from "@/components/highlights/keywords";
 import { TopicsByLanguageContainer } from "@/components/highlights/topics-by-language";
+import { TopDevelopersContainer } from "@/components/highlights/top-developers";
 import { PageTitle } from "@/components/page-title";
 
 export function DailyHighlight() {
@@ -17,6 +18,7 @@ export function DailyHighlight() {
           <div className="w-full max-w-4xl">
             <div className="space-y-3">
               <KeywordsContainer />
+              <TopDevelopersContainer />
               <LanguagesContainer />
               <TopicsByLanguageContainer />
             </div>

@@ -8,7 +8,10 @@ import {
   withCache,
   paginateArray,
 } from "../utils/controller-helper";
-import { fetchTrendingDevelopers } from "@/services/developer-service";
+import {
+  fetchTrendingDevelopers,
+  fetchTopTrendingDevelopers,
+} from "@/services/developer-service";
 
 /**
  * GET /developers
@@ -69,6 +72,35 @@ export async function getTrendingDevelopers(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch developers";
+    res.status(400).json(makeError(new Date().toISOString(), 400, message));
+  }
+}
+
+/**
+ * GET /developers/top
+ * Returns top developers by trending frequency
+ * Query Parameters: ?limit=10 (default: 10, max: 50)
+ */
+export async function getTopTrendingDevelopers(
+  req: Request,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 50);
+    const cacheKey = getTrendCacheKey(`top-trending-developers-${limit}`);
+    const { data: developers, fromCache } = await withCache(
+      cacheKey,
+      () => fetchTopTrendingDevelopers(limit),
+      TTL._1_DAY,
+    );
+
+    const response = makeSuccess({ developers }, new Date().toISOString());
+    response.isCached = fromCache;
+    res.status(200).json(response);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch top developers";
     res.status(400).json(makeError(new Date().toISOString(), 400, message));
   }
 }

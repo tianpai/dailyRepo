@@ -5,15 +5,11 @@ export function About(): React.JSX.Element {
   return (
     <>
       <div className="border-2 border-border bg-background text-foreground mb-8">
-        {/* ASCII Header */}
         <div className="p-4 border-b-2 border-border">
           <div>
             <h1 className="major-mono text-lg font-normal text-foreground">
               ABOUT DAILY REPO
             </h1>
-            <p className="major-mono text-sm text-description mt-1">
-              Discover trending repositories daily
-            </p>
           </div>
         </div>
 
@@ -26,7 +22,7 @@ export function About(): React.JSX.Element {
 
         {/* ASCII Footer */}
         <div className="p-4 border-t-2 border-border text-center">
-          <p className="major-mono text-sm text-description">
+          <p className="major-mono text-lg text-description">
             Made for the open-source community
           </p>
         </div>
@@ -38,15 +34,15 @@ export function About(): React.JSX.Element {
 function ProjectDescription() {
   return (
     <section className="border-2 border-border bg-background p-4">
-      <h2 className="major-mono text-sm font-normal text-foreground mb-3">
+      <h2 className="major-mono text-lg font-normal text-foreground mb-3">
         WHAT IS DAILY REPO?
       </h2>
-      <p className="major-mono text-xs text-description leading-relaxed">
+      <p className="major-mono text-lg text-description leading-relaxed">
         DailyRepo is a curated platform for discovering GitHub's most trending
         repositories. We track and showcase the hottest open-source projects
         across multiple categories, helping developers stay updated with the
         latest innovations in the tech world. From AI/ML tools to productivity
-        apps, security utilities to web development frameworks - find what's
+        apps, security utilities to web development frameworks, find what's
         trending and what's worth your attention.
       </p>
     </section>
@@ -56,10 +52,10 @@ function ProjectDescription() {
 function AboutDeveloper(): React.JSX.Element {
   return (
     <section className="border-2 border-border bg-background p-4">
-      <h2 className="major-mono text-sm font-normal text-foreground mb-3">
+      <h2 className="major-mono text-lg font-normal text-foreground mb-3">
         ABOUT THE DEVELOPER
       </h2>
-      <p className="major-mono text-xs text-description leading-relaxed mb-4">
+      <p className="major-mono text-lg text-description leading-relaxed mb-4">
         Hi! I'm a passionate developer who loves exploring the open-source
         ecosystem. I built DailyRepo to solve my own problem of staying current
         with trending repositories across different technology stacks. : )
@@ -69,24 +65,22 @@ function AboutDeveloper(): React.JSX.Element {
           href="https://www.linkedin.com/in/tianpai"
           target="_blank"
           rel="noopener noreferrer"
-          className="major-mono text-xs text-foreground hover:text-primary transition-colors flex items-center gap-2"
+          className="major-mono text-lg text-foreground hover:text-primary transition-colors flex items-center gap-2"
         >
           <FaLinkedin /> CONNECT ON LINKEDIN
         </a>
 
-        <span className="major-mono text-xs text-description hidden sm:inline">
-          |
-        </span>
+        <span className="major-mono text-description hidden sm:inline">|</span>
         <div className="flex flex-col sm:flex-row sm:items-center gap-1">
           <a
             href="https://github.com/tianpai/dailyRepo"
             target="_blank"
             rel="noopener noreferrer"
-            className="major-mono text-xs text-foreground hover:text-primary transition-colors flex items-center gap-2"
+            className="major-mono text-lg text-foreground hover:text-primary transition-colors flex items-center gap-2"
           >
             <FaGithub /> VIEW ON GITHUB
           </a>
-          <span className="major-mono text-xs text-description">
+          <span className="major-mono text-description">
             (consider starring!)
           </span>
         </div>
@@ -98,10 +92,10 @@ function AboutDeveloper(): React.JSX.Element {
 function LegalDisclaimer(): React.JSX.Element {
   return (
     <section className="border-2 border-border bg-background p-4">
-      <h2 className="major-mono text-sm font-normal text-foreground mb-3">
+      <h2 className="major-mono text-lg font-normal text-foreground mb-3">
         LEGAL & DISCLAIMER
       </h2>
-      <div className="major-mono text-xs text-description space-y-3">
+      <div className="major-mono text-lg text-description space-y-3">
         <p>
           <span className="text-foreground">DATA SOURCE:</span> All repository
           data is sourced from GitHub's public API. We do not claim ownership of

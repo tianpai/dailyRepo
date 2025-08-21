@@ -76,9 +76,43 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
   };
 }
 
-function processDevelopers(
-  data: Developers,
-): DeveloperProps[] {
+export function useTopDevelopers() {
+  const base_url = env("VITE_DATABASE_DEVS");
+  const token = env("VITE_DEV_AUTH");
+
+  const urlArgs = useMemo(
+    () => ({
+      baseUrl: base_url,
+      endpoint: "top",
+      query: {},
+    }),
+    [base_url],
+  );
+
+  const fetchOptions = useMemo(
+    () => ({
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+    [token],
+  );
+
+  const {
+    data: response,
+    loading,
+    error,
+  } = useApi<Developers>({
+    urlArgs,
+    fetchOptions,
+  });
+
+  return {
+    data: response ? processDevelopers(response) : [],
+    loading,
+    error: error?.error?.message || "",
+  };
+}
+
+function processDevelopers(data: Developers): DeveloperProps[] {
   const mapped: DeveloperProps[] = data.developers.map(
     (dev: Developer): DeveloperProps => ({
       username: dev.username,
