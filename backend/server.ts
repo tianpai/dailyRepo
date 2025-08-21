@@ -34,6 +34,7 @@ app.use(
       "https://daily-repo.vercel.app",
       "https://dailyrepo.tianpai.io",
       "https://www.dailyrepo.tianpai.io",
+      "https://dailyrepo.up.railway.app",
     ],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

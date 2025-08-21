@@ -11,13 +11,28 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    host: "0.0.0.0",
+    port: Number(process.env.PORT) || 5173,
+    allowedHosts: [
+      "frontend-production-219b.up.railway.app",
+      "www.dailyrepo.tianpai.io",
+      ".railway.app",
+      ".tianpai.io",
+    ],
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          recharts: ['recharts'],
-          ui: ['@radix-ui/react-slot', '@radix-ui/react-separator', '@radix-ui/react-tooltip', '@radix-ui/react-dialog'],
+          vendor: ["react", "react-dom"],
+          recharts: ["recharts"],
+          ui: [
+            "@radix-ui/react-slot",
+            "@radix-ui/react-separator",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-dialog",
+          ],
         },
       },
     },

@@ -3,11 +3,15 @@
   "private": true,
   "version": "0.0.2",
   "type": "module",
+  "engines": {
+    "node": "22.11.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "vite --host 0.0.0.0 --port $PORT"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
