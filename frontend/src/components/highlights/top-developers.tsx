@@ -42,7 +42,7 @@ function DeveloperCard({
           onClick={handleRepoClick}
           className="major-mono text-lg text-description hover:opacity-70 transition-opacity block"
         >
-          {developer.repositoryPath.split('/')[1]}
+          {developer.repositoryPath.split("/")[1]}
         </a>
       </div>
       <div className="major-mono text-lg text-foreground">{trendingCount}x</div>
@@ -52,7 +52,6 @@ function DeveloperCard({
 
 function DevelopersList({
   developers,
-  loading,
 }: {
   developers: DeveloperProps[];
   loading: boolean;
@@ -62,7 +61,7 @@ function DevelopersList({
   // Extract repo name from "owner/repo" format for search
   const searchQuery = expandedRepo ? expandedRepo.split("/")[1] : "";
 
-  const { data: searchResults, isLoading: searchLoading } = useSearch({
+  const { data: searchResults } = useSearch({
     query: searchQuery,
     enabled: !!expandedRepo,
   });
@@ -77,11 +76,7 @@ function DevelopersList({
 
   return (
     <div className="w-full flex flex-col p-2">
-      {loading ? (
-        <span className="major-mono text-lg text-description">
-          Loading developers...
-        </span>
-      ) : developers && developers.length > 0 ? (
+      {developers && developers.length > 0 ? (
         developers.map((developer, index: number) => (
           <div key={index}>
             <DeveloperCard
@@ -90,11 +85,7 @@ function DevelopersList({
             />
             {expandedRepo === developer.repositoryPath && (
               <div>
-                {searchLoading ? (
-                  <span className="major-mono text-lg text-description">
-                    Loading repository...
-                  </span>
-                ) : repoData ? (
+                {repoData ? (
                   <RepoCard {...repoData} />
                 ) : (
                   <div className="border-1">

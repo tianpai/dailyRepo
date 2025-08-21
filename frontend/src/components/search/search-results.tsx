@@ -1,5 +1,6 @@
 import { RepoCard } from "@/components/repo/repo-card";
 import { GenericPagination } from "@/components/repo/repo-pagination";
+import { Loading } from "@/components/loading";
 import { type Pagination } from "@/interface/endpoint";
 import { type SearchProps } from "@/hooks/useSearch";
 
@@ -37,13 +38,7 @@ export function SearchResults({
   }
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="skeleton h-32 w-full"></div>
-        ))}
-      </div>
-    );
+    return <Loading className="py-12" />;
   }
 
   if (!searchInfo) {

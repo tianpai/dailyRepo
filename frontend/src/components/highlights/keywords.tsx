@@ -20,19 +20,10 @@ function KeywordBadge({ keyword }: { keyword: string }) {
   );
 }
 
-function KeywordsList({
-  keywords,
-  loading,
-}: {
-  keywords: string[];
-  loading: boolean;
-}) {
+function KeywordsList({ keywords }: { keywords: string[]; loading: boolean }) {
   return (
     <div className="flex flex-wrap gap-1 m-2 w-full">
-      {loading ? (
-        // TODO: add a ascii design skeleton page
-        <>Keyword is loading</>
-      ) : keywords && keywords.length > 0 ? (
+      {keywords && keywords.length > 0 ? (
         keywords.map((keyword, index) => (
           <KeywordBadge key={index} keyword={keyword} />
         ))
