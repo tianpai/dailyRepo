@@ -16,6 +16,7 @@ export default defineConfig({
     port: Number(process.env.PORT) || 5173,
     allowedHosts: [
       "frontend-production-219b.up.railway.app",
+      "dailyrepo-9rgp.onrender.com",
       "www.dailyrepo.tianpai.io",
       ".railway.app",
       ".tianpai.io",
