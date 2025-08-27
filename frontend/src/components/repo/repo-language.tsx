@@ -1,11 +1,10 @@
 import { type LanguageMap } from "@/interface/repository";
 import { toChartData } from "@/lib/pie-chart-data";
+import { languageColors } from "@/data/language-color";
+import { type ReactElement } from "react";
 
 interface RepoLanguageProps {
   language: LanguageMap;
-  threshold?: number;
-  desktopWidth?: number;
-  mobileWidth?: number;
   showPercentages?: boolean;
   showTitle?: boolean;
   title?: string;
@@ -16,12 +15,6 @@ interface LanguageItem {
   count: number;
 }
 
-// Constants
-const CUMULATIVE_THRESHOLD = 75;
-const ASCII_BAR_WIDTH_DESKTOP = 30;
-const ASCII_BAR_WIDTH_MOBILE = 20;
-const BAR_TOTAL_PERCENTAGE = 80;
-
 // Minimalistic theme classes - respects light/dark mode
 const THEME_CLASSES = {
   container: "bg-background text-foreground",
@@ -29,22 +22,26 @@ const THEME_CLASSES = {
 } as const;
 
 // Helper functions
-function processLanguageData(chartData: LanguageItem[], threshold: number = CUMULATIVE_THRESHOLD): LanguageItem[] {
-  let cumulativePercentage = 0;
-  const displayLanguages: LanguageItem[] = [];
-  let otherPercentage = 0;
+function processLanguageData(
+  chartData: LanguageItem[],
+  maxLanguages: number = 2,
+): LanguageItem[] {
+  // Filter out 0% languages
+  const filteredData = chartData.filter((item) => item.count > 0);
 
-  for (const item of chartData) {
-    if (cumulativePercentage < threshold) {
-      displayLanguages.push(item);
-      cumulativePercentage += item.count;
-    } else {
-      otherPercentage += item.count;
-    }
+  // If only one language with 100%, show just that one
+  if (filteredData.length === 1 && filteredData[0].count === 100) {
+    return filteredData;
   }
 
-  // Add "Other" category if there are remaining languages
-  if (otherPercentage > 0) {
+  const displayLanguages = filteredData.slice(0, maxLanguages);
+  const remainingLanguages = filteredData.slice(maxLanguages);
+
+  if (remainingLanguages.length > 0) {
+    const otherPercentage = remainingLanguages.reduce(
+      (sum, item) => sum + item.count,
+      0,
+    );
     displayLanguages.push({
       language: "Other",
       count: otherPercentage,
@@ -54,76 +51,65 @@ function processLanguageData(chartData: LanguageItem[], threshold: number = CUMU
   return displayLanguages;
 }
 
-function createLanguageSegment(item: LanguageItem, totalWidth: number): string {
-  const segmentWidth = Math.round(
-    (item.count / BAR_TOTAL_PERCENTAGE) * totalWidth,
+function createLanguageListItem(item: LanguageItem): ReactElement {
+  const languageColor = languageColors[item.language] || "#8884d8";
+
+  return (
+    <div
+      key={item.language}
+      className="relative flex items-center justify-between p-1"
+      style={{
+        background: `linear-gradient(to right, ${languageColor}20 ${item.count}%, transparent ${item.count}%)`,
+      }}
+    >
+      <span className="major-mono text-sm text-foreground truncate flex-1 relative z-10">
+        {item.language}
+      </span>
+      <div className="flex items-center gap-2 relative z-10">
+        <span className="major-mono text-sm text-description">
+          {item.count}%
+        </span>
+      </div>
+    </div>
   );
-  const isOther = item.language === "Other";
-
-  if (isOther) {
-    return "/".repeat(segmentWidth);
-  }
-
-  if (segmentWidth > item.language.length + 4) {
-    // Add space around language name: --- C ---
-    const totalPadding = segmentWidth - item.language.length - 2; // -2 for the spaces
-    const leftPad = Math.floor(totalPadding / 2);
-    const rightPad = totalPadding - leftPad;
-    return (
-      "-".repeat(leftPad) + " " + item.language + " " + "-".repeat(rightPad)
-    );
-  } else if (segmentWidth > 2) {
-    return "-".repeat(segmentWidth);
-  }
-  return "";
 }
 
-function generateAsciiBar(
+function generateLanguageList(
   processedData: LanguageItem[],
-  isMobile: boolean = false,
-  customDesktopWidth?: number,
-  customMobileWidth?: number,
   showTitle: boolean = false,
   title: string = "",
-): string {
-  const barWidth = isMobile 
-    ? (customMobileWidth || ASCII_BAR_WIDTH_MOBILE)
-    : (customDesktopWidth || ASCII_BAR_WIDTH_DESKTOP);
-
-  let result = showTitle && title ? `${title.toUpperCase()} |` : "|";
-
-  for (const item of processedData) {
-    const segment = createLanguageSegment(item, barWidth);
-    result += segment + "|";
-  }
-
-  return result;
+): ReactElement {
+  return (
+    <div className="w-full">
+      {showTitle && title && (
+        <div className="major-mono text-sm text-foreground mb-1">
+          {title.toUpperCase()}
+        </div>
+      )}
+      <div className="space-y-1">
+        {processedData.map((item) => createLanguageListItem(item))}
+      </div>
+    </div>
+  );
 }
 
-export function RepoLanguage({ 
-  language, 
-  threshold = CUMULATIVE_THRESHOLD,
-  desktopWidth,
-  mobileWidth,
-  showPercentages = true,
+export function RepoLanguage({
+  language,
   showTitle = false,
-  title = ""
+  title = "",
 }: RepoLanguageProps) {
   const chartData = toChartData(language).map((item) => ({
     language: item.language,
     count: item.count,
   }));
 
-  const processedData = processLanguageData(chartData, threshold);
-  const asciiBarDesktop = generateAsciiBar(processedData, false, desktopWidth, mobileWidth, showTitle, title);
-  const asciiBarMobile = generateAsciiBar(processedData, true, desktopWidth, mobileWidth, showTitle, title);
-
+  const processedData = processLanguageData(chartData, 2);
   const isEmpty = Object.keys(language).length === 0;
 
   if (isEmpty) {
     return (
-      <div className={`${THEME_CLASSES.container} flex items-center pl-4 py-2`}>
-        <span className="major-mono text-lg text-foreground">
+      <div className={`${THEME_CLASSES.container} flex items-center p-2`}>
+        <span className="major-mono text-sm text-foreground">
           No language data
         </span>
       </div>
@@ -131,39 +117,8 @@ export function RepoLanguage({
   }
 
   return (
-    <div className={`${THEME_CLASSES.container} w-full`}>
-      <div className="flex items-center justify-between pl-4 py-2 min-h-8">
-        <span className="major-mono text-lg whitespace-nowrap overflow-x-auto md:hidden">
-          {asciiBarMobile}
-        </span>
-        <span className="major-mono text-lg whitespace-nowrap overflow-x-auto hidden md:block">
-          {asciiBarDesktop}
-        </span>
-        {showPercentages && (
-          <div className="hidden md:flex gap-3 pr-4">
-            {processedData.map((item) => (
-              <span
-                key={item.language}
-                className="major-mono text-lg text-description whitespace-nowrap"
-              >
-                {item.language}: {item.count}%
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-      {showPercentages && (
-        <div className="flex flex-wrap gap-3 px-4 pb-2 md:hidden">
-          {processedData.map((item) => (
-            <span
-              key={item.language}
-              className="major-mono text-lg text-description"
-            >
-              {item.language}: {item.count}%
-            </span>
-          ))}
-        </div>
-      )}
+    <div className={`${THEME_CLASSES.container} w-full p-2`}>
+      {generateLanguageList(processedData, showTitle, title)}
     </div>
   );
 }
