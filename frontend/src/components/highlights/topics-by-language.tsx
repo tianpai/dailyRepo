@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { useApi, env } from "@/hooks/useApi";
 import { languageColors } from "@/data/language-color";
 import { MobilePopup } from "@/components/ui/mobile-popup";
@@ -18,40 +18,8 @@ interface TopicEntry {
 }
 
 const CONFIG = {
-  MAX_TOPICS: 6,
+  MAX_TOPICS: 10,
 } as const;
-
-// Hook to get screen width
-function useScreenWidth() {
-  const [screenWidth, setScreenWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 768,
-  );
-
-  useEffect(() => {
-    function handleResize() {
-      setScreenWidth(window.innerWidth);
-    }
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return screenWidth;
-}
-
-// Get dynamic bar width based on screen width
-function getDynamicBarWidth(screenWidth: number): number {
-  if (screenWidth <= 440) return 12; // Very small screens
-  if (screenWidth <= 768) return 20; // Mobile/tablet
-  return 35; // Desktop
-}
-
-// Get dynamic topic name width based on screen width
-function getDynamicTopicWidth(screenWidth: number): string {
-  if (screenWidth <= 440) return "w-14"; // Very small screens (was w-10, +4 chars)
-  if (screenWidth <= 768) return "w-16"; // Mobile/tablet (was w-12, +4 chars)
-  return "w-20"; // Desktop (was w-16, +4 chars)
-}
 
 /**
  * Get the current week number of the year
@@ -123,40 +91,19 @@ function transformToTopicEntries(topicCounts: ClusterCount): TopicEntry[] {
   return entries;
 }
 
-/**
- * Create proportional ASCII bar for topic count
- * @param count - The count for this topic
- * @param maxCount - The maximum count among all topics
- * @param barWidth - Dynamic bar width based on screen size
- * @returns String of dashes representing the proportion
- */
-function createTopicBar(
-  count: number,
-  maxCount: number,
-  barWidth: number,
-): string {
-  if (maxCount === 0) return "";
-  const proportion = count / maxCount;
-  const barLength = Math.round(proportion * barWidth);
-  return "─".repeat(Math.max(1, barLength));
-}
-
 interface TopicLanguageCardProps {
   language: string;
   topicCounts: ClusterCount;
 }
 
 /**
- * Individual ASCII card component for a single programming language
- * Displays top topics as horizontal bars with proportional lengths
+ * Individual card component for a single programming language
+ * Displays top topics with counts and percentages
  */
 function TopicLanguageCard({ language, topicCounts }: TopicLanguageCardProps) {
-  const screenWidth = useScreenWidth();
-  const topicEntries = transformToTopicEntries(topicCounts);
+  const topicEntries: TopicEntry[] = transformToTopicEntries(topicCounts);
   const languageColor = languageColors[language] || "#8884d8";
-  const maxCount = Math.max(...topicEntries.map((entry) => entry.count));
-  const barWidth = getDynamicBarWidth(screenWidth);
-  const topicWidthClass = getDynamicTopicWidth(screenWidth);
+  const totalCount = topicEntries.reduce((sum, entry) => sum + entry.count, 0);
 
   return (
     <div className="border-2 border-border bg-background text-foreground">
@@ -173,23 +120,38 @@ function TopicLanguageCard({ language, topicCounts }: TopicLanguageCardProps) {
         </div>
       </div>
 
-      {/* Topics with ASCII Bars */}
-      <div className="p-2 space-y-1">
-        {topicEntries.map(({ topic, count }) => {
-          const bar = createTopicBar(count, maxCount, barWidth);
-          return (
-            <div key={topic} className="flex items-center">
-              <span
-                className={`major-mono text-xs text-foreground ${topicWidthClass} truncate`}
+      {/* Topics with Percentages */}
+      <div className="p-2">
+        <div className="space-y-1">
+          {topicEntries.map(({ topic, count }) => {
+            const percentage =
+              totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+            const maxCount = Math.max(...topicEntries.map((e) => e.count));
+            const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+
+            return (
+              <div
+                key={topic}
+                className="relative flex items-center justify-between p-1"
+                style={{
+                  background: `linear-gradient(to right, ${languageColor}20 ${barWidth}%, transparent ${barWidth}%)`,
+                }}
               >
-                {topic}
-              </span>
-              <span className="major-mono text-xs text-description mx-1">
-                |{bar} {count}
-              </span>
-            </div>
-          );
-        })}
+                <span className="major-mono text-sm text-foreground truncate flex-1 relative z-10">
+                  {topic}
+                </span>
+                <div className="flex items-center gap-2 relative z-10">
+                  <span className="major-mono text-sm text-description">
+                    {count}
+                  </span>
+                  <span className="major-mono text-sm text-description">
+                    ({percentage}%)
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -197,7 +159,7 @@ function TopicLanguageCard({ language, topicCounts }: TopicLanguageCardProps) {
 
 /**
  * Container component that fetches and displays topics by language
- * Renders a grid of ASCII cards, one for each programming language
+ * Renders a grid of cards with percentages, one for each programming language
  */
 export function TopicsByLanguageContainer() {
   const { data, loading, error } = useTopicsByLanguage();
@@ -217,7 +179,6 @@ export function TopicsByLanguageContainer() {
 
   return (
     <div className="border-2 border-border bg-background text-foreground">
-      {/* ASCII Header */}
       <div className="p-4 border-b-2 border-border">
         <div className="flex items-start justify-between">
           <div>
