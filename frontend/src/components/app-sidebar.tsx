@@ -43,7 +43,7 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
 const SIDEBAR_STYLES = {
   toggle: "fixed top-4 left-4 z-50 p-3 text-foreground major-mono hover:opacity-70 transition-all duration-200",
   backdrop: "fixed inset-0 bg-black/20 z-40",
-  container: "fixed top-16 left-4 z-50 w-80 h-[calc(100vh-4rem)] overflow-y-auto border-2 bg-background border-border text-foreground transition-all duration-200 animate-in slide-in-from-left-10",
+  container: "fixed top-0 left-0 z-50 w-80 h-screen overflow-y-auto border-2 bg-background border-border text-foreground",
   section: "p-4 sm:p-6 lg:p-10 border-b-2 border-border",
   sectionLast: "p-4 sm:p-6 lg:p-10",
   heading: "major-mono text-lg font-normal text-foreground mb-4",
@@ -62,51 +62,43 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
 
   return (
     <div className="relative min-h-screen">
-      <SidebarToggle isOpen={isOpen} onToggle={toggleSidebar} />
+      <button 
+        onClick={toggleSidebar} 
+        className={SIDEBAR_STYLES.toggle} 
+        aria-label="Toggle sidebar"
+      >
+        {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+      </button>
       
       {isOpen && (
-        <SidebarOverlay onClose={closeSidebar}>
-          <FloatingSidebar />
-        </SidebarOverlay>
+        <div className={SIDEBAR_STYLES.backdrop} onClick={closeSidebar} />
       )}
+      
+      <div 
+        className={SIDEBAR_STYLES.container}
+        style={{
+          transform: isOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 300ms ease-in-out",
+        }}
+      >
+        <FloatingSidebar onClose={closeSidebar} />
+      </div>
 
       <main>{children}</main>
     </div>
   );
 }
 
-interface SidebarToggleProps {
-  isOpen: boolean;
-  onToggle: () => void;
-}
 
-function SidebarToggle({ isOpen, onToggle }: SidebarToggleProps) {
+function FloatingSidebar({ onClose }: { onClose: () => void }) {
   return (
-    <button onClick={onToggle} className={SIDEBAR_STYLES.toggle} aria-label="Toggle sidebar">
-      {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-    </button>
-  );
-}
-
-interface SidebarOverlayProps {
-  children: React.ReactNode;
-  onClose: () => void;
-}
-
-function SidebarOverlay({ children, onClose }: SidebarOverlayProps) {
-  return (
-    <>
-      <div className={SIDEBAR_STYLES.backdrop} onClick={onClose} />
-      <div className={SIDEBAR_STYLES.container}>
-        {children}
+    <div className="flex flex-col pt-20">
+      <div className="absolute top-4 left-4">
+        <button onClick={onClose} className="p-3 text-foreground major-mono hover:opacity-70 transition-all duration-200">
+          <X className="w-4 h-4" />
+        </button>
       </div>
-    </>
-  );
-}
 
-function FloatingSidebar() {
-  return (
-    <div className="flex flex-col">
       <SidebarSection title="Select Date">
         <RepoDatePicker />
       </SidebarSection>
