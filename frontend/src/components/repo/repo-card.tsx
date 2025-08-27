@@ -11,6 +11,7 @@ import {
 import emojiRegex from "emoji-regex";
 import { RepoLanguage } from "@/components/repo/repo-language.tsx";
 import type { RepoProps } from "@/hooks/useTrendingRepos.tsx";
+import { TiltedWrapper } from "@/components/ui/tilted-wrapper";
 
 const RepoCardContainer = ({ children }: { children: React.ReactNode }) => (
   <div className="flex flex-col items-stretch justify-between mt-4 sm:mt-6 border-2 bg-background border-border text-foreground transition-all duration-200">
@@ -182,35 +183,37 @@ export function RepoCard({
   createdAt,
 }: RepoProps) {
   return (
-    <RepoCardContainer>
-      <div className="flex flex-col flex-grow border-b-2 border-border p-4 sm:p-6 lg:p-10">
-        {/* Repo Name - Always on top */}
-        <div className="w-full mb-3">
-          <RepoCardTitle>
-            <RepoName owner={owner} name={name} url={url} />
-          </RepoCardTitle>
-        </div>
+    <TiltedWrapper>
+      <RepoCardContainer>
+        <div className="flex flex-col flex-grow border-b-2 border-border p-4 sm:p-6 lg:p-10">
+          {/* Repo Name - Always on top */}
+          <div className="w-full mb-3">
+            <RepoCardTitle>
+              <RepoName owner={owner} name={name} url={url} />
+            </RepoCardTitle>
+          </div>
 
-        {/* Description - Always below repo name */}
-        <div className="w-full">
-          <div className="line-clamp-3 sm:line-clamp-4 lg:line-clamp-5 major-mono text-base sm:text-lg text-description leading-relaxed">
-            {removeEmojis(description)}
+          {/* Description - Always below repo name */}
+          <div className="w-full">
+            <div className="line-clamp-3 sm:line-clamp-4 lg:line-clamp-5 major-mono text-base sm:text-lg text-description leading-relaxed">
+              {removeEmojis(description)}
+            </div>
           </div>
         </div>
-      </div>
-      <RepoCardFooter>
-        <RepoLanguage language={language} />
-        <div className="px-4 py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center w-full gap-3 sm:gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-            <TrendingHistory trendingRecord={trendingRecord} />
-            <RepoBirthday createdAt={createdAt} />
+        <RepoCardFooter>
+          <RepoLanguage language={language} />
+          <div className="px-4 py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center w-full gap-3 sm:gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+              <TrendingHistory trendingRecord={trendingRecord} />
+              <RepoBirthday createdAt={createdAt} />
+            </div>
+            <RepoLicense license={license} />
           </div>
-          <RepoLicense license={license} />
-        </div>
-        <div className="px-4 py-2">
-          <RepoTopics topics={topics} />
-        </div>
-      </RepoCardFooter>
-    </RepoCardContainer>
+          <div className="px-4 py-2">
+            <RepoTopics topics={topics} />
+          </div>
+        </RepoCardFooter>
+      </RepoCardContainer>
+    </TiltedWrapper>
   );
 }
