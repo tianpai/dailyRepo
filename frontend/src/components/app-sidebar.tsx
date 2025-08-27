@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { RepoDatePicker } from "@/components/date-picker";
 
 interface NavigationItem {
   title: string;
@@ -41,20 +40,18 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
 ];
 
 const SIDEBAR_STYLES = {
-  toggle: "fixed top-4 left-4 z-50 p-3 text-foreground major-mono hover:opacity-70 transition-all duration-200",
+  toggle:
+    "fixed top-4 left-4 z-50 p-3 text-foreground major-mono hover:opacity-70 transition-all duration-200",
   backdrop: "fixed inset-0 bg-black/20 z-40",
-  container: "fixed top-0 left-0 z-50 w-80 h-screen overflow-y-auto border-2 bg-background border-border text-foreground",
+  container:
+    "fixed top-0 left-0 z-50 w-80 h-screen overflow-y-auto bg-background text-foreground",
   section: "p-4 sm:p-6 lg:p-10 border-b-2 border-border",
   sectionLast: "p-4 sm:p-6 lg:p-10",
   heading: "major-mono text-lg font-normal text-foreground mb-4",
   link: "flex items-center gap-3 p-2 major-mono text-lg text-foreground hover:bg-foreground hover:text-background transition-all duration-200",
 } as const;
 
-interface SidebarLayoutProps {
-  children: React.ReactNode;
-}
-
-export function SidebarLayout({ children }: SidebarLayoutProps) {
+export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
@@ -62,19 +59,19 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
 
   return (
     <div className="relative min-h-screen">
-      <button 
-        onClick={toggleSidebar} 
-        className={SIDEBAR_STYLES.toggle} 
+      <button
+        onClick={toggleSidebar}
+        className={SIDEBAR_STYLES.toggle}
         aria-label="Toggle sidebar"
       >
         {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </button>
-      
+
       {isOpen && (
         <div className={SIDEBAR_STYLES.backdrop} onClick={closeSidebar} />
       )}
-      
-      <div 
+
+      <div
         className={SIDEBAR_STYLES.container}
         style={{
           transform: isOpen ? "translateX(0)" : "translateX(-100%)",
@@ -89,30 +86,24 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   );
 }
 
-
 function FloatingSidebar({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex flex-col pt-20">
       <div className="absolute top-4 left-4">
-        <button onClick={onClose} className="p-3 text-foreground major-mono hover:opacity-70 transition-all duration-200">
+        <button
+          onClick={onClose}
+          className="p-3 text-foreground major-mono hover:opacity-70 transition-all duration-200"
+        >
           <X className="w-4 h-4" />
         </button>
       </div>
-
-      <SidebarSection title="Select Date">
-        <RepoDatePicker />
-      </SidebarSection>
 
       <SidebarSection title="Trending">
         <NavigationMenu items={NAVIGATION_ITEMS} />
       </SidebarSection>
 
       <SidebarSection title="" isLast>
-        <NavigationLink
-          to="/about"
-          icon={Info}
-          label="About"
-        />
+        <NavigationLink to="/about" icon={Info} label="About" />
       </SidebarSection>
     </div>
   );
@@ -124,9 +115,15 @@ interface SidebarSectionProps {
   isLast?: boolean;
 }
 
-function SidebarSection({ title, children, isLast = false }: SidebarSectionProps) {
+function SidebarSection({
+  title,
+  children,
+  isLast = false,
+}: SidebarSectionProps) {
   return (
-    <div className={isLast ? SIDEBAR_STYLES.sectionLast : SIDEBAR_STYLES.section}>
+    <div
+      className={isLast ? SIDEBAR_STYLES.sectionLast : SIDEBAR_STYLES.section}
+    >
       {title && <h4 className={SIDEBAR_STYLES.heading}>{title}</h4>}
       {children}
     </div>
