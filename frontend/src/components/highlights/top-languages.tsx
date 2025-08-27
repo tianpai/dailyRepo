@@ -136,17 +136,7 @@ function LanguagesAsciiBar({
 
       {/* ASCII Language Bar */}
       <div className="p-4">
-        <RepoLanguage
-          language={data}
-          threshold={
-            typeof window !== "undefined" && window.innerWidth <= 440 ? 60 : 80
-          }
-          desktopWidth={50}
-          mobileWidth={30}
-          showPercentages={false}
-          showTitle={false}
-          title=""
-        />
+        <RepoLanguage language={data} showTitle={false} title="" />
         {/* Custom percentage display always on next line */}
         <ProgrammingLanguagesBreakdown language={data} />
       </div>
