@@ -86,6 +86,9 @@ export async function scrapeTrending(): Promise<string[]> {
     console.log(
       chalk.green(`Success rate: ${successCount}/${LANGS.length} languages`),
     );
+    if (failureCount > 0) {
+      console.log(chalk.red(`Failed languages: ${failureCount}`));
+    }
 
     return uniqueRepos;
   } catch (error) {
@@ -111,8 +114,8 @@ async function extractTrendingReposWithRetry(
         );
       }
       return repos;
-    } catch (error: any) {
-      const is403 = error.message?.includes("403") || error.status === 403;
+    } catch (error: unknown) {
+      const is403 = (error as any)?.message?.includes("403") || (error as any)?.status === 403;
       const isLastAttempt = attempt === maxRetries;
 
       if (is403 && !isLastAttempt) {
@@ -126,7 +129,7 @@ async function extractTrendingReposWithRetry(
       } else {
         console.log(
           chalk.red(
-            `Failed to scrape ${language} after ${attempt} attempts: ${error.message || error}`,
+            `Failed to scrape ${language} after ${attempt} attempts: ${(error as any)?.message || error}`,
           ),
         );
         return [];
@@ -155,8 +158,8 @@ async function extractTrendingRepos(url: string): Promise<string[]> {
   const $ = cheerio.load(html);
   const repositories: string[] = [];
 
-  $(".Box-row").each((index, element) => {
-    const repoLink = $(element).find("h2 a[href*=\"/\"]");
+  $(".Box-row").each((_, element) => {
+    const repoLink = $(element).find("h2 a[href*='/']");
     if (repoLink.length > 0) {
       const fullName: string = repoLink.text().trim();
       // Remove extra spaces and normalize the format
@@ -252,6 +255,9 @@ export async function scrapeTrendingDevelopers(): Promise<TrendingDeveloper[]> {
     console.log(
       chalk.green(`Success rate: ${successCount}/${LANGS.length} languages`),
     );
+    if (failureCount > 0) {
+      console.log(chalk.red(`Failed languages: ${failureCount}`));
+    }
 
     return uniqueDevelopers;
   } catch (error) {
@@ -279,8 +285,8 @@ async function extractTrendingDevelopersWithRetry(
         );
       }
       return developers;
-    } catch (error: any) {
-      const is403 = error.message?.includes("403") || error.status === 403;
+    } catch (error: unknown) {
+      const is403 = (error as any)?.message?.includes("403") || (error as any)?.status === 403;
       const isLastAttempt = attempt === maxRetries;
 
       if (is403 && !isLastAttempt) {
@@ -294,7 +300,7 @@ async function extractTrendingDevelopersWithRetry(
       } else {
         console.log(
           chalk.red(
-            `Failed to scrape ${language} developers after ${attempt} attempts: ${error.message || error}`,
+            `Failed to scrape ${language} developers after ${attempt} attempts: ${(error as any)?.message || error}`,
           ),
         );
         return [];
@@ -324,12 +330,12 @@ async function extractTrendingDevelopers(
   const $ = cheerio.load(html);
   const developers: TrendingDeveloper[] = [];
 
-  $(".Box-row.d-flex").each((index, element) => {
+  $(".Box-row.d-flex").each((_, element) => {
     // Extract username from the profile link
     const usernameLink = $(element).find("p.f4 a.Link--secondary");
     const username = usernameLink.text().trim();
     // Try to find popular repository
-    const repoLink = $(element).find("h1.h4 a[href*=\"/\"][href*=\"/\"]");
+    const repoLink = $(element).find("h1.h4 a[href*='/'][href*='/']");
     // Only include developers who have both username and repository
     if (username && repoLink.length > 0) {
       const href = repoLink.attr("href");

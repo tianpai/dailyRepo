@@ -3,7 +3,10 @@ import { TTL, getTrendCacheKey } from "@utils/caching";
 import { getTodayUTC, validateDate } from "@utils/time";
 import { makeSuccess, errorResponse } from "@/interfaces/api";
 import { withCache } from "@utils/controller-helper";
-import { fetchKeywordAnalysis, fetchKeywordAnalysisByDate } from "@/services/keyword-service";
+import {
+  fetchKeywordAnalysis,
+  fetchKeywordAnalysisByDate,
+} from "@/services/keyword-service";
 import { groupTopicsByLanguage } from "@/services/repo-lang-relation-service";
 
 export async function getTrendingkeywords(
@@ -14,9 +17,9 @@ export async function getTrendingkeywords(
   try {
     const dateParam = req.query.date as string;
     const includeRelated = req.query.includeRelated === "true";
-    
+
     let targetDate: string;
-    
+
     if (dateParam) {
       // Validate date format and check if within past 7 days
       const validatedDate = validateDate(dateParam);
@@ -24,16 +27,18 @@ export async function getTrendingkeywords(
         errorResponse(res, 400, "Invalid date format. Use YYYY-MM-DD");
         return;
       }
-      
+
       const today = new Date();
       const requestedDate = new Date(validatedDate);
-      const daysDiff = Math.floor((today.getTime() - requestedDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+      const daysDiff = Math.floor(
+        (today.getTime() - requestedDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
       if (daysDiff < 0 || daysDiff > 6) {
         // Silently ignore invalid date requests
         return;
       }
-      
+
       targetDate = validatedDate;
     } else {
       targetDate = getTodayUTC();
@@ -45,7 +50,10 @@ export async function getTrendingkeywords(
 
     const { data: keywordData, fromCache } = await withCache(
       cacheKey,
-      () => dateParam ? fetchKeywordAnalysisByDate(targetDate, includeRelated) : fetchKeywordAnalysis(targetDate, includeRelated),
+      () =>
+        dateParam
+          ? fetchKeywordAnalysisByDate(targetDate)
+          : fetchKeywordAnalysis(targetDate, includeRelated),
       TTL._1_WEEK,
     );
 

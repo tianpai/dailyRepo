@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { TTL } from "@utils/caching";
 import { withCache } from "../utils/controller-helper";
 import { makeSuccess, makeError } from "@interfaces/api";
-import { fetchTimeToFirstHundredStars } from "@/services/repo-service";
+import { fetchTimeToFirstThreeHundredStars } from "@/services/repo-service";
 import {
   parseTrendingParams,
   fetchTrendingWithCache,
@@ -71,21 +71,37 @@ export async function searchRepos(
 }
 
 /**
- * GET /repos/time-to-100-stars
- * Returns analysis of how long it takes repos to reach 100 stars
- * Grouped by age categories: YTD, 2_years, 5_years, 10_years
+ * GET /repos/time-to-300-stars
+ * Returns analysis of how long it takes repos to reach 300 stars
+ * ?age=YTD|all|5y|10y (optional; default 'YTD')
  */
-export async function getTimeToFirstHundredStars(
-  _req: Request,
+export async function getTimeToFirstThreeHundredStars(
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): Promise<void> {
   try {
-    const cacheKey = "time-to-100-stars-analysis";
+    const age = (req.query.age as string) || "YTD";
+    const validAgeValues = ["YTD", "all", "5y", "10y"];
+
+    if (!validAgeValues.includes(age)) {
+      res
+        .status(400)
+        .json(
+          makeError(
+            new Date().toISOString(),
+            400,
+            "Invalid age parameter. Must be one of: YTD, all, 5y, 10y",
+          ),
+        );
+      return;
+    }
+
+    const cacheKey = `time-to-300-stars-analysis-${age}`;
 
     const { data: analysisResult, fromCache } = await withCache(
       cacheKey,
-      () => fetchTimeToFirstHundredStars(),
+      () => fetchTimeToFirstThreeHundredStars(age),
       TTL._1_WEEK,
     );
 
@@ -96,7 +112,7 @@ export async function getTimeToFirstHundredStars(
     const message =
       error instanceof Error
         ? error.message
-        : "Failed to analyze time to 100 stars";
+        : "Failed to analyze time to 300 stars";
     res.status(500).json(makeError(new Date().toISOString(), 500, message));
   }
 }

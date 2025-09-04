@@ -151,10 +151,12 @@ export const searchReposPipeline = (
       $expr: {
         $in: [
           { $toLower: language },
-          { $map: { 
-            input: { $objectToArray: "$language" }, 
-            in: { $toLower: "$$this.k" }, 
-          }},
+          {
+            $map: {
+              input: { $objectToArray: "$language" },
+              in: { $toLower: "$$this.k" },
+            },
+          },
         ],
       },
     });
@@ -210,3 +212,131 @@ export const searchReposPipeline = (
     },
   ];
 };
+
+export const timeToFirstThreeHundredStarsPipeline = (): any[] => [
+  {
+    $lookup: {
+      from: "starhistories",
+      localField: "_id",
+      foreignField: "repoId",
+      as: "starHistory",
+    },
+  },
+  {
+    $match: {
+      starHistory: { $ne: [] },
+    },
+  },
+  {
+    $addFields: {
+      latestStarHistory: { $arrayElemAt: ["$starHistory", -1] },
+      createdAtDate: { $dateFromString: { dateString: "$createdAt" } },
+    },
+  },
+  {
+    $addFields: {
+      maxStars: { $max: "$latestStarHistory.history.count" },
+    },
+  },
+  {
+    $match: {
+      maxStars: { $gte: 300 },
+    },
+  },
+  {
+    $addFields: {
+      firstThreeHundredEntry: {
+        $arrayElemAt: [
+          {
+            $filter: {
+              input: "$latestStarHistory.history",
+              cond: { $gte: ["$$this.count", 300] },
+            },
+          },
+          0,
+        ],
+      },
+    },
+  },
+  {
+    $match: {
+      firstThreeHundredEntry: { $exists: true },
+    },
+  },
+  {
+    $addFields: {
+      firstThreeHundredDate: {
+        $dateFromString: { dateString: "$firstThreeHundredEntry.date" },
+      },
+      daysToThreeHundredStars: {
+        $divide: [
+          {
+            $subtract: [
+              {
+                $dateFromString: { dateString: "$firstThreeHundredEntry.date" },
+              },
+              "$createdAtDate",
+            ],
+          },
+          86400000,
+        ],
+      },
+    },
+  },
+  {
+    $addFields: {
+      ageCategory: {
+        $switch: {
+          branches: [
+            {
+              case: { $lte: ["$daysToThreeHundredStars", 30] },
+              then: "0-30 days",
+            },
+            {
+              case: { $lte: ["$daysToThreeHundredStars", 90] },
+              then: "31-90 days",
+            },
+            {
+              case: { $lte: ["$daysToThreeHundredStars", 365] },
+              then: "91-365 days",
+            },
+            {
+              case: { $gt: ["$daysToThreeHundredStars", 365] },
+              then: "1+ years",
+            },
+          ],
+          default: "unknown",
+        },
+      },
+    },
+  },
+  {
+    $group: {
+      _id: "$ageCategory",
+      totalRepos: { $sum: 1 },
+      averageDays: { $avg: "$daysToThreeHundredStars" },
+      repos: {
+        $push: {
+          fullName: "$fullName",
+          createdAt: "$createdAt",
+          firstThreeHundredDate: "$firstThreeHundredEntry.date",
+          daysToThreeHundredStars: { $round: ["$daysToThreeHundredStars", 1] },
+        },
+      },
+    },
+  },
+  {
+    $project: {
+      ageCategory: "$_id",
+      totalRepos: 1,
+      averageDays: { $round: ["$averageDays", 1] },
+      repos: { $slice: ["$repos", 10] },
+      _id: 0,
+    },
+  },
+  {
+    $sort: {
+      totalRepos: -1,
+    },
+  },
+];
