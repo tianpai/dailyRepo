@@ -133,6 +133,7 @@ function createHttpDecorator(method: HttpMethod) {
           if (config.cacheKey && config.cacheTTL) {
             const dynamicCacheKey = interpolateCacheKey(
               config.cacheKey,
+              params,
               req,
               config,
             );
@@ -329,35 +330,58 @@ function zodIssuesToMessage(err: ZodError, kind: string): string {
 // Replace {paramName} in cache key with actual values
 function interpolateCacheKey(
   keyPattern: string,
+  parsedParams: Record<string, unknown> | null | undefined,
   req: Request,
   config: RouteConfig,
 ): string {
   let key = keyPattern;
 
-  // If legacy query/params metadata exists, use it first
-  if (config.queryParams.length > 0 || config.pathParams.length > 0) {
-    for (const param of config.queryParams) {
-      const value =
-        (req.query as Record<string, unknown>)[param.name] ??
-        param.defaultValue;
-      key = key.replace(`{${param.name}}`, String(value));
-    }
-    for (const paramName of config.pathParams) {
-      key = key.replace(
-        `{${paramName}}`,
-        String((req.params as Record<string, unknown>)[paramName]),
-      );
-    }
-    return key;
-  }
-
-  // Schema-only: replace any {token} by looking up in req.query/req.params
+  // tokenRegex matches all placeholders in the pattern like `{token}`.
+  // Explanation:
+  // - `\{`  match a literal opening curly brace
+  // - `([^}]+)` capture one or more characters that are NOT a closing brace
+  //            (this becomes the token name, e.g., "date", "page", "owner")
+  // - `\}`  match a literal closing curly brace
+  // - `g`    global flag so `replace` processes every occurrence in the string
   const tokenRegex = /\{([^}]+)\}/g;
   key = key.replace(tokenRegex, (_match, tokenName) => {
+    // For each `{token}` found, resolve its value using the following precedence:
+    // 1) Parsed params (schema/legacy) so defaults and coercion are applied
+    // 2) Legacy decorator metadata (@Query/@Param) using req + defaults
+    // 3) Raw req.query / req.params values
+    // 1) Prefer parsed params (schema or legacy parse) so defaults/coercion apply
+    if (
+      parsedParams &&
+      Object.prototype.hasOwnProperty.call(parsedParams, tokenName)
+    ) {
+      const v = (parsedParams as Record<string, unknown>)[tokenName];
+      if (v !== undefined && v !== null && String(v) !== "") {
+        return String(v);
+      }
+    }
+
+    // 2) If legacy @Query/@Param metadata exists, use req with defaults
+    const qp = config.queryParams.find((p) => p.name === tokenName);
+    if (qp) {
+      const qVal = (req.query as Record<string, unknown>)[tokenName];
+      const v = qVal ?? qp.defaultValue ?? "";
+      return String(v);
+    }
+    if (config.pathParams.includes(tokenName)) {
+      const pVal = (req.params as Record<string, unknown>)[tokenName];
+      return String(pVal ?? "");
+    }
+
+    // 3) Fallback to raw req values; if still missing, use empty string
     const qVal = (req.query as Record<string, unknown>)[tokenName];
+    if (qVal !== undefined) {
+      return String(qVal);
+    }
     const pVal = (req.params as Record<string, unknown>)[tokenName];
-    const v = qVal ?? pVal ?? "";
-    return String(v);
+    if (pVal !== undefined) {
+      return String(pVal);
+    }
+    return "";
   });
 
   return key;
