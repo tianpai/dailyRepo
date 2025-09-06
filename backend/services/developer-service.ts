@@ -26,7 +26,9 @@ export async function fetchTrendingDevelopers(
   return developers;
 }
 
-export async function fetchTopTrendingDevelopers(limit: number = 10): Promise<any[]> {
+export async function fetchTopTrendingDevelopers(
+  limit: number = 10,
+): Promise<any[]> {
   return await TrendingDeveloper.aggregate([
     { $addFields: { trendingCount: { $size: "$trendingRecord" } } },
     { $sort: { trendingCount: -1 } },
