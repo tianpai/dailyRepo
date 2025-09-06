@@ -1,4 +1,9 @@
-import { Controller, Get, Cache, Schema } from "../decorators/http-decorators";
+import {
+  Controller,
+  Get,
+  Cache,
+  Schema,
+} from "../../decorators/http-decorators";
 import { TTL } from "@/utils/caching";
 import { getTodayUTC } from "@/utils/time";
 import { Repo } from "@model/Repo";

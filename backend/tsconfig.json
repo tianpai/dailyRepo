@@ -27,7 +27,7 @@
       "@utils/*": ["./utils/*"],
       "@model/*": ["./model/*"],
       "@controller/*": ["./controller/*"],
-      "@version2/*": ["./version2/*"],
+      "@version2/*": ["controller/version2/*"],
       "@decorators/*": ["./decorators/*"],
       "@interfaces/*": ["interfaces/*"]
     }

@@ -4,7 +4,7 @@ import {
   Cache,
   Schema,
   Controller,
-} from "../decorators/http-decorators";
+} from "../../decorators/http-decorators";
 import { TTL } from "@/utils/caching";
 import { getTodayUTC } from "@/utils/time";
 import {
