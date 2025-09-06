@@ -7,7 +7,7 @@ import {
   parseDateParam,
   withCache,
   paginateArray,
-} from "../utils/controller-helper";
+} from "../../utils/controller-helper";
 import {
   fetchTrendingDevelopers,
   fetchTopTrendingDevelopers,
@@ -87,7 +87,10 @@ export async function getTopTrendingDevelopers(
   _next: NextFunction,
 ): Promise<void> {
   try {
-    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 50);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit as string) || 10, 1),
+      50,
+    );
     const cacheKey = getTrendCacheKey(`top-trending-developers-${limit}`);
     const { data: developers, fromCache } = await withCache(
       cacheKey,

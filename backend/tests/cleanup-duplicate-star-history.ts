@@ -139,9 +139,15 @@ function sortDocumentsByPriority(
     const dateB = new Date(b.saveDate);
 
     // Handle invalid dates - put them at the end (oldest)
-    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) {return 0;}
-    if (isNaN(dateA.getTime())) {return 1;} // a is older
-    if (isNaN(dateB.getTime())) {return -1;} // b is older
+    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) {
+      return 0;
+    }
+    if (isNaN(dateA.getTime())) {
+      return 1;
+    } // a is older
+    if (isNaN(dateB.getTime())) {
+      return -1;
+    } // b is older
 
     return dateB.getTime() - dateA.getTime();
   });

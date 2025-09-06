@@ -3,7 +3,7 @@ import {
   getDevelopersList,
   getTrendingDevelopers,
   getTopTrendingDevelopers,
-} from "@controller/developer-controller";
+} from "@/controller/version1/developer-controller";
 
 const devRouter = Router();
 

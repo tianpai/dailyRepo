@@ -3,15 +3,15 @@ import {
   getTrending,
   searchRepos,
   getTimeToFirstThreeHundredStars,
-} from "@controller/repo-controller";
+} from "@/controller/version1/repo-controller";
 import {
   getTrendingkeywords,
   getTopicByLanguage,
-} from "@controller/keyword-controller";
+} from "@/controller/version1/keyword-controller";
 import {
   getStarHistory,
   getStarHistoryForRepos,
-} from "@controller/star-history-controller";
+} from "@/controller/version1/star-history-controller";
 
 const repoRouter = Router();
 

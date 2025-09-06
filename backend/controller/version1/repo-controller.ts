@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { TTL } from "@utils/caching";
-import { withCache } from "../utils/controller-helper";
+import { withCache } from "../../utils/controller-helper";
 import { makeSuccess, makeError } from "@interfaces/api";
 import { fetchTimeToFirstThreeHundredStars } from "@/services/repo-service";
 import {

@@ -3,7 +3,7 @@ import {
   getLanguagesList,
   getLanguageTrendingRepos,
   getTopLang,
-} from "@controller/language-controller";
+} from "@/controller/version1/language-controller";
 
 const languageRouter: Router = Router();
 
