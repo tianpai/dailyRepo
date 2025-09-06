@@ -61,6 +61,27 @@ export type MethodMetadataRegistry = Map<ControllerClass, RouteMap>;
 // Store metadata for each decorated method
 const methodMetadata: MethodMetadataRegistry = new Map();
 
+// ----------------------
+// Class-level metadata
+// ----------------------
+export interface ControllerConfig {
+  basePath: string;
+}
+
+const controllerMetadata = new Map<ControllerClass, ControllerConfig>();
+
+export function Controller(basePath: string) {
+  return function (target: ControllerClass) {
+    controllerMetadata.set(target, { basePath });
+  };
+}
+
+export function getControllerBasePath(
+  controllerClass: ControllerClass,
+): string | null {
+  return controllerMetadata.get(controllerClass)?.basePath ?? null;
+}
+
 // Helper to get/set method metadata
 function getRouteConfig(target: unknown, methodName: string): RouteConfig {
   const constructor = (target as { constructor: ControllerClass }).constructor;

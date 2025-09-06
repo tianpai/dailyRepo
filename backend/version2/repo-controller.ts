@@ -1,12 +1,12 @@
-import { Get, Cache, Schema } from "../decorators/http-decorators";
+import { Get, Cache, Schema, Controller } from "../decorators/http-decorators";
 import { TTL } from "@/utils/caching";
 import { getTodayUTC, isValidDate } from "@/utils/time";
 import {
   fetchTrendingRepos,
   fetchSearchedRepos,
+  fetchTimeToFirstThreeHundredStars,
 } from "@/services/repo-service";
 import { paginateArray } from "@/utils/controller-helper";
-import { fetchTimeToFirstThreeHundredStars } from "@/services/repo-service";
 import { z } from "zod";
 
 const TrendingQuery = z.object({
@@ -29,6 +29,7 @@ const TimeTo300Query = z.object({
   age: z.enum(["YTD", "all", "5y", "10y"]).default("YTD"),
 });
 
+@Controller("/repos")
 export class RepoController {
   @Get("/trending")
   @Schema({ query: TrendingQuery })

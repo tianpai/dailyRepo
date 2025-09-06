@@ -2,18 +2,13 @@
 // Discovers decorated controllers and creates Express routers
 
 import { Router } from "express";
-import { getControllerRoutes } from "../decorators/http-decorators";
+import {
+  getControllerRoutes,
+  getControllerBasePath,
+} from "../decorators/http-decorators";
 
 // Type for controller classes
 type ControllerClass = new (...args: any[]) => any;
-
-// Registry to hold controller instances and their base paths
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface ControllerRegistration {
-  controllerClass: ControllerClass;
-  basePath: string;
-  instance: any;
-}
 
 /**
  * Create a router with automatic controller registration
@@ -33,6 +28,43 @@ export function createRouter(
     controllers,
   )) {
     const combinedBasePath = `${basePath}${controllerBasePath}`;
+    registerController(router, combinedBasePath, ControllerClass);
+  }
+
+  return router;
+}
+
+/**
+ * Create a router using class decorators for base paths
+ * Example usage:
+ *   @Controller('/repos')
+ *   class RepoController { ... }
+ *   createRouterFromControllers('/api/v2', [RepoController])
+ */
+export function createRouterFromControllers(
+  apiBasePath: string,
+  controllers: ControllerClass[],
+): Router {
+  const router = Router();
+  console.log(`----- Creating router for ${apiBasePath}`);
+
+  for (const ControllerClass of controllers) {
+    const basePath = getControllerBasePath(ControllerClass) || "";
+    if (!basePath) {
+      console.warn(
+        `[router] ${ControllerClass.name} missing @Controller base path; registering at ${apiBasePath}`,
+      );
+    } else if (!basePath.startsWith("/")) {
+      console.warn(
+        `[router] ${ControllerClass.name} base path '${basePath}' should start with '/'; adjusting automatically`,
+      );
+    }
+    const normalizedBase = basePath
+      ? basePath.startsWith("/")
+        ? basePath
+        : `/${basePath}`
+      : "";
+    const combinedBasePath = `${apiBasePath}${normalizedBase}`;
     registerController(router, combinedBasePath, ControllerClass);
   }
 
@@ -98,9 +130,7 @@ function registerController(
 
     // Log additional metadata
     if (config.cacheKey) {
-      console.log(
-        `      Cache: ${config.cacheKey} (TTL: ${config.cacheTTL}s)`,
-      );
+      console.log(`      Cache: ${config.cacheKey} (TTL: ${config.cacheTTL}s)`);
     }
     if (config.queryParams.length > 0) {
       const queryInfo = config.queryParams
