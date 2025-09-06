@@ -1,4 +1,10 @@
-import { Get, Post, Cache, Schema, Controller } from "../decorators/http-decorators";
+import {
+  Get,
+  Post,
+  Cache,
+  Schema,
+  Controller,
+} from "../decorators/http-decorators";
 import { TTL } from "@/utils/caching";
 import { getTodayUTC } from "@/utils/time";
 import {
@@ -8,7 +14,6 @@ import {
 } from "@/services/star-history-service";
 import { z } from "zod";
 
-// Zod schemas for validation
 const StarHistoryParams = z.object({
   owner: z.string().min(1, "Owner is required"),
   repo: z.string().min(1, "Repository name is required"),
@@ -34,12 +39,15 @@ export class StarHistoryController {
   // schema values so defaults are applied; then @Query becomes fully optional too.
   async getStarHistory({ owner, repo }: z.infer<typeof StarHistoryParams>) {
     const fname = `${owner}/${repo}`;
-    const starHistory = await fetchRepoStarHistory(fname);
-
-    return {
-      ...starHistory,
-      _dateOverride: getTodayUTC(), // Use consistent date format like original
-    };
+    const raw = await fetchRepoStarHistory(fname);
+    // Remove _id from entries; frontend never uses it
+    const starHistory = (raw ?? []).map((p: any) => ({
+      date: p.date,
+      count: p.count,
+    }));
+    //TODO: consider just use Date() after checking frontend usage
+    (starHistory as any)._dateOverride = getTodayUTC();
+    return starHistory;
   }
 
   /**
