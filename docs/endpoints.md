@@ -1,6 +1,12 @@
 # Backend Endpoints
 
-All endpoints are relative to `/api/v1/`.
+API versioning
+
+- v1 base: `/api/v1` (legacy controllers)
+- v2 base: `/api/v2` (decorator-based controllers)
+
+Unless noted, paths below are the same across v1 and v2. To call v2, replace
+the base prefix `/api/v1` with `/api/v2`.
 
 ## Repositories (`/repos`)
 
@@ -11,7 +17,7 @@ All endpoints are relative to `/api/v1/`.
     items per page, default 15)
 - `GET /repos/search`
   - Description: Search repositories by name, owner, or topics with optional language filtering.
-  - Query Parameters: 
+  - Query Parameters:
     - `?q=search terms` (Required: search query, supports multiple terms)
     - `?language=JavaScript` (Optional: filter by programming language)
     - `?page=N` (Optional: page number, default 1)
@@ -52,7 +58,22 @@ All endpoints are relative to `/api/v1/`.
   - Path Parameters: `:language`
   - Query Parameters: `?date=YYYY-MM-DD` (Optional: specific date for trending
     data)
-- `GET /languages/language-list`
+- v1: `GET /languages/language-list`
+  - Description: Retrieves top programming languages with usage statistics.
+  - Query Parameters: `?top=N` (Optional: number of top languages to return,
+    default 5, max 15)
+- v2: `GET /languages/top`
+  - Description: Same as above (migrated name).
+  - Query Parameters: `?top=N` (Optional: number of top languages to return,
+    default 5, max 15)
+
+Notes
+
+- v2 uses server-side caching with per-route TTL and conditions to skip caching
+  empty results. Browser caching headers are kept consistent and not dependent
+  on payload content.
+- v2 validates and coerces query/params using schemas; response shapes remain
+  the same as v1.
   - Description: Retrieves top programming languages with usage statistics.
   - Query Parameters: `?top=N` (Optional: number of top languages to return,
     default 5, max 15)

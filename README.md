@@ -46,5 +46,6 @@ npm run dev
 ## Documentation
 
 1. [Documentation](docs/)
-2. [Backend README](backend/README.md)
-3. [Frontend README](frontend/README.md)
+2. [API Versioning (v1 vs v2)](docs/versioning.md)
+3. [Backend README](backend/README.md)
+4. [Frontend README](frontend/README.md)
