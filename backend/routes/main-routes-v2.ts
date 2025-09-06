@@ -4,6 +4,7 @@ import { RepoController } from "@version2/repo-controller";
 import { StarHistoryController } from "@version2/star-history-controller";
 import { DeveloperController } from "@version2/developer-controller";
 import { LanguageController } from "@version2/language-controller";
+import { KeywordController } from "@version2/keyword-controller";
 
 export function createV2Router(): Router {
   return createRouterFromControllers("/api/v2", [
@@ -11,6 +12,7 @@ export function createV2Router(): Router {
     StarHistoryController,
     DeveloperController,
     LanguageController,
+    KeywordController,
   ]);
 }
 
