@@ -3,6 +3,8 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowImportingTsExtensions": false,
@@ -25,6 +27,8 @@
       "@utils/*": ["./utils/*"],
       "@model/*": ["./model/*"],
       "@controller/*": ["./controller/*"],
+      "@version2/*": ["./version2/*"],
+      "@decorators/*": ["./decorators/*"],
       "@interfaces/*": ["interfaces/*"]
     }
   },

@@ -1,7 +1,5 @@
-import { setCache, TTL, getTrendCacheKey } from "@utils/caching";
 import { IRepo } from "@/interfaces/database";
 import { Repo, StarHistory } from "@model/Repo";
-import { getTodayUTC } from "@/utils/time";
 import { searchReposPipeline } from "@/utils/db-pipline";
 
 export async function fetchTrendingRepos(date: string): Promise<IRepo[]> {
@@ -25,21 +23,6 @@ export async function fetchTrendingRepos(date: string): Promise<IRepo[]> {
         .lean();
     }
   }
-
-  // After fetching, update cache with proper strategy
-  if (repos.length > 0) {
-    const actualDate = repos[0].trendingDate;
-    const today = getTodayUTC();
-
-    // Cache the data against its actual date with a long TTL
-    setCache(getTrendCacheKey(actualDate), repos, TTL._1_WEEK);
-
-    // If today's data was requested but we served older data, create a short-lived alias
-    if (date === today && actualDate !== date) {
-      setCache(getTrendCacheKey(date), repos, TTL._1_HOUR);
-    }
-  }
-
   return repos;
 }
 

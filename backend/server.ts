@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import apiRouterV1 from "./routes/main-routes";
 // import compression from "compression";
 import helmet from "helmet";
+import createV2Router from "./routes/main-routes-v2";
 import { connectToDatabase } from "./services/db-connection";
 import { startMainScheduler } from "./schedulers/main-scheduler";
 
@@ -73,6 +74,7 @@ if (process.argv.includes("--debug")) {
 }
 
 app.use(apiRouterV1);
+app.use(createV2Router());
 
 const server = app.listen(port, "::", () => {
   console.log(`Server is running on ${port}`);
