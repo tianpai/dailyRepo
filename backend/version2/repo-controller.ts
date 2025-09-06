@@ -1,7 +1,4 @@
-// New decorator-based RepoController
-// Clean separation: decorators handle HTTP, methods handle business logic
-
-import { Get, Cache, Query } from "../decorators/http-decorators";
+import { Get, Cache, Schema } from "../decorators/http-decorators";
 import { TTL } from "@/utils/caching";
 import { getTodayUTC, isValidDate } from "@/utils/time";
 import {
@@ -10,24 +7,34 @@ import {
 } from "@/services/repo-service";
 import { paginateArray } from "@/utils/controller-helper";
 import { fetchTimeToFirstThreeHundredStars } from "@/services/repo-service";
+import { z } from "zod";
+
+const TrendingQuery = z.object({
+  date: z
+    .string()
+    .optional()
+    .refine((v) => !v || isValidDate(v), { message: "Invalid date format" }),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(15),
+});
+
+const SearchQuery = z.object({
+  q: z.string().min(1, "q is required"),
+  language: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(15),
+});
+
+const TimeTo300Query = z.object({
+  age: z.enum(["YTD", "all", "5y", "10y"]).default("YTD"),
+});
 
 export class RepoController {
   @Get("/trending")
+  @Schema({ query: TrendingQuery })
   @Cache("trending-repos-{date}-{page}-{limit}", TTL._1_HOUR)
-  @Query({ date: "", page: 1, limit: 15 })
-  async getTrending({
-    date,
-    page,
-    limit,
-  }: {
-    date: string;
-    page: number;
-    limit: number;
-  }) {
+  async getTrending({ date, page, limit }: z.infer<typeof TrendingQuery>) {
     const effectiveDate = date && date.trim() !== "" ? date : getTodayUTC();
-    if (date && date.trim() !== "" && !isValidDate(date)) {
-      throw new Error(`Invalid date format: ${date}`);
-    }
     const pageNum = Number(page);
     const limitNum = Number(limit);
 
@@ -60,23 +67,13 @@ export class RepoController {
   }
 
   @Get("/search")
+  @Schema({ query: SearchQuery })
   @Cache(
     "search-{q}-{language}-{page}-{limit}",
     TTL._1_HOUR,
     (data: any) => (data?.searchInfo?.resultsFound ?? 0) > 0,
   )
-  @Query({ q: undefined, language: undefined, page: 1, limit: 15 })
-  async searchRepos({
-    q,
-    language,
-    page,
-    limit,
-  }: {
-    q: string;
-    language?: string;
-    page: number;
-    limit: number;
-  }) {
+  async searchRepos({ q, language, page, limit }: z.infer<typeof SearchQuery>) {
     const pageNum = Number(page);
     const limitNum = Number(limit);
     const { repos, totalCount } = await fetchSearchedRepos(
@@ -109,17 +106,11 @@ export class RepoController {
    * Analysis of how long it takes repos to reach 300 stars
    */
   @Get("/time-to-300-stars")
+  @Schema({ query: TimeTo300Query })
   @Cache("time-to-300-stars-analysis-{age}", TTL._1_WEEK)
-  @Query({ age: "YTD" })
-  async getTimeToFirstThreeHundredStars({ age }: { age: string }) {
-    const validAgeValues = ["YTD", "all", "5y", "10y"];
-
-    if (!validAgeValues.includes(age)) {
-      throw new Error(
-        "Invalid age parameter. Must be one of: YTD, all, 5y, 10y",
-      );
-    }
-
+  async getTimeToFirstThreeHundredStars({
+    age,
+  }: z.infer<typeof TimeTo300Query>) {
     return await fetchTimeToFirstThreeHundredStars(age);
   }
 }
