@@ -184,7 +184,7 @@ async function deleteDuplicateDocuments(
       // Remove the older documents with validation
       const removeIds = toRemove
         .map((doc) => doc.docId)
-        .filter((id) => id != null);
+        .filter((id) => id !== null);
 
       if (removeIds.length === 0) {
         processLog.push(

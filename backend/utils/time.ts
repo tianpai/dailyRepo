@@ -43,7 +43,7 @@ export function validateDate(date) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   if (!m) {return null;}
 
-  const [_, y, M, d] = m;
+  const [, y, M, d] = m;
   const year = +y;
   const month = +M;
   const day = +d;

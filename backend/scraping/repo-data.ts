@@ -429,7 +429,6 @@ async function getGitHubUser(username: string): Promise<GithubUser | null> {
  */
 export async function prepTrendingDevelopers(): Promise<ProcessedDeveloper[]> {
   const trendingDevelopers = await scrapeTrendingDevelopers();
-  const today = getTodayUTC();
   // Process developers with sequential delays to respect GitHub API rate limits
   const processedDevelopers: ProcessedDeveloper[] = [];
 
