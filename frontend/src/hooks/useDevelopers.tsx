@@ -75,14 +75,13 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
   };
 }
 
-export function useTopDevelopers() {
+export function useTopDevelopers(limit: number = 10) {
   const apiBase = apiV2Base();
-  // no params needed for top developers
 
-  const queryKey = useMemo(() => topDevelopersKey(apiBase), [apiBase]);
+  const queryKey = useMemo(() => topDevelopersKey(apiBase, limit), [apiBase, limit]);
 
   const fetchFn = async (): Promise<Developers> =>
-    get<Developers>(apiBase, ["developers", "top"]);
+    get<Developers>(apiBase, ["developers", "top"], { limit });
 
   const {
     data: response,

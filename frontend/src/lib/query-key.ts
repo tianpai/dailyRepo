@@ -10,8 +10,8 @@ export const devsTrendingKey = (
   page?: number,
 ) => ["trending-developers", base, dateStr, page ?? 1] as const;
 
-export const topDevelopersKey = (base: string) =>
-  ["top-developers", base] as const;
+export const topDevelopersKey = (base: string, limit: number) =>
+  ["top-developers", base, limit] as const;
 
 export const searchReposKey = (
   base: string,
