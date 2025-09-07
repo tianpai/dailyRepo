@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import { MobilePopup } from "@/components/ui/mobile-popup";
 import {
   TrendingUp,
@@ -43,13 +44,14 @@ function RepoTopics({ topics }: { topics: string[] }) {
     <div className="flex flex-wrap gap-1 m-2 w-full">
       {displayTopics.map((topic, index) => {
         return (
-          <Badge
-            key={index}
-            variant="outline"
-            className="px-3 py-1 border-1 transition-opacity rounded-none major-mono text-lg text-description"
-          >
-            {topic}
-          </Badge>
+          <Link key={index} to={`/search?q=${encodeURIComponent(topic)}`} className="inline-block">
+            <Badge
+              variant="outline"
+              className="px-3 py-1 border-1 transition-opacity rounded-none major-mono text-lg text-description hover:opacity-80"
+            >
+              {topic}
+            </Badge>
+          </Link>
         );
       })}
       {hasMoreTopics && (
