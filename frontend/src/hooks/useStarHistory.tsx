@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { env } from "@/lib/env";
-import { buildUrlString } from "@/lib/url-builder";
-import type { ApiResponse } from "@/interface/endpoint";
+import { bulkStarHistoryKey } from "@/lib/query-key";
+import { postJson } from "@/lib/api";
 
 export interface StarDataPoint {
   date: string;
@@ -16,34 +16,13 @@ export type RepoStarHistory = Record<string, StarDataPoint[]>;
 export function useBulkStarHistory(repoNames: string[]) {
   const base_url = env("VITE_DATABASE_REPOS");
 
-  const urlArgs = useMemo(() => {
-    return {
-      baseUrl: base_url,
-      endpoint: "star-history",
-    };
-  }, [base_url]);
-
-  const body = useMemo(
-    () => JSON.stringify({ repoNames: repoNames }),
-    [repoNames],
-  );
-
   const queryKey = useMemo(
-    () => ["bulk-star-history", base_url, repoNames.join(",")],
+    () => bulkStarHistoryKey(base_url, repoNames),
     [base_url, repoNames],
   );
 
-  const fetchFn = async (): Promise<RepoStarHistory> => {
-    const url = buildUrlString(urlArgs.baseUrl, urlArgs.endpoint);
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    });
-    const json: ApiResponse<RepoStarHistory> = await res.json();
-    if (json.isSuccess) return json.data;
-    throw new Error(json.error.message);
-  };
+  const fetchFn = async (): Promise<RepoStarHistory> =>
+    postJson<RepoStarHistory>(base_url, "star-history", { repoNames });
 
   const { data: response, isLoading: loading, error, refetch } = useQuery({
     queryKey,

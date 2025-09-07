@@ -2,8 +2,10 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { LanguageMap } from "@/interface/repository";
 import { env } from "@/lib/env";
-import { type Query, buildUrlString } from "@/lib/url-builder";
-import type { ApiResponse } from "@/interface/endpoint";
+import { type Query } from "@/lib/url-builder";
+import { topLanguagesKey } from "@/lib/query-key";
+import { get } from "@/lib/api";
+import { STALE_MIN } from "@/lib/constants";
 
 type TopLangResponse = { data: LanguageMap; count?: number };
 
@@ -23,19 +25,20 @@ export function useTopLanguages(numberOfLanguages: number = 10) {
   );
 
   const queryKey = useMemo(
-    () => ["top-languages", urlArgs.baseUrl, urlArgs.query?.top ?? 10],
-    [urlArgs.baseUrl, urlArgs.query?.top],
+    () =>
+      topLanguagesKey(
+        baseUrl,
+        (urlArgs.query as Query | undefined)?.top as number | undefined ?? 10,
+      ),
+    [baseUrl, urlArgs.query],
   );
 
-  const fetchFn = async (): Promise<LanguageMap> => {
-    const url = buildUrlString(urlArgs.baseUrl, urlArgs.endpoint, urlArgs.query);
-    const res = await fetch(url);
-    const json: ApiResponse<TopLangResponse> = await res.json();
-    if (json.isSuccess) return json.data.data;
-    throw new Error(json.error.message);
-  };
+  const fetchFn = async (): Promise<LanguageMap> =>
+    get<TopLangResponse>(baseUrl, "language-list", urlArgs.query).then(
+      (r) => r.data,
+    );
 
-  const { data, isLoading, error } = useQuery({ queryKey, queryFn: fetchFn, staleTime: 60_000 });
+  const { data, isLoading, error } = useQuery({ queryKey, queryFn: fetchFn, staleTime: STALE_MIN });
 
   return {
     data: (data ?? {}) as LanguageMap,

@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { env } from "@/lib/env";
-import { buildUrlString } from "@/lib/url-builder";
-import type { ApiResponse } from "@/interface/endpoint";
+import { keywordsKey } from "@/lib/query-key";
+import { get } from "@/lib/api";
+import { STALE_MIN } from "@/lib/constants";
 
 export interface Keywords {
   originalTopicsCount: number;
@@ -25,24 +26,12 @@ export function useKeywords(date?: string) {
     [base_url, date],
   );
 
-  const queryKey = useMemo(
-    () => ["keywords", base_url, date || null],
-    [base_url, date],
-  );
+  const queryKey = useMemo(() => keywordsKey(base_url, date), [base_url, date]);
 
-  const fetchFn = async (): Promise<Keywords> => {
-    const url = buildUrlString(urlArgs.baseUrl, urlArgs.endpoint, urlArgs.query);
-    const res = await fetch(url);
-    const json: ApiResponse<Keywords> = await res.json();
-    if (json.isSuccess) return json.data;
-    throw new Error(json.error.message);
-  };
+  const fetchFn = async (): Promise<Keywords> =>
+    get<Keywords>(base_url, "keywords", urlArgs.query);
 
-  const { data: response, isLoading: loading, error, refetch } = useQuery({
-    queryKey,
-    queryFn: fetchFn,
-    staleTime: 60_000,
-  });
+  const { data: response, isLoading: loading, error, refetch } = useQuery({ queryKey, queryFn: fetchFn, staleTime: STALE_MIN });
 
   return {
     data: response || ({} as Keywords),

@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { env } from "@/lib/env";
-import { buildUrlString } from "@/lib/url-builder";
-import type { ApiResponse, Pagination } from "@/interface/endpoint";
+import type { Pagination } from "@/interface/endpoint";
+import { searchReposKey } from "@/lib/query-key";
+import { get } from "@/lib/api";
+import { STALE_MIN } from "@/lib/constants";
 import { type Repo, type LanguageMap } from "@/hooks/useTrendingRepos";
 
 export interface UseSearchParams {
@@ -81,27 +83,15 @@ export function useSearch({
   const shouldFetch = enabled && query.trim().length > 0;
 
   const queryKey = useMemo(
-    () => [
-      "search-repos",
-      base_url,
-      query.trim(),
-      language || null,
-      page,
-      limit,
-    ],
+    () => searchReposKey(base_url, query, language, page, limit),
     [base_url, query, language, page, limit],
   );
 
-  const fetchFn = async (): Promise<Search> => {
-    const url = buildUrlString(urlArgs.baseUrl, urlArgs.endpoint, urlArgs.query);
-    const res = await fetch(url);
-    const json: ApiResponse<Search> = await res.json();
-    if (json.isSuccess) return json.data;
-    throw new Error(json.error.message);
-  };
+  const fetchFn = async (): Promise<Search> =>
+    get<Search>(base_url, "search", urlArgs.query);
 
   const { data: response, isLoading: loading, error, refetch, isFetching } =
-    useQuery({ queryKey, queryFn: fetchFn, enabled: shouldFetch, placeholderData: keepPreviousData });
+    useQuery({ queryKey, queryFn: fetchFn, enabled: shouldFetch, placeholderData: keepPreviousData, staleTime: STALE_MIN });
 
   return {
     data: response ? processSearchResults(response) : [],

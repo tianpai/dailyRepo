@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { buildUrlString } from "@/lib/url-builder";
+import { timeTo100StarsKey } from "@/lib/query-key";
 
 interface TimeToHundredStarsRepo {
   fullName: string;
@@ -65,7 +66,7 @@ export function useTimeToHundredStars(): UseTimeToHundredStarsReturn {
   };
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["time-to-100-stars"],
+    queryKey: timeTo100StarsKey(),
     queryFn: fetchFn,
     staleTime: 60_000,
   });

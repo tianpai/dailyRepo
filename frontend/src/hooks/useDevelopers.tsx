@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { env } from "@/lib/env";
-import { buildUrlString } from "@/lib/url-builder";
-import type { ApiResponse, Pagination } from "@/interface/endpoint";
+import type { Pagination } from "@/interface/endpoint";
+import { devsTrendingKey, topDevelopersKey } from "@/lib/query-key";
+import { get } from "@/lib/api";
+import { STALE_MIN } from "@/lib/constants";
 
 export interface DeveloperProps {
   username: string;
@@ -53,27 +55,16 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
     };
   }, [base_url, selectedDate, page]);
 
+  const dateStr = selectedDate
+    ? selectedDate.toISOString().split("T")[0]
+    : undefined;
   const queryKey = useMemo(
-    () => [
-      "trending-developers",
-      base_url,
-      selectedDate ? selectedDate.toISOString().split("T")[0] : undefined,
-      page ?? 1,
-    ],
-    [base_url, selectedDate, page],
+    () => devsTrendingKey(base_url, dateStr, page),
+    [base_url, dateStr, page],
   );
 
-  const fetchFn = async (): Promise<Developers> => {
-    const url = buildUrlString(
-      urlArgs.baseUrl,
-      urlArgs.endpoint,
-      urlArgs.query,
-    );
-    const res = await fetch(url);
-    const json: ApiResponse<Developers> = await res.json();
-    if (json.isSuccess) return json.data;
-    throw new Error(json.error.message);
-  };
+  const fetchFn = async (): Promise<Developers> =>
+    get<Developers>(base_url, "trending", urlArgs.query);
 
   const {
     data: response,
@@ -83,7 +74,7 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
     queryKey,
     queryFn: fetchFn,
     placeholderData: keepPreviousData,
-    staleTime: 60_000,
+    staleTime: STALE_MIN,
   });
 
   return {
@@ -106,19 +97,10 @@ export function useTopDevelopers() {
     [base_url],
   );
 
-  const queryKey = useMemo(() => ["top-developers", base_url], [base_url]);
+  const queryKey = useMemo(() => topDevelopersKey(base_url), [base_url]);
 
-  const fetchFn = async (): Promise<Developers> => {
-    const url = buildUrlString(
-      urlArgs.baseUrl,
-      urlArgs.endpoint,
-      urlArgs.query,
-    );
-    const res = await fetch(url);
-    const json: ApiResponse<Developers> = await res.json();
-    if (json.isSuccess) return json.data;
-    throw new Error(json.error.message);
-  };
+  const fetchFn = async (): Promise<Developers> =>
+    get<Developers>(base_url, "top", urlArgs.query);
 
   const {
     data: response,
@@ -127,7 +109,7 @@ export function useTopDevelopers() {
   } = useQuery({
     queryKey,
     queryFn: fetchFn,
-    staleTime: 60_000,
+    staleTime: STALE_MIN,
   });
 
   return {

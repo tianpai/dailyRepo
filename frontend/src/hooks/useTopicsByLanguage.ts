@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { env } from "@/lib/env";
-import { buildUrlString } from "@/lib/url-builder";
-import type { ApiResponse } from "@/interface/endpoint";
+import { topicsByLanguageKey } from "@/lib/query-key";
+import { get } from "@/lib/api";
+import { STALE_MIN } from "@/lib/constants";
 
 interface ClusterCount {
   [topics: string]: number;
@@ -15,25 +16,12 @@ export interface LanguageTopicMap {
 export function useTopicsByLanguage() {
   const base_url = env("VITE_DATABASE_REPOS");
 
-  const urlArgs = useMemo(
-    () => ({
-      baseUrl: base_url,
-      endpoint: "topics-by-language",
-    }),
-    [base_url],
-  );
+  const queryKey = useMemo(() => topicsByLanguageKey(base_url), [base_url]);
 
-  const queryKey = useMemo(() => ["topics-by-language", urlArgs.baseUrl], [urlArgs.baseUrl]);
+  const fetchFn = async (): Promise<LanguageTopicMap> =>
+    get<LanguageTopicMap>(base_url, "topics-by-language");
 
-  const fetchFn = async (): Promise<LanguageTopicMap> => {
-    const url = buildUrlString(urlArgs.baseUrl, urlArgs.endpoint);
-    const res = await fetch(url);
-    const json: ApiResponse<LanguageTopicMap> = await res.json();
-    if (json.isSuccess) return json.data;
-    throw new Error(json.error.message);
-  };
-
-  const { data, isLoading, error, refetch } = useQuery({ queryKey, queryFn: fetchFn, staleTime: 60_000 });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey, queryFn: fetchFn, staleTime: STALE_MIN });
 
   return {
     data: data || ({} as LanguageTopicMap),
