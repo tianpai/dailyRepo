@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { apiV1Base } from "@/lib/env";
+import { apiV2Base } from "@/lib/env";
 import type { Pagination } from "@/interface/endpoint";
 import { searchReposKey } from "@/lib/query-key";
 import { get } from "@/lib/api";
@@ -55,29 +55,17 @@ export function useSearch({
   limit = 15,
   enabled = true,
 }: UseSearchParams): UseSearchReturn {
-  const base_url = apiV1Base();
+  const base_url = apiV2Base();
 
   // Build query parameters
-  const urlArgs = useMemo(() => {
-    const queryParams: Record<string, string | number> = {};
-
-    if (query.trim()) {
-      queryParams.q = query.trim();
-    }
-
-    if (language) {
-      queryParams.language = language;
-    }
-
-    queryParams.page = page;
-    queryParams.limit = limit;
-
-    return {
-      baseUrl: base_url,
-      endpoint: "search",
-      query: queryParams,
-    };
-  }, [base_url, query, language, page, limit]);
+  const params = useMemo(() => {
+    const qp: Record<string, string | number> = {};
+    if (query.trim()) qp.q = query.trim();
+    if (language) qp.language = language;
+    qp.page = page;
+    qp.limit = limit;
+    return qp;
+  }, [query, language, page, limit]);
 
   // Only fetch if query exists and enabled is true
   const shouldFetch = enabled && query.trim().length > 0;
@@ -88,10 +76,21 @@ export function useSearch({
   );
 
   const fetchFn = async (): Promise<Search> =>
-    get<Search>(base_url, ["repos", "search"], urlArgs.query);
+    get<Search>(base_url, ["repos", "search"], params);
 
-  const { data: response, isLoading: loading, error, refetch, isFetching } =
-    useQuery({ queryKey, queryFn: fetchFn, enabled: shouldFetch, placeholderData: keepPreviousData, staleTime: STALE_MIN });
+  const {
+    data: response,
+    isLoading: loading,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey,
+    queryFn: fetchFn,
+    enabled: shouldFetch,
+    placeholderData: keepPreviousData,
+    staleTime: STALE_MIN,
+  });
 
   return {
     data: response ? processSearchResults(response) : [],

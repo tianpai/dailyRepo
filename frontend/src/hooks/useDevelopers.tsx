@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { apiV1Base } from "@/lib/env";
+import { apiV2Base } from "@/lib/env";
 import type { Pagination } from "@/interface/endpoint";
 import { devsTrendingKey, topDevelopersKey } from "@/lib/query-key";
 import { get } from "@/lib/api";
@@ -37,23 +37,13 @@ export interface Developers {
  * const { data, pagination, loading, error } = useTrendingDevelopers(new Date(), 2);
  */
 export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
-  const apiBase = apiV1Base();
-
-  const urlArgs = useMemo(() => {
-    const query: Record<string, string> = {};
-    if (selectedDate) {
-      query.date = selectedDate.toISOString().split("T")[0];
-    }
-    if (page && page > 1) {
-      query.page = page.toString();
-    }
-
-    return {
-      baseUrl: apiBase,
-      endpoint: ["developers", "trending"],
-      query,
-    };
-  }, [apiBase, selectedDate, page]);
+  const apiBase = apiV2Base();
+  const params = useMemo(() => {
+    const q: Record<string, string> = {};
+    if (selectedDate) q.date = selectedDate.toISOString().split("T")[0];
+    if (page && page > 1) q.page = page.toString();
+    return q;
+  }, [selectedDate, page]);
 
   const dateStr = selectedDate
     ? selectedDate.toISOString().split("T")[0]
@@ -64,7 +54,7 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
   );
 
   const fetchFn = async (): Promise<Developers> =>
-    get<Developers>(apiBase, ["developers", "trending"], urlArgs.query);
+    get<Developers>(apiBase, ["developers", "trending"], params);
 
   const {
     data: response,
@@ -86,21 +76,13 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
 }
 
 export function useTopDevelopers() {
-  const apiBase = apiV1Base();
-
-  const urlArgs = useMemo(
-    () => ({
-      baseUrl: apiBase,
-      endpoint: ["developers", "top"],
-      query: {},
-    }),
-    [apiBase],
-  );
+  const apiBase = apiV2Base();
+  // no params needed for top developers
 
   const queryKey = useMemo(() => topDevelopersKey(apiBase), [apiBase]);
 
   const fetchFn = async (): Promise<Developers> =>
-    get<Developers>(apiBase, ["developers", "top"], urlArgs.query);
+    get<Developers>(apiBase, ["developers", "top"]);
 
   const {
     data: response,

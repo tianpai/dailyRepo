@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { apiV1Base } from "@/lib/env";
+import { apiV2Base } from "@/lib/env";
 import { reposTrendingKey } from "@/lib/query-key";
 import { get } from "@/lib/api";
 import { STALE_MIN } from "@/lib/constants";
@@ -47,23 +47,14 @@ export interface RepoCardProps extends Repo {
 }
 
 export function useTrendingRepos(selectedDate?: Date, page?: number) {
-  const apiBase = apiV1Base();
+  const apiBase = apiV2Base();
 
-  const urlArgs = useMemo(() => {
-    const query: Record<string, string | number> = {};
-    if (selectedDate) {
-      query.date = selectedDate.toISOString().split("T")[0];
-    }
-    if (page && page > 1) {
-      query.page = page;
-    }
-
-    return {
-      baseUrl: apiBase,
-      endpoint: ["repos", "trending"],
-      query: Object.keys(query).length > 0 ? query : undefined,
-    };
-  }, [apiBase, selectedDate, page]);
+  const params = useMemo(() => {
+    const q: Record<string, string | number> = {};
+    if (selectedDate) q.date = selectedDate.toISOString().split("T")[0];
+    if (page && page > 1) q.page = page;
+    return Object.keys(q).length ? q : undefined;
+  }, [selectedDate, page]);
 
   const dateStr = selectedDate
     ? selectedDate.toISOString().split("T")[0]
@@ -74,9 +65,14 @@ export function useTrendingRepos(selectedDate?: Date, page?: number) {
   );
 
   const fetchFn = async (): Promise<Repos> =>
-    get<Repos>(apiBase, ["repos", "trending"], urlArgs.query);
+    get<Repos>(apiBase, ["repos", "trending"], params);
 
-  const { data: response, isLoading: loading, error, refetch } = useQuery({
+  const {
+    data: response,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: fetchFn,
     placeholderData: keepPreviousData,
