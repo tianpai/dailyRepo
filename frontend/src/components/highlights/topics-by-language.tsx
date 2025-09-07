@@ -1,6 +1,8 @@
 import { useTopicsByLanguage } from "@/hooks/useTopicsByLanguage";
 import { languageColors } from "@/data/language-color";
 import { MobilePopup } from "@/components/ui/mobile-popup";
+import { Link } from "react-router-dom";
+import { Lightbulb } from "lucide-react";
 
 // ==================== Type Definitions ====================
 interface ClusterCount {
@@ -98,9 +100,12 @@ function TopicLanguageCard({ language, topicCounts }: TopicLanguageCardProps) {
                   background: `linear-gradient(to right, ${languageColor}20 ${barWidth}%, transparent ${barWidth}%)`,
                 }}
               >
-                <span className="major-mono text-sm text-foreground truncate flex-1 relative z-10">
+                <Link
+                  to={`/search?q=${encodeURIComponent(topic)}&language=${encodeURIComponent(language)}`}
+                  className="major-mono text-sm text-foreground truncate flex-1 relative z-10 hover:underline underline-offset-2"
+                >
                   {topic}
-                </span>
+                </Link>
                 <div className="flex items-center gap-2 relative z-10">
                   <span className="major-mono text-sm text-description">
                     {count}
@@ -148,6 +153,10 @@ export function TopicsByLanguageContainer() {
             </h3>
             <p className="major-mono text-sm text-description mt-1">
               Update weekly (Week {getCurrentWeekNumber()})
+            </p>
+            <p className="major-mono text-sm text-description mt-1 inline-flex items-center gap-1">
+              <Lightbulb className="w-3 h-3" />
+              Tip: keywords are clickable — tap to search.
             </p>
           </div>
           <MobilePopup content={helpText} popupWidth="w-72" />

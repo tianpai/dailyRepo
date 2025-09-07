@@ -7,7 +7,7 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 interface HistoryBarData {
   id: number;
@@ -16,11 +16,13 @@ interface HistoryBarData {
 }
 
 function KeywordBadge({ keyword }: { keyword: string }) {
+  const location = useLocation();
+  const languageParam = new URLSearchParams(location.search).get("language") || "";
+  const qp = new URLSearchParams();
+  qp.set("q", keyword);
+  if (languageParam) qp.set("language", languageParam);
   return (
-    <Link
-      to={`/search?q=${encodeURIComponent(keyword)}`}
-      className="px-2 py-0.5 border-1 transition-opacity border-border text-base text-foreground bg-background hover:opacity-70"
-    >
+    <Link to={`/search?${qp.toString()}`} className="px-2 py-0.5 border-1 transition-opacity border-border text-base text-foreground bg-background hover:opacity-70">
       {keyword}
     </Link>
   );

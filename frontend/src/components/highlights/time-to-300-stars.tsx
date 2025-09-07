@@ -7,7 +7,7 @@ import { MobilePopup } from "@/components/ui/mobile-popup";
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/loading";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 function Stat({
   label,
@@ -251,19 +251,26 @@ function aggregateKeywords(
 function KeywordsSummary({ repos }: { repos: TimeTo300Repo[] }) {
   const items = aggregateKeywords(repos).slice(0, 10);
   const [expanded, setExpanded] = useState(false);
+  const location = useLocation();
+  const languageParam = new URLSearchParams(location.search).get("language") || "";
   if (!items.length) return null;
   const visible = expanded ? items : items.slice(0, 3);
   return (
     <div className="px-3 sm:px-4 pb-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="major-mono text-xs text-description">KEYWORDS:</span>
-        {visible.map(({ key, count }) => (
-          <Link key={key} to={`/search?q=${encodeURIComponent(key)}`} className="inline-block">
-            <Badge variant="outline" className="major-mono text-xs px-2 py-0.5">
-              {key} ({count})
-            </Badge>
-          </Link>
-        ))}
+        {visible.map(({ key, count }) => {
+          const qp = new URLSearchParams();
+          qp.set("q", key);
+          if (languageParam) qp.set("language", languageParam);
+          return (
+            <Link key={key} to={`/search?${qp.toString()}`} className="inline-block">
+              <Badge variant="outline" className="major-mono text-xs px-2 py-0.5">
+                {key} ({count})
+              </Badge>
+            </Link>
+          );
+        })}
         {items.length > 3 && (
           <Button
             size="sm"
