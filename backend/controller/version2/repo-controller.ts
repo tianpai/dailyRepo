@@ -10,6 +10,7 @@ import {
   fetchTrendingRepos,
   fetchSearchedRepos,
   fetchTimeToFirstThreeHundredStars,
+  fetchSlowestTimeToFirstThreeHundredStars,
 } from "@/services/repo-service";
 import { paginateArray } from "@/utils/controller-helper";
 import { z } from "zod";
@@ -32,6 +33,7 @@ const SearchQuery = z.object({
 
 const TimeTo300Query = z.object({
   age: z.enum(["YTD", "all", "5y", "10y"]).default("YTD"),
+  sort: z.enum(["fastest", "slowest"]).default("fastest"),
 });
 
 @Controller("/repos")
@@ -113,10 +115,14 @@ export class RepoController {
    */
   @Get("/time-to-300-stars")
   @Schema({ query: TimeTo300Query })
-  @Cache("time-to-300-stars-analysis-{age}", TTL._1_WEEK)
+  @Cache("time-to-300-stars-analysis-{age}-{sort}", TTL._1_WEEK)
   async getTimeToFirstThreeHundredStars({
     age,
+    sort,
   }: z.infer<typeof TimeTo300Query>) {
+    if (sort === "slowest") {
+      return await fetchSlowestTimeToFirstThreeHundredStars(age);
+    }
     return await fetchTimeToFirstThreeHundredStars(age);
   }
 }

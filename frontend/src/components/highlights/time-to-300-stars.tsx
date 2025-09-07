@@ -5,6 +5,8 @@ import { RepoCard } from "@/components/repo/repo-card";
 import type { TimeTo300Repo } from "@/hooks/useTimeTo300Stars";
 import { MobilePopup } from "@/components/ui/mobile-popup";
 import { Badge } from "@/components/ui/badge";
+import { Loading } from "@/components/loading";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 
 function Stat({
   label,
@@ -29,7 +31,9 @@ function Stat({
   );
 }
 
-const AGES = ["YTD", "all", "5y", "10y"] as const;
+// Order from shortest to longest period
+const AGES = ["YTD", "5y", "10y", "all"] as const;
+const SORTS = ["fastest", "slowest"] as const;
 
 function isNewRepo(createdAt: string): boolean {
   const created = new Date(createdAt).getTime();
@@ -40,6 +44,7 @@ function isNewRepo(createdAt: string): boolean {
 }
 
 type Age = (typeof AGES)[number];
+type Sort = (typeof SORTS)[number];
 
 function HeaderSection({ ageFilter }: { ageFilter: string }) {
   return (
@@ -64,21 +69,48 @@ function HeaderSection({ ageFilter }: { ageFilter: string }) {
   );
 }
 
-function AgeTabs({ age, onChange }: { age: Age; onChange: (a: Age) => void }) {
+function FiltersBar({
+  age,
+  sort,
+  onAge,
+  onSort,
+}: {
+  age: Age;
+  sort: Sort;
+  onAge: (a: Age) => void;
+  onSort: (s: Sort) => void;
+}) {
   return (
     <div className="px-4 pt-3 sm:px-4 sm:pt-4">
-      <div className="flex items-center gap-2 mb-3">
-        {AGES.map((a) => (
-          <Button
-            key={a}
-            size="sm"
-            variant={a === age ? "default" : "outline"}
-            onClick={() => onChange(a)}
-            className="major-mono"
-          >
-            {a}
-          </Button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        {/* Age buttons (left) */}
+        <div className="flex items-center gap-2">
+          {AGES.map((a) => (
+            <Button
+              key={a}
+              size="sm"
+              variant={a === age ? "default" : "outline"}
+              onClick={() => onAge(a)}
+              className="major-mono"
+            >
+              {a}
+            </Button>
+          ))}
+        </div>
+        {/* Sort buttons (right on md+, wrap under on small) */}
+        <div className="flex items-center gap-2 md:ml-auto">
+          {SORTS.map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={s === sort ? "default" : "outline"}
+              onClick={() => onSort(s)}
+              className="major-mono"
+            >
+              {s.toUpperCase()}
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -149,9 +181,11 @@ function RepoRow({
 function RepoTable({
   repos,
   onSelect,
+  isLoading,
 }: {
   repos: TimeTo300Repo[];
   onSelect: (r: TimeTo300Repo) => void;
+  isLoading: boolean;
 }) {
   return (
     <div className="px-3 sm:px-4 pb-3 sm:pb-4">
@@ -172,21 +206,83 @@ function RepoTable({
           </span>
         </div>
         <div>
-          {repos.map((r, idx) => (
-            <RepoRow
-              key={r.fullName}
-              r={r}
-              index={idx}
-              onSelect={(cur) => onSelect(cur)}
-            />
-          ))}
-          {repos.length === 0 && (
-            <div className="px-3 py-6 text-center major-mono text-sm text-description">
-              No repositories found.
-            </div>
+          {isLoading ? (
+            <Loading className="h-24" />
+          ) : (
+            <>
+              {repos.map((r, idx) => (
+                <RepoRow
+                  key={r.fullName}
+                  r={r}
+                  index={idx}
+                  onSelect={(cur) => onSelect(cur)}
+                />
+              ))}
+              {repos.length === 0 && (
+                <div className="px-3 py-6 text-center major-mono text-sm text-description">
+                  No repositories found.
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function aggregateKeywords(
+  repos: TimeTo300Repo[],
+): Array<{ key: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const r of repos) {
+    for (const t of r.topics || []) {
+      if (!t) continue;
+      const key = t.toLowerCase();
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+  }
+  return Array.from(counts.entries())
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function KeywordsSummary({ repos }: { repos: TimeTo300Repo[] }) {
+  const items = aggregateKeywords(repos).slice(0, 10);
+  const [expanded, setExpanded] = useState(false);
+  if (!items.length) return null;
+  const visible = expanded ? items : items.slice(0, 3);
+  return (
+    <div className="px-3 sm:px-4 pb-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="major-mono text-xs text-description">KEYWORDS:</span>
+        {visible.map(({ key, count }) => (
+          <Badge
+            key={key}
+            variant="outline"
+            className="major-mono text-xs px-2 py-0.5"
+          >
+            {key} ({count})
+          </Badge>
+        ))}
+        {items.length > 3 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="major-mono text-[10px] px-2 py-0.5 inline-flex items-center gap-1 border-none"
+            onClick={() => setExpanded((e) => !e)}
+          >
+            {expanded ? (
+              <ChevronLeft className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
+          </Button>
+        )}
+      </div>
+      <p className="major-mono text-xs text-description mt-1">
+        Keywords aggregated from the 20 repos shown (top 10).
+      </p>
     </div>
   );
 }
@@ -225,32 +321,34 @@ function DetailsModal({
 
 export function TimeTo300StarsSummaryCard() {
   const [age, setAge] = useState<Age>("YTD");
-  const { summary, repos, isLoading, error } = useTimeTo300Stars(age);
+  const [sort, setSort] = useState<Sort>("fastest");
+  const { summary, repos, isLoading, error } = useTimeTo300Stars(age, sort);
   const [selected, setSelected] = useState<TimeTo300Repo | null>(null);
 
   const renderStateMessage = (message: string) => (
     <div className="flex items-center justify-center h-24">{message}</div>
   );
 
-  if (isLoading) return renderStateMessage("Loading...");
   if (error) return renderStateMessage(`Error: ${error}`);
-  if (!summary) return null;
-
-  const { totalAnalyzedRepos, averageDays, medianDays, maxDays, ageFilter } =
-    summary;
+  const ageFilter = summary?.ageFilter ?? age;
 
   return (
     <div className="border-2 border-border bg-background text-foreground">
       <HeaderSection ageFilter={ageFilter} />
-      <AgeTabs age={age} onChange={setAge} />
-      <StatsGrid
-        total={totalAnalyzedRepos}
-        avg={averageDays}
-        median={medianDays}
-        max={maxDays}
-      />
+      <FiltersBar age={age} sort={sort} onAge={setAge} onSort={setSort} />
+      {summary && (
+        <StatsGrid
+          total={summary.totalAnalyzedRepos}
+          avg={summary.averageDays}
+          median={summary.medianDays}
+          max={summary.maxDays}
+        />
+      )}
+      {/* Keywords aggregated from the 20 displayed repos */}
+      <KeywordsSummary repos={repos} />
       <RepoTable
         repos={repos}
+        isLoading={isLoading}
         onSelect={(r) =>
           setSelected((prev) => (prev?.fullName === r.fullName ? null : r))
         }

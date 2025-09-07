@@ -31,12 +31,18 @@ export interface TimeTo300Data {
   repos: TimeTo300Repo[];
 }
 
-export function useTimeTo300Stars(age: "YTD" | "all" | "5y" | "10y" = "YTD") {
+export function useTimeTo300Stars(
+  age: "YTD" | "all" | "5y" | "10y" = "YTD",
+  sort: "fastest" | "slowest" = "fastest",
+) {
   const fetchFn = async (): Promise<TimeTo300Data> =>
-    get<TimeTo300Data>(apiV2Base(), ["repos", "time-to-300-stars"], { age });
+    get<TimeTo300Data>(apiV2Base(), ["repos", "time-to-300-stars"], {
+      age,
+      sort,
+    });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: timeTo300StarsKey(age),
+    queryKey: timeTo300StarsKey(age, sort),
     queryFn: fetchFn,
     staleTime: 60_000,
   });

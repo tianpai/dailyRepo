@@ -168,6 +168,32 @@ export async function fetchTimeToFirstThreeHundredStars(
   };
 }
 
+/**
+ * Returns slowest repositories to reach 300 stars
+ * Sorted by daysToThreeHundredStars descending (slowest first)
+ */
+export async function fetchSlowestTimeToFirstThreeHundredStars(
+  age?: string,
+  limit: number = 20,
+) {
+  const allData = await fetchAllTimeToFirstThreeHundredStars(age);
+
+  if (!allData) {
+    return null;
+  }
+
+  const slowest = [...allData.repos]
+    .sort(
+      (a, b) => b.daysToThreeHundredStars - a.daysToThreeHundredStars,
+    )
+    .slice(0, limit);
+
+  return {
+    summary: allData.summary,
+    repos: slowest,
+  };
+}
+
 /*
  * Returns a mongodb query
  */
