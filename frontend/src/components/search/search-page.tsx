@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { PageContainer } from "@/components/page-container";
 import { SidebarLayout } from "@/components/app-sidebar";
 import { useSearch } from "@/hooks/useSearch";
@@ -7,8 +8,14 @@ import { SearchForm } from "./search-form";
 import { SearchResults } from "./search-results";
 
 export function SearchPage() {
-  const [query, setQuery] = useState("");
-  const [language, setLanguage] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const initialQ = params.get("q") || "";
+  const initialLang = params.get("language") || "";
+
+  const [query, setQuery] = useState(initialQ);
+  const [language, setLanguage] = useState(initialLang);
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data, pagination, searchInfo, isLoading, error } = useSearch({
@@ -21,12 +28,29 @@ export function SearchPage() {
   const handleSearch = (searchQuery: string) => {
     setQuery(searchQuery);
     setCurrentPage(1);
+    const next = new URLSearchParams(location.search);
+    if (searchQuery.trim()) next.set("q", searchQuery.trim());
+    else next.delete("q");
+    if (language.trim()) next.set("language", language.trim());
+    else next.delete("language");
+    navigate({ pathname: "/search", search: next.toString() ? `?${next.toString()}` : "" }, { replace: false });
   };
 
   const handleLanguageFilter = (selectedLanguage: string) => {
     setLanguage(selectedLanguage);
     setCurrentPage(1);
+    const next = new URLSearchParams(location.search);
+    if (query.trim()) next.set("q", query.trim());
+    else next.delete("q");
+    if (selectedLanguage.trim()) next.set("language", selectedLanguage.trim());
+    else next.delete("language");
+    navigate({ pathname: "/search", search: next.toString() ? `?${next.toString()}` : "" }, { replace: false });
   };
+
+  useEffect(() => {
+    setQuery(initialQ);
+    setLanguage(initialLang);
+  }, [initialQ, initialLang]);
 
   return (
     <PageContainer>

@@ -7,6 +7,7 @@ import { MobilePopup } from "@/components/ui/mobile-popup";
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/loading";
 import { ChevronRight, ChevronLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function Stat({
   label,
@@ -257,13 +258,11 @@ function KeywordsSummary({ repos }: { repos: TimeTo300Repo[] }) {
       <div className="flex flex-wrap items-center gap-2">
         <span className="major-mono text-xs text-description">KEYWORDS:</span>
         {visible.map(({ key, count }) => (
-          <Badge
-            key={key}
-            variant="outline"
-            className="major-mono text-xs px-2 py-0.5"
-          >
-            {key} ({count})
-          </Badge>
+          <Link key={key} to={`/search?q=${encodeURIComponent(key)}`} className="inline-block">
+            <Badge variant="outline" className="major-mono text-xs px-2 py-0.5">
+              {key} ({count})
+            </Badge>
+          </Link>
         ))}
         {items.length > 3 && (
           <Button

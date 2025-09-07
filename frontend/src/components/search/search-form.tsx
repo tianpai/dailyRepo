@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SearchInput } from "./search-input";
 import { LanguageFilter } from "./language-filter";
 
@@ -28,6 +28,15 @@ export function SearchForm({
 }: SearchFormProps) {
   const [localQuery, setLocalQuery] = useState(initialQuery);
   const [localLanguage, setLocalLanguage] = useState(initialLanguage);
+
+  // Sync internal state if the initial props change (e.g., URL-driven search)
+  useEffect(() => {
+    setLocalQuery(initialQuery);
+  }, [initialQuery]);
+
+  useEffect(() => {
+    setLocalLanguage(initialLanguage);
+  }, [initialLanguage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
