@@ -1,6 +1,8 @@
 import { useMemo } from "react";
-import { useApi, env } from "@/hooks/useApi";
-import { type Pagination } from "@/interface/endpoint";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { env } from "@/lib/env";
+import { buildUrlString } from "@/lib/url-builder";
+import type { ApiResponse, Pagination } from "@/interface/endpoint";
 import { type Repo, type LanguageMap } from "@/hooks/useTrendingRepos";
 
 export interface UseSearchParams {
@@ -52,7 +54,6 @@ export function useSearch({
   enabled = true,
 }: UseSearchParams): UseSearchReturn {
   const base_url = env("VITE_DATABASE_REPOS");
-  const token = env("VITE_DEV_AUTH");
 
   // Build query parameters
   const urlArgs = useMemo(() => {
@@ -76,33 +77,38 @@ export function useSearch({
     };
   }, [base_url, query, language, page, limit]);
 
-  const fetchOptions = useMemo(
-    () => ({
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    [token],
-  );
-
   // Only fetch if query exists and enabled is true
   const shouldFetch = enabled && query.trim().length > 0;
 
-  const {
-    data: response,
-    loading,
-    error,
-    refetch,
-  } = useApi<Search>({
-    urlArgs,
-    fetchOptions,
-    autoFetch: shouldFetch,
-  });
+  const queryKey = useMemo(
+    () => [
+      "search-repos",
+      base_url,
+      query.trim(),
+      language || null,
+      page,
+      limit,
+    ],
+    [base_url, query, language, page, limit],
+  );
+
+  const fetchFn = async (): Promise<Search> => {
+    const url = buildUrlString(urlArgs.baseUrl, urlArgs.endpoint, urlArgs.query);
+    const res = await fetch(url);
+    const json: ApiResponse<Search> = await res.json();
+    if (json.isSuccess) return json.data;
+    throw new Error(json.error.message);
+  };
+
+  const { data: response, isLoading: loading, error, refetch, isFetching } =
+    useQuery({ queryKey, queryFn: fetchFn, enabled: shouldFetch, placeholderData: keepPreviousData });
 
   return {
     data: response ? processSearchResults(response) : [],
     pagination: response?.pagination || null,
     searchInfo: response?.searchInfo || null,
-    isLoading: loading,
-    error: error?.error?.message || null,
+    isLoading: loading || isFetching,
+    error: (error as Error | undefined)?.message || null,
     refetch,
   };
 }

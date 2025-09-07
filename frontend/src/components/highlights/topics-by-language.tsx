@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { useApi, env } from "@/hooks/useApi";
+import { useTopicsByLanguage } from "@/hooks/useTopicsByLanguage";
 import { languageColors } from "@/data/language-color";
 import { MobilePopup } from "@/components/ui/mobile-popup";
 
@@ -8,9 +7,7 @@ interface ClusterCount {
   [topics: string]: number;
 }
 
-interface LanguageTopicMap {
-  [language: string]: ClusterCount;
-}
+// data shape provided by the API hook
 
 interface TopicEntry {
   topic: string;
@@ -38,43 +35,7 @@ function getCurrentWeekNumber(): number {
  * Fetches data for the current week showing which topics are popular in each language
  * @returns Object containing data, loading state, error message, and refetch function
  */
-function useTopicsByLanguage() {
-  const base_url = env("VITE_DATABASE_REPOS");
-  const token = env("VITE_DEV_AUTH");
-
-  const urlArgs = useMemo(
-    () => ({
-      baseUrl: base_url,
-      endpoint: "topics-by-language",
-    }),
-    [base_url],
-  );
-
-  const fetchOptions = useMemo(
-    () => ({
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    [token],
-  );
-
-  const {
-    data: response,
-    loading,
-    error,
-    refetch,
-  } = useApi<LanguageTopicMap>({
-    urlArgs,
-    fetchOptions,
-  });
-
-  return {
-    data: response || ({} as LanguageTopicMap),
-    date: "",
-    loading,
-    error: error?.error?.message || "",
-    refetch,
-  };
-}
+// moved into hooks/api/useTopicsByLanguage
 
 /**
  * Transform topic counts into sorted array for ASCII visualization

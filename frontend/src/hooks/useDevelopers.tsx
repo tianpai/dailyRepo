@@ -1,6 +1,8 @@
 import { useMemo } from "react";
-import { useApi, env } from "@/hooks/useApi";
-import { type Pagination } from "@/interface/endpoint";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { env } from "@/lib/env";
+import { buildUrlString } from "@/lib/url-builder";
+import type { ApiResponse, Pagination } from "@/interface/endpoint";
 
 export interface DeveloperProps {
   username: string;
@@ -34,7 +36,6 @@ export interface Developers {
  */
 export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
   const base_url = env("VITE_DATABASE_DEVS");
-  const token = env("VITE_DEV_AUTH");
 
   const urlArgs = useMemo(() => {
     const query: Record<string, string> = {};
@@ -52,33 +53,49 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
     };
   }, [base_url, selectedDate, page]);
 
-  const fetchOptions = useMemo(
-    () => ({
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    [token],
+  const queryKey = useMemo(
+    () => [
+      "trending-developers",
+      base_url,
+      selectedDate ? selectedDate.toISOString().split("T")[0] : undefined,
+      page ?? 1,
+    ],
+    [base_url, selectedDate, page],
   );
+
+  const fetchFn = async (): Promise<Developers> => {
+    const url = buildUrlString(
+      urlArgs.baseUrl,
+      urlArgs.endpoint,
+      urlArgs.query,
+    );
+    const res = await fetch(url);
+    const json: ApiResponse<Developers> = await res.json();
+    if (json.isSuccess) return json.data;
+    throw new Error(json.error.message);
+  };
 
   const {
     data: response,
-    loading,
+    isLoading: loading,
     error,
-  } = useApi<Developers>({
-    urlArgs,
-    fetchOptions,
+  } = useQuery({
+    queryKey,
+    queryFn: fetchFn,
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
   });
 
   return {
     data: response ? processDevelopers(response) : [],
     pagination: response?.pagination || null,
     loading,
-    error: error?.error?.message || "",
+    error: (error as Error | undefined)?.message || "",
   };
 }
 
 export function useTopDevelopers() {
   const base_url = env("VITE_DATABASE_DEVS");
-  const token = env("VITE_DEV_AUTH");
 
   const urlArgs = useMemo(
     () => ({
@@ -89,26 +106,34 @@ export function useTopDevelopers() {
     [base_url],
   );
 
-  const fetchOptions = useMemo(
-    () => ({
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    [token],
-  );
+  const queryKey = useMemo(() => ["top-developers", base_url], [base_url]);
+
+  const fetchFn = async (): Promise<Developers> => {
+    const url = buildUrlString(
+      urlArgs.baseUrl,
+      urlArgs.endpoint,
+      urlArgs.query,
+    );
+    const res = await fetch(url);
+    const json: ApiResponse<Developers> = await res.json();
+    if (json.isSuccess) return json.data;
+    throw new Error(json.error.message);
+  };
 
   const {
     data: response,
-    loading,
+    isLoading: loading,
     error,
-  } = useApi<Developers>({
-    urlArgs,
-    fetchOptions,
+  } = useQuery({
+    queryKey,
+    queryFn: fetchFn,
+    staleTime: 60_000,
   });
 
   return {
     data: response ? processDevelopers(response) : [],
     loading,
-    error: error?.error?.message || "",
+    error: (error as Error | undefined)?.message || "",
   };
 }
 

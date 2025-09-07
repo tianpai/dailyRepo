@@ -3,53 +3,7 @@
 import type { LanguageMap } from "@/interface/repository";
 import { RepoLanguage } from "@/components/repo/repo-language";
 import { toChartData } from "@/lib/pie-chart-data";
-import { useApi, env } from "@/hooks/useApi";
-import { type Query } from "@/lib/url-builder";
-import { useMemo } from "react";
-
-type TopLangResponse = { data: LanguageMap; count?: number };
-
-// fetch data from endpoint and transform it into a format suitable for the ASCII bar
-function useLanguageData(numberOfLanguages: number = 10) {
-  const baseUrl = env("VITE_DATABASE_LANGUAGES");
-  const token = env("VITE_DEV_AUTH");
-
-  const urlArgs = useMemo(
-    () => ({
-      baseUrl,
-      endpoint: "language-list",
-      query:
-        numberOfLanguages > 0
-          ? ({ top: Math.min(numberOfLanguages, 15) } as Query)
-          : undefined,
-    }),
-    [baseUrl, numberOfLanguages],
-  );
-
-  const fetchOptions = useMemo(
-    () => ({
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }),
-    [token],
-  );
-
-  const {
-    data: raw,
-    loading,
-    error: apiError,
-  } = useApi<TopLangResponse>({ urlArgs, fetchOptions });
-
-  const data = useMemo(() => raw?.data ?? {}, [raw]);
-  const error = useMemo(() => apiError?.error?.message ?? null, [apiError]);
-
-  return {
-    data: data as LanguageMap,
-    loading,
-    error,
-  };
-}
+import { useTopLanguages } from "@/hooks/useTopLanguages";
 
 // Component to show detailed breakdown for programming languages
 function ProgrammingLanguagesBreakdown({
@@ -146,7 +100,7 @@ function LanguagesAsciiBar({
 
 // Container component that combines data and presentation
 export function LanguagesContainer() {
-  const { data, loading, error } = useLanguageData(10);
+  const { data, loading, error } = useTopLanguages(10);
 
   return <LanguagesAsciiBar data={data} loading={loading} error={error} />;
 }

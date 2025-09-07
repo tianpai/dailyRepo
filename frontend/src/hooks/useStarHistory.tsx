@@ -1,5 +1,8 @@
 import { useMemo } from "react";
-import { useApi, env } from "@/hooks/useApi";
+import { useQuery } from "@tanstack/react-query";
+import { env } from "@/lib/env";
+import { buildUrlString } from "@/lib/url-builder";
+import type { ApiResponse } from "@/interface/endpoint";
 
 export interface StarDataPoint {
   date: string;
@@ -12,7 +15,6 @@ export type RepoStarHistory = Record<string, StarDataPoint[]>;
 
 export function useBulkStarHistory(repoNames: string[]) {
   const base_url = env("VITE_DATABASE_REPOS");
-  const token = env("VITE_DEV_AUTH");
 
   const urlArgs = useMemo(() => {
     return {
@@ -21,33 +23,39 @@ export function useBulkStarHistory(repoNames: string[]) {
     };
   }, [base_url]);
 
-  const fetchOptions = useMemo(
-    () => ({
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      method: "POST",
-      body: JSON.stringify({ repoNames: repoNames }),
-    }),
-    [token, repoNames],
+  const body = useMemo(
+    () => JSON.stringify({ repoNames: repoNames }),
+    [repoNames],
   );
 
-  const {
-    data: response,
-    loading,
-    error,
-    refetch,
-  } = useApi<RepoStarHistory>({
-    urlArgs,
-    fetchOptions,
+  const queryKey = useMemo(
+    () => ["bulk-star-history", base_url, repoNames.join(",")],
+    [base_url, repoNames],
+  );
+
+  const fetchFn = async (): Promise<RepoStarHistory> => {
+    const url = buildUrlString(urlArgs.baseUrl, urlArgs.endpoint);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+    const json: ApiResponse<RepoStarHistory> = await res.json();
+    if (json.isSuccess) return json.data;
+    throw new Error(json.error.message);
+  };
+
+  const { data: response, isLoading: loading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: fetchFn,
+    enabled: repoNames.length > 0,
   });
 
   return {
     data: response || {},
     pagination: response?.pagination || null,
     loading,
-    error: error?.error?.message || "",
+    error: (error as Error | undefined)?.message || "",
     refetch,
   };
 }

@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { buildUrl } from "@/lib/url-builder";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { buildUrlString } from "@/lib/url-builder";
 
 interface TimeToHundredStarsRepo {
   fullName: string;
@@ -39,52 +40,41 @@ interface UseTimeToHundredStarsReturn {
 }
 
 export function useTimeToHundredStars(): UseTimeToHundredStarsReturn {
-  const [data, setData] = useState<TimeToHundredStarsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isCached, setIsCached] = useState(false);
+  const url = useMemo(
+    () => buildUrlString("/api/v1", ["repos", "time-to-100-stars"]),
+    [],
+  );
 
-  useEffect(() => {
-    const fetchTimeToHundredStars = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+  type RawResponse = {
+    success: boolean;
+    data: TimeToHundredStarsData;
+    isCached?: boolean;
+    message?: string;
+  };
 
-        const url = buildUrl("/api/v1/repos/time-to-100-stars");
-        const response = await fetch(url);
+  const fetchFn = async (): Promise<{
+    data: TimeToHundredStarsData;
+    isCached: boolean;
+  }> => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const json: RawResponse = await res.json();
+    if (json.success)
+      return { data: json.data, isCached: json.isCached ?? false };
+    throw new Error(json.message || "Failed to fetch time to 100 stars data");
+  };
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-          setData(result.data);
-          setIsCached(result.isCached || false);
-        } else {
-          throw new Error(
-            result.message || "Failed to fetch time to 100 stars data",
-          );
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Unknown error occurred";
-        setError(errorMessage);
-        console.error("Error fetching time to 100 stars data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTimeToHundredStars();
-  }, []);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["time-to-100-stars"],
+    queryFn: fetchFn,
+    staleTime: 60_000,
+  });
 
   return {
-    data,
+    data: data?.data ?? null,
     isLoading,
-    error,
-    isCached,
+    error: (error as Error | undefined)?.message ?? null,
+    isCached: data?.isCached ?? false,
   };
 }
 

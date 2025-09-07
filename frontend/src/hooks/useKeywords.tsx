@@ -1,5 +1,8 @@
 import { useMemo } from "react";
-import { useApi, env } from "@/hooks/useApi";
+import { useQuery } from "@tanstack/react-query";
+import { env } from "@/lib/env";
+import { buildUrlString } from "@/lib/url-builder";
+import type { ApiResponse } from "@/interface/endpoint";
 
 export interface Keywords {
   originalTopicsCount: number;
@@ -12,7 +15,6 @@ export interface Keywords {
 
 export function useKeywords(date?: string) {
   const base_url = env("VITE_DATABASE_REPOS");
-  const token = env("VITE_DEV_AUTH");
 
   const urlArgs = useMemo(
     () => ({
@@ -23,28 +25,30 @@ export function useKeywords(date?: string) {
     [base_url, date],
   );
 
-  const fetchOptions = useMemo(
-    () => ({
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    [token],
+  const queryKey = useMemo(
+    () => ["keywords", base_url, date || null],
+    [base_url, date],
   );
 
-  const {
-    data: response,
-    loading,
-    error,
-    refetch,
-  } = useApi<Keywords>({
-    urlArgs,
-    fetchOptions,
+  const fetchFn = async (): Promise<Keywords> => {
+    const url = buildUrlString(urlArgs.baseUrl, urlArgs.endpoint, urlArgs.query);
+    const res = await fetch(url);
+    const json: ApiResponse<Keywords> = await res.json();
+    if (json.isSuccess) return json.data;
+    throw new Error(json.error.message);
+  };
+
+  const { data: response, isLoading: loading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: fetchFn,
+    staleTime: 60_000,
   });
 
   return {
     data: response || ({} as Keywords),
     date: "", // Note: The date is now part of the error object if needed
     loading,
-    error: error?.error?.message || "",
+    error: (error as Error | undefined)?.message || "",
     refetch,
   };
 }

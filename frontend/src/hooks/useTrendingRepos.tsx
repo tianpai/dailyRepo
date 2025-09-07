@@ -1,5 +1,8 @@
 import { useMemo } from "react";
-import { useApi, env } from "@/hooks/useApi";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { env } from "@/lib/env";
+import { buildUrlString } from "@/lib/url-builder";
+import type { ApiResponse } from "@/interface/endpoint";
 import { type Pagination } from "@/interface/endpoint";
 
 export type LanguageMap = Record<string, number>;
@@ -44,7 +47,6 @@ export interface RepoCardProps extends Repo {
 
 export function useTrendingRepos(selectedDate?: Date, page?: number) {
   const base_url = env("VITE_DATABASE_REPOS");
-  const token = env("VITE_DEV_AUTH");
 
   const urlArgs = useMemo(() => {
     const query: Record<string, string | number> = {};
@@ -62,28 +64,40 @@ export function useTrendingRepos(selectedDate?: Date, page?: number) {
     };
   }, [base_url, selectedDate, page]);
 
-  const fetchOptions = useMemo(
-    () => ({
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    [token],
+  const queryKey = useMemo(
+    () => [
+      "trending-repos",
+      base_url,
+      selectedDate ? selectedDate.toISOString().split("T")[0] : undefined,
+      page ?? 1,
+    ],
+    [base_url, selectedDate, page],
   );
 
-  const {
-    data: response,
-    loading,
-    error,
-    refetch,
-  } = useApi<Repos>({
-    urlArgs,
-    fetchOptions,
+  const fetchFn = async (): Promise<Repos> => {
+    const url = buildUrlString(
+      urlArgs.baseUrl,
+      urlArgs.endpoint,
+      urlArgs.query,
+    );
+    const res = await fetch(url);
+    const json: ApiResponse<Repos> = await res.json();
+    if (json.isSuccess) return json.data;
+    throw new Error(json.error.message);
+  };
+
+  const { data: response, isLoading: loading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: fetchFn,
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
   });
 
   return {
     data: response?.repos ? processRepos(response) : [],
     pagination: response?.pagination || null,
     loading,
-    error: error?.error?.message || "",
+    error: (error as Error | undefined)?.message || "",
     refetch,
   };
 }
