@@ -1,3 +1,6 @@
+import { X } from "lucide-react";
+import { useId } from "react";
+
 const LANGUAGES = [
   "JavaScript",
   "TypeScript",
@@ -16,25 +19,38 @@ const LANGUAGES = [
 interface LanguageFilterProps {
   value: string;
   onChange: (value: string) => void;
+  embedded?: boolean; // kept for compatibility
 }
 
 export function LanguageFilter({ value, onChange }: LanguageFilterProps) {
+  const listId = useId();
   return (
-    <div className="sm:w-48">
-      <div className="border-2 bg-background border-border text-foreground transition-all duration-200">
-        <select
-          className="w-full bg-background text-foreground major-mono text-lg p-4 outline-none appearance-none"
+    <div className="w-full">
+      <label className="input input-bordered input-ghost w-full flex items-center gap-2 bg-transparent focus-within:bg-transparent dark:focus-within:bg-transparent focus-within:outline-none focus-within:ring-1 focus-within:ring-foreground focus-within:border-foreground">
+        <input
+          type="text"
+          className="grow bg-transparent outline-none text-black dark:text-white placeholder:text-neutral-500 dark:placeholder:text-neutral-400"
+          placeholder="Language (optional)"
+          list={listId}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">All Languages</option>
-          {LANGUAGES.map((language) => (
-            <option key={language} value={language}>
-              {language}
-            </option>
-          ))}
-        </select>
-      </div>
+        />
+        {value && (
+          <button
+            type="button"
+            className="p-1 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+            onClick={() => onChange("")}
+            aria-label="Clear language"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </label>
+      <datalist id={listId}>
+        {LANGUAGES.map((language) => (
+          <option key={language} value={language} />
+        ))}
+      </datalist>
     </div>
   );
 }

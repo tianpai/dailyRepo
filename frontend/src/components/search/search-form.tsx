@@ -13,9 +13,9 @@ export function SearchButton() {
   return (
     <button
       type="submit"
-      className="px-6 py-4 border-2 bg-background border-border text-foreground major-mono text-lg transition-all duration-200 hover:bg-foreground hover:text-background"
+      className="px-4 py-2 border-l-2 border-border text-foreground major-mono text-base transition-all duration-200 hover:text-foreground/80"
     >
-      Search
+      SEARCH
     </button>
   );
 }
@@ -46,16 +46,16 @@ export function SearchForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 w-full">
-      <div className="flex flex-col sm:flex-row gap-4 w-full">
-        <div className="flex-1 min-w-0">
-          <SearchInput value={localQuery} onChange={setLocalQuery} />
-        </div>
-        <div className="flex-shrink-0">
-          <LanguageFilter value={localLanguage} onChange={setLocalLanguage} />
-        </div>
-        <div className="flex-shrink-0">
+      <div className="w-full grid grid-cols-1 sm:grid-cols-[1fr_16rem_auto] gap-2">
+        <SearchInput value={localQuery} onChange={setLocalQuery} />
+        <LanguageFilter value={localLanguage} onChange={setLocalLanguage} />
+        <div className="hidden sm:flex items-center">
           <SearchButton />
         </div>
+      </div>
+      {/* Mobile submit button */}
+      <div className="sm:hidden">
+        <SearchButton />
       </div>
     </form>
   );
