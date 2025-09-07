@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { env } from "@/lib/env";
+import { apiV1Base } from "@/lib/env";
 import type { Pagination } from "@/interface/endpoint";
 import { devsTrendingKey, topDevelopersKey } from "@/lib/query-key";
 import { get } from "@/lib/api";
@@ -37,7 +37,7 @@ export interface Developers {
  * const { data, pagination, loading, error } = useTrendingDevelopers(new Date(), 2);
  */
 export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
-  const base_url = env("VITE_DATABASE_DEVS");
+  const apiBase = apiV1Base();
 
   const urlArgs = useMemo(() => {
     const query: Record<string, string> = {};
@@ -49,22 +49,22 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
     }
 
     return {
-      baseUrl: base_url,
-      endpoint: "trending",
+      baseUrl: apiBase,
+      endpoint: ["developers", "trending"],
       query,
     };
-  }, [base_url, selectedDate, page]);
+  }, [apiBase, selectedDate, page]);
 
   const dateStr = selectedDate
     ? selectedDate.toISOString().split("T")[0]
     : undefined;
   const queryKey = useMemo(
-    () => devsTrendingKey(base_url, dateStr, page),
-    [base_url, dateStr, page],
+    () => devsTrendingKey(apiBase, dateStr, page),
+    [apiBase, dateStr, page],
   );
 
   const fetchFn = async (): Promise<Developers> =>
-    get<Developers>(base_url, "trending", urlArgs.query);
+    get<Developers>(apiBase, ["developers", "trending"], urlArgs.query);
 
   const {
     data: response,
@@ -86,21 +86,21 @@ export function useTrendingDevelopers(selectedDate?: Date, page?: number) {
 }
 
 export function useTopDevelopers() {
-  const base_url = env("VITE_DATABASE_DEVS");
+  const apiBase = apiV1Base();
 
   const urlArgs = useMemo(
     () => ({
-      baseUrl: base_url,
-      endpoint: "top",
+      baseUrl: apiBase,
+      endpoint: ["developers", "top"],
       query: {},
     }),
-    [base_url],
+    [apiBase],
   );
 
-  const queryKey = useMemo(() => topDevelopersKey(base_url), [base_url]);
+  const queryKey = useMemo(() => topDevelopersKey(apiBase), [apiBase]);
 
   const fetchFn = async (): Promise<Developers> =>
-    get<Developers>(base_url, "top", urlArgs.query);
+    get<Developers>(apiBase, ["developers", "top"], urlArgs.query);
 
   const {
     data: response,

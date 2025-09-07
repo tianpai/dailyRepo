@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { env } from "@/lib/env";
+import { apiV1Base } from "@/lib/env";
 import { bulkStarHistoryKey } from "@/lib/query-key";
 import { postJson } from "@/lib/api";
 
@@ -14,7 +14,7 @@ export type RepoStarHistory = Record<string, StarDataPoint[]>;
 // export type StarHistoryData = Record<string, starDataPoint[]>;
 
 export function useBulkStarHistory(repoNames: string[]) {
-  const base_url = env("VITE_DATABASE_REPOS");
+  const base_url = apiV1Base();
 
   const queryKey = useMemo(
     () => bulkStarHistoryKey(base_url, repoNames),
@@ -22,7 +22,7 @@ export function useBulkStarHistory(repoNames: string[]) {
   );
 
   const fetchFn = async (): Promise<RepoStarHistory> =>
-    postJson<RepoStarHistory>(base_url, "star-history", { repoNames });
+    postJson<RepoStarHistory>(base_url, ["repos", "star-history"], { repoNames });
 
   const { data: response, isLoading: loading, error, refetch } = useQuery({
     queryKey,

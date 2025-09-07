@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { env } from "@/lib/env";
+import { apiV1Base } from "@/lib/env";
 import type { Pagination } from "@/interface/endpoint";
 import { searchReposKey } from "@/lib/query-key";
 import { get } from "@/lib/api";
@@ -55,7 +55,7 @@ export function useSearch({
   limit = 15,
   enabled = true,
 }: UseSearchParams): UseSearchReturn {
-  const base_url = env("VITE_DATABASE_REPOS");
+  const base_url = apiV1Base();
 
   // Build query parameters
   const urlArgs = useMemo(() => {
@@ -88,7 +88,7 @@ export function useSearch({
   );
 
   const fetchFn = async (): Promise<Search> =>
-    get<Search>(base_url, "search", urlArgs.query);
+    get<Search>(base_url, ["repos", "search"], urlArgs.query);
 
   const { data: response, isLoading: loading, error, refetch, isFetching } =
     useQuery({ queryKey, queryFn: fetchFn, enabled: shouldFetch, placeholderData: keepPreviousData, staleTime: STALE_MIN });

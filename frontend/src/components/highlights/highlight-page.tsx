@@ -5,6 +5,7 @@ import { KeywordsContainer } from "@/components/highlights/keywords";
 import { TopicsByLanguageContainer } from "@/components/highlights/topics-by-language";
 import { TopDevelopersContainer } from "@/components/highlights/top-developers";
 import { PageTitle } from "@/components/page-title";
+import { TimeTo300StarsSummaryCard } from "@/components/highlights/time-to-300-stars";
 
 export function DailyHighlight() {
   return (
@@ -17,6 +18,7 @@ export function DailyHighlight() {
           />
           <div className="w-full max-w-4xl">
             <div className="space-y-3">
+              <TimeTo300StarsSummaryCard />
               <KeywordsContainer />
               <TopDevelopersContainer />
               <LanguagesContainer />

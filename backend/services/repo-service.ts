@@ -154,7 +154,7 @@ async function fetchAllTimeToFirstThreeHundredStars(age?: string) {
  */
 export async function fetchTimeToFirstThreeHundredStars(
   age?: string,
-  limit: number = 50,
+  limit: number = 20,
 ) {
   const allData = await fetchAllTimeToFirstThreeHundredStars(age);
 

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { LanguageMap } from "@/interface/repository";
-import { env } from "@/lib/env";
+import { apiV1Base } from "@/lib/env";
 import { type Query } from "@/lib/url-builder";
 import { topLanguagesKey } from "@/lib/query-key";
 import { get } from "@/lib/api";
@@ -10,7 +10,7 @@ import { STALE_MIN } from "@/lib/constants";
 type TopLangResponse = { data: LanguageMap; count?: number };
 
 export function useTopLanguages(numberOfLanguages: number = 10) {
-  const baseUrl = env("VITE_DATABASE_LANGUAGES");
+  const baseUrl = apiV1Base();
 
   const urlArgs = useMemo(
     () => ({
@@ -34,7 +34,7 @@ export function useTopLanguages(numberOfLanguages: number = 10) {
   );
 
   const fetchFn = async (): Promise<LanguageMap> =>
-    get<TopLangResponse>(baseUrl, "language-list", urlArgs.query).then(
+    get<TopLangResponse>(baseUrl, ["languages", "language-list"], urlArgs.query).then(
       (r) => r.data,
     );
 

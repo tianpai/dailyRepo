@@ -6,12 +6,24 @@ export type Query = Record<
 const DEFAULT_DEBUG = import.meta.env?.DEV ?? false;
 
 export function buildUrl(
-  base: string | URL, //start with https:// or http://
+  base: string | URL, // absolute (https://...) or app-relative (e.g., "/api/v2")
   endpoints: string | string[] = "", // "users" or ["users", id, "repos"]
   query?: Query,
   debug: boolean = DEFAULT_DEBUG,
 ): URL {
-  const url = base instanceof URL ? new URL(base.toString()) : new URL(base);
+  const url = (() => {
+    if (base instanceof URL) return new URL(base.toString());
+    const b = String(base);
+    // Support app-relative bases like "/api/v1" by resolving against current origin
+    if (b.startsWith("/")) {
+      const origin =
+        typeof window !== "undefined" && window.location?.origin
+          ? window.location.origin
+          : "";
+      return new URL(b, origin || undefined);
+    }
+    return new URL(b);
+  })();
 
   // stitch path segments
   const segments = Array.isArray(endpoints) ? endpoints : [endpoints];

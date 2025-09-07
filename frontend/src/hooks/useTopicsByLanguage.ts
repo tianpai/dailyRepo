@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { env } from "@/lib/env";
+import { apiV1Base } from "@/lib/env";
 import { topicsByLanguageKey } from "@/lib/query-key";
 import { get } from "@/lib/api";
 import { STALE_MIN } from "@/lib/constants";
@@ -14,12 +14,12 @@ export interface LanguageTopicMap {
 }
 
 export function useTopicsByLanguage() {
-  const base_url = env("VITE_DATABASE_REPOS");
+  const base_url = apiV1Base();
 
   const queryKey = useMemo(() => topicsByLanguageKey(base_url), [base_url]);
 
   const fetchFn = async (): Promise<LanguageTopicMap> =>
-    get<LanguageTopicMap>(base_url, "topics-by-language");
+    get<LanguageTopicMap>(base_url, ["repos", "topics-by-language"]);
 
   const { data, isLoading, error, refetch } = useQuery({ queryKey, queryFn: fetchFn, staleTime: STALE_MIN });
 

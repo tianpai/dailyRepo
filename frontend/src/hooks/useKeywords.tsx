@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { env } from "@/lib/env";
+import { apiV1Base } from "@/lib/env";
 import { keywordsKey } from "@/lib/query-key";
 import { get } from "@/lib/api";
 import { STALE_MIN } from "@/lib/constants";
@@ -15,7 +15,7 @@ export interface Keywords {
 }
 
 export function useKeywords(date?: string) {
-  const base_url = env("VITE_DATABASE_REPOS");
+  const base_url = apiV1Base();
 
   const urlArgs = useMemo(
     () => ({
@@ -29,7 +29,7 @@ export function useKeywords(date?: string) {
   const queryKey = useMemo(() => keywordsKey(base_url, date), [base_url, date]);
 
   const fetchFn = async (): Promise<Keywords> =>
-    get<Keywords>(base_url, "keywords", urlArgs.query);
+    get<Keywords>(base_url, ["repos", "keywords"], urlArgs.query);
 
   const { data: response, isLoading: loading, error, refetch } = useQuery({ queryKey, queryFn: fetchFn, staleTime: STALE_MIN });
 
