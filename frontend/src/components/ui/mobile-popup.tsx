@@ -15,11 +15,11 @@ interface MobilePopupProps {
   trigger?: React.ReactNode;
 }
 
-export function MobilePopup({ 
-  content, 
-  className = "", 
+export function MobilePopup({
+  content,
+  className = "",
   popupWidth = "w-64",
-  trigger
+  trigger,
 }: MobilePopupProps) {
   const isMobile = useIsMobile();
   const [showPopup, setShowPopup] = useState(false);
@@ -28,14 +28,18 @@ export function MobilePopup({
   // Close popup when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node)
+      ) {
         setShowPopup(false);
       }
     }
 
     if (showPopup) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showPopup]);
 
@@ -49,7 +53,9 @@ export function MobilePopup({
           {trigger || <CircleHelp className="w-5 h-5" />}
         </button>
         {showPopup && (
-          <div className={`absolute right-0 top-6 z-10 ${popupWidth} p-3 border-2 border-border bg-background text-foreground major-mono text-xs shadow-lg`}>
+          <div
+            className={`absolute right-0 top-6 z-10 ${popupWidth} p-3 border-2 border-border bg-background text-foreground major-mono text-xs shadow-lg`}
+          >
             <p>{content}</p>
             <button
               onClick={() => setShowPopup(false)}
@@ -69,7 +75,9 @@ export function MobilePopup({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={`cursor-help ${className}`}>
-            {trigger || <CircleHelp className="w-5 h-5 text-description hover:text-foreground" />}
+            {trigger || (
+              <CircleHelp className="w-5 h-5 text-description hover:text-foreground" />
+            )}
           </div>
         </TooltipTrigger>
         <TooltipContent>

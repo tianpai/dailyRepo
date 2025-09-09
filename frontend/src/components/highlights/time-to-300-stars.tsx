@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { useTimeTo300Stars } from "@/hooks/useTimeTo300Stars";
-import { Button } from "@/components/ui/button";
-import { RepoCard } from "@/components/repo/repo-card";
-import type { TimeTo300Repo } from "@/hooks/useTimeTo300Stars";
-import { MobilePopup } from "@/components/ui/mobile-popup";
-import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/loading";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { RepoCard } from "@/components/repo/repo-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { BottomDrawer } from "@/components/ui/drawer";
+import { MobilePopup } from "@/components/ui/mobile-popup";
+import type { TimeTo300Repo } from "@/hooks/useTimeTo300Stars";
+import { useTimeTo300Stars } from "@/hooks/useTimeTo300Stars";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 function Stat({
@@ -252,7 +253,8 @@ function KeywordsSummary({ repos }: { repos: TimeTo300Repo[] }) {
   const items = aggregateKeywords(repos).slice(0, 10);
   const [expanded, setExpanded] = useState(false);
   const location = useLocation();
-  const languageParam = new URLSearchParams(location.search).get("language") || "";
+  const languageParam =
+    new URLSearchParams(location.search).get("language") || "";
   if (!items.length) return null;
   const visible = expanded ? items : items.slice(0, 3);
   return (
@@ -264,8 +266,15 @@ function KeywordsSummary({ repos }: { repos: TimeTo300Repo[] }) {
           qp.set("q", key);
           if (languageParam) qp.set("language", languageParam);
           return (
-            <Link key={key} to={`/search?${qp.toString()}`} className="inline-block">
-              <Badge variant="outline" className="major-mono text-xs px-2 py-0.5">
+            <Link
+              key={key}
+              to={`/search?${qp.toString()}`}
+              className="inline-block"
+            >
+              <Badge
+                variant="outline"
+                className="major-mono text-xs px-2 py-0.5"
+              >
                 {key} ({count})
               </Badge>
             </Link>
@@ -297,31 +306,59 @@ function DetailsModal({
   repo,
   onClose,
 }: {
-  repo: TimeTo300Repo;
+  repo: TimeTo300Repo | null;
   onClose: () => void;
 }) {
+  // Keep the last shown repo during close animation so content doesn't disappear instantly
+  const [displayRepo, setDisplayRepo] = useState<TimeTo300Repo | null>(repo);
+  const closeTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (repo) {
+      // Opening: immediately show new repo
+      if (closeTimer.current) {
+        window.clearTimeout(closeTimer.current);
+        closeTimer.current = null;
+      }
+      setDisplayRepo(repo);
+    } else {
+      // Closing: delay clearing until animation finishes (~300ms)
+      closeTimer.current = window.setTimeout(() => {
+        setDisplayRepo(null);
+        closeTimer.current = null;
+      }, 320);
+    }
+    return () => {
+      if (closeTimer.current) {
+        window.clearTimeout(closeTimer.current);
+        closeTimer.current = null;
+      }
+    };
+  }, [repo]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-3xl">
-        <div className="flex justify-end mb-2">
-          <Button size="sm" variant="outline" onClick={onClose}>
-            CLOSE
-          </Button>
-        </div>
-        <RepoCard
-          owner={repo.owner}
-          name={repo.name}
-          description={repo.description ?? ""}
-          url={repo.url}
-          language={repo.language}
-          topics={repo.topics}
-          trendingRecord={[]}
-          license={""}
-          createdAt={repo.createdAt}
-        />
-      </div>
-    </div>
+    <BottomDrawer open={!!repo} onClose={onClose}>
+      {displayRepo && (
+        <>
+          <div className="flex justify-end mb-2">
+            <Button size="sm" variant="outline" onClick={onClose}>
+              CLOSE
+            </Button>
+          </div>
+          <RepoCard
+            owner={displayRepo.owner}
+            name={displayRepo.name}
+            description={displayRepo.description ?? ""}
+            url={displayRepo.url}
+            language={displayRepo.language}
+            topics={displayRepo.topics}
+            trendingRecord={[]}
+            license={""}
+            createdAt={displayRepo.createdAt}
+          />
+        </>
+      )}
+    </BottomDrawer>
   );
 }
 
@@ -359,9 +396,7 @@ export function TimeTo300StarsSummaryCard() {
           setSelected((prev) => (prev?.fullName === r.fullName ? null : r))
         }
       />
-      {selected && (
-        <DetailsModal repo={selected} onClose={() => setSelected(null)} />
-      )}
+      <DetailsModal repo={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
