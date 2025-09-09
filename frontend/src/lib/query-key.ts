@@ -34,5 +34,8 @@ export const topLanguagesKey = (base: string, top: number) =>
 export const bulkStarHistoryKey = (base: string, names: string[]) =>
   ["bulk-star-history", base, names.join(",")] as const;
 
+export const starHistoryKey = (base: string, fullName: string) =>
+  ["star-history", base, fullName] as const;
+
 export const timeTo300StarsKey = (age: string, sort: "fastest" | "slowest") =>
   ["time-to-300-stars", age, sort] as const;

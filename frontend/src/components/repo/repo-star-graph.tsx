@@ -1,121 +1,146 @@
 "use client";
-import { useMemo } from "react";
-import { LuChartArea } from "react-icons/lu";
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { COLORS } from "@/data/color";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Loading } from "@/components/loading";
+import { formatNumber } from "@/lib/number-formatter";
 import {
   useBulkStarHistory,
   convertToNormalizedDays,
 } from "@/hooks/useStarHistory";
-import { useRepoDataContext } from "@/components/repo/repo-data-provider";
 
-export function RepoStarGraph() {
-  const { data: repoData } = useRepoDataContext();
+type RepoStarGraphProps = {
+  owner: string;
+  name: string;
+  className?: string;
+};
 
-  // Extract repo names from current repo data for bulk star history fetch
-  const fullRepoNames = useMemo(() => {
-    const names = repoData.map((repo) => `${repo.owner}/${repo.name}`);
-    return names;
-  }, [repoData]);
-
+// A lightweight star history graph for a single repo using the bulk hook
+export function RepoStarGraph({ owner, name, className }: RepoStarGraphProps) {
+  const fullName = `${owner}/${name}`;
   const {
     data: starHistoryData,
     loading,
     error,
-  } = useBulkStarHistory(fullRepoNames);
-  if (loading)
+  } = useBulkStarHistory([fullName]);
+
+  if (loading) {
     return (
-      <div>
-        <h1>Loading star history...</h1>
+      <div className="w-full h-64 flex items-center justify-center">
+        <Loading className="h-16" />
       </div>
     );
-  if (error) return <div className="text-red-500">Error: {error}</div>;
-
-  // Handle empty data case
-  if (!starHistoryData || Object.keys(starHistoryData).length === 0) {
+  }
+  if (error) {
     return (
-      <div className="text-center text-gray-500 p-4">
-        <LuChartArea></LuChartArea>
-        <h2>No star history data available for the selected date.</h2>
+      <div className={`${className ?? ""} text-red-500`}>
+        Failed to load: {error}
       </div>
     );
   }
 
-  // Get repository names (short names without owner prefix)
-  const normalizedData = convertToNormalizedDays(starHistoryData);
-  const repoNames = Object.keys(starHistoryData).map(
-    (fullName) => fullName.split("/")[1],
-  );
-  const colorKeys = Object.keys(COLORS);
+  if (
+    !starHistoryData ||
+    !starHistoryData[fullName] ||
+    starHistoryData[fullName].length === 0
+  ) {
+    return <div className={className}>No star history available.</div>;
+  }
 
-  // Create dynamic chart config
-  const chartConfig: ChartConfig = {};
-  repoNames.forEach((repoName, index) => {
-    const colorKey = colorKeys[index % colorKeys.length];
-    chartConfig[repoName] = {
-      label: repoName,
-      color: COLORS[colorKey as keyof typeof COLORS],
-    };
-  });
+  // Use normalized days based on earliest date in the fetched dataset
+  const normalizedData = convertToNormalizedDays(starHistoryData);
+
+  // Base date for tooltip date calculation comes from the first entry
+  const baseDateMs = (() => {
+    const first = starHistoryData[fullName][0]?.date;
+    if (!first) return undefined as number | undefined;
+    return Date.parse(`${first}T00:00:00Z`);
+  })();
+
+  const chartConfig: ChartConfig = {
+    [name]: {
+      label: name,
+      color: COLORS.color14,
+    },
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <LuChartArea className="size-7" />
-        <CardTitle>
-          <h2>Repository star history</h2>
-        </CardTitle>
-        <CardDescription>
-          Star growth over time (normalized to days from earliest repo creation)
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <LineChart
-            accessibilityLayer
-            data={normalizedData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="day"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => `Day ${value}`}
-            />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            {repoNames.map((repoName) => (
-              <Line
-                key={repoName}
-                dataKey={repoName}
-                type="monotone"
-                stroke={chartConfig[repoName]?.color}
-                strokeWidth={2}
-                dot={false}
-                connectNulls={false}
-                isAnimationActive={false}
+    <div className={className}>
+      <ChartContainer config={chartConfig} className="w-full h-64 min-w-0">
+        <LineChart
+          accessibilityLayer
+          data={normalizedData}
+          margin={{ left: 0, right: 20, bottom: 10 }}
+        >
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="day"
+            tickLine={true}
+            axisLine={true}
+            tickMargin={8}
+            height={50}
+            angle={-45}
+            textAnchor="end"
+            tickFormatter={(value) => `${value}`}
+            label={{ value: "Day", position: "insideBottom", offset: -4 }}
+          />
+          <YAxis
+            tickLine={true}
+            axisLine={true}
+            tickMargin={5}
+            width={60}
+            domain={[0, "auto"]}
+            tickFormatter={(v) =>
+              formatNumber(typeof v === "number" ? v : Number(v))
+            }
+            label={{ value: "total stars", angle: -90, position: "insideLeft" }}
+          />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                hideLabel={false}
+                labelFormatter={(_val, p) => {
+                  const day = Array.isArray(p) && p[0]?.payload?.day;
+                  if (typeof day === "number") {
+                    if (typeof baseDateMs === "number") {
+                      const d = new Date(baseDateMs + day * 24 * 60 * 60 * 1000);
+                      const iso = d.toISOString().slice(0, 10);
+                      return `Day ${day} · ${iso}`;
+                    }
+                    return `Day ${day}`;
+                  }
+                  return "Day";
+                }}
+                formatter={(value, name) => (
+                  <span className="flex items-center gap-2">
+                    <span>{String(name)}:</span>
+                    <span className="font-mono font-medium">
+                      {formatNumber(
+                        typeof value === "number" ? value : Number(value),
+                      )}
+                    </span>
+                  </span>
+                )}
               />
-            ))}
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+            }
+          />
+          <Line
+            dataKey={name}
+            type="monotone"
+            stroke={chartConfig[name]?.color}
+            strokeWidth={3}
+            dot={false}
+            connectNulls={false}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </ChartContainer>
+    </div>
   );
 }

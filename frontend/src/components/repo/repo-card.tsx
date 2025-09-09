@@ -9,10 +9,13 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
+import { ChartSpline } from "lucide-react";
 import emojiRegex from "emoji-regex";
 import { RepoLanguage } from "@/components/repo/repo-language.tsx";
 import type { RepoProps } from "@/hooks/useTrendingRepos.tsx";
 import { TiltedWrapper } from "@/components/ui/tilted-wrapper";
+import { Button } from "@/components/ui/button";
+import { RepoStarGraph } from "@/components/repo/repo-star-graph";
 
 const RepoCardContainer = ({ children }: { children: React.ReactNode }) => (
   <div className="flex flex-col items-stretch justify-between mt-4 sm:mt-6 border-2 bg-background border-border text-foreground transition-all duration-200">
@@ -44,7 +47,11 @@ function RepoTopics({ topics }: { topics: string[] }) {
     <div className="flex flex-wrap gap-1 m-2 w-full">
       {displayTopics.map((topic, index) => {
         return (
-          <Link key={index} to={`/search?q=${encodeURIComponent(topic)}`} className="inline-block">
+          <Link
+            key={index}
+            to={`/search?q=${encodeURIComponent(topic)}`}
+            className="inline-block"
+          >
             <Badge
               variant="outline"
               className="px-3 py-1 border-1 transition-opacity rounded-none major-mono text-lg text-description hover:opacity-80"
@@ -184,12 +191,13 @@ export function RepoCard({
   license,
   createdAt,
 }: RepoProps) {
+  const [showGraph, setShowGraph] = useState(false);
   return (
     <TiltedWrapper>
       <RepoCardContainer>
         <div className="flex flex-col flex-grow border-b-2 border-border p-4 sm:p-6 lg:p-10">
           {/* Repo Name - Always on top */}
-          <div className="w-full mb-3">
+          <div className="w-full mb-3 flex flex-row justify-between">
             <RepoCardTitle>
               <RepoName owner={owner} name={name} url={url} />
             </RepoCardTitle>
@@ -211,7 +219,27 @@ export function RepoCard({
             </div>
             <RepoLicense license={license} />
           </div>
-          <div className="px-4 py-2">
+          <div className="px-2 py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowGraph((v) => !v)}
+              aria-expanded={showGraph}
+              aria-controls={`repo-star-graph-${owner}-${name}`}
+            >
+              <ChartSpline className="w-4 h-4" />
+              {showGraph ? "Hide Stars" : "Show Stars"}
+            </Button>
+          </div>
+          {showGraph && (
+            <div
+              id={`repo-star-graph-${owner}-${name}`}
+              className="px-4 pb-4 sm:px-6 lg:px-10 w-full"
+            >
+              <RepoStarGraph owner={owner} name={name} />
+            </div>
+          )}
+          <div className="">
             <RepoTopics topics={topics} />
           </div>
         </RepoCardFooter>

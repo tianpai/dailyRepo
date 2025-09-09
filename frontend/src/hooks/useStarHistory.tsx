@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiV2Base } from "@/lib/env";
-import { bulkStarHistoryKey } from "@/lib/query-key";
+import { bulkStarHistoryKey, starHistoryKey } from "@/lib/query-key";
 import { postJson } from "@/lib/api";
 
 export interface StarDataPoint {
@@ -15,15 +15,23 @@ export type RepoStarHistory = Record<string, StarDataPoint[]>;
 
 export function useBulkStarHistory(repoNames: string[]) {
   const base_url = apiV2Base();
+  const queryClient = useQueryClient();
+
+  // Normalize names to avoid cache misses due to ordering/duplicates
+  const names = useMemo(() => {
+    const deduped = Array.from(new Set(repoNames.filter(Boolean)));
+    deduped.sort((a, b) => a.localeCompare(b));
+    return deduped;
+  }, [repoNames]);
 
   const queryKey = useMemo(
-    () => bulkStarHistoryKey(base_url, repoNames),
-    [base_url, repoNames],
+    () => bulkStarHistoryKey(base_url, names),
+    [base_url, names],
   );
 
   const fetchFn = async (): Promise<RepoStarHistory> =>
     postJson<RepoStarHistory>(base_url, ["repos", "star-history"], {
-      repoNames,
+      repoNames: names,
     });
 
   const {
@@ -34,8 +42,19 @@ export function useBulkStarHistory(repoNames: string[]) {
   } = useQuery({
     queryKey,
     queryFn: fetchFn,
-    enabled: repoNames.length > 0,
+    enabled: names.length > 0,
+    staleTime: 1000 * 60 * 60 * 6, // 6 hours
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days
+    refetchOnWindowFocus: false,
   });
+
+  // Prefill per-repo caches so single-repo lookups can reuse data
+  useEffect(() => {
+    if (!response) return;
+    for (const [fullName, points] of Object.entries(response)) {
+      queryClient.setQueryData(starHistoryKey(base_url, fullName), points);
+    }
+  }, [response, base_url, queryClient]);
 
   return {
     data: response || {},
