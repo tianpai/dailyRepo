@@ -32,7 +32,9 @@ export class DevelopersController {
   ) {
     const { date, page, limit } = query;
     const effectiveDate = date || this.getTodayUTC();
-    this.logger.debug(`GET /developers/trending - date: ${effectiveDate}, page: ${page}, limit: ${limit}`);
+    this.logger.debug(
+      `GET /developers/trending - date: ${effectiveDate}, page: ${page}, limit: ${limit}`,
+    );
 
     const list =
       await this.developersService.fetchTrendingDevelopers(effectiveDate);

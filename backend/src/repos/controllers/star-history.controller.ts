@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, UsePipes, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UsePipes,
+  Logger,
+} from '@nestjs/common';
 import { StarHistoryService } from '../services/star-history.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { z } from 'zod';

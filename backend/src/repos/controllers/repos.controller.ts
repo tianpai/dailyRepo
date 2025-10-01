@@ -41,7 +41,9 @@ export class ReposController {
     const { date, page, limit } = query;
     const effectiveDate =
       date && date.trim() !== '' ? date : this.getTodayUTC();
-    this.logger.debug(`GET /repos/trending - date: ${effectiveDate}, page: ${page}, limit: ${limit}`);
+    this.logger.debug(
+      `GET /repos/trending - date: ${effectiveDate}, page: ${page}, limit: ${limit}`,
+    );
 
     const repoList = await this.reposService.fetchTrendingRepos(effectiveDate);
 
@@ -74,7 +76,9 @@ export class ReposController {
   @UsePipes(new ZodValidationPipe(SearchQuerySchema))
   async searchRepos(@Query() query: z.infer<typeof SearchQuerySchema>) {
     const { q, language, page, limit } = query;
-    this.logger.debug(`GET /repos/search - q: ${q}, language: ${language}, page: ${page}, limit: ${limit}`);
+    this.logger.debug(
+      `GET /repos/search - q: ${q}, language: ${language}, page: ${page}, limit: ${limit}`,
+    );
 
     const result = await this.reposService.fetchSearchedRepos(
       q,
@@ -109,7 +113,9 @@ export class ReposController {
     @Query() query: z.infer<typeof TimeTo300QuerySchema>,
   ) {
     const { age, sort } = query;
-    this.logger.debug(`GET /repos/time-to-300-stars - age: ${age}, sort: ${sort}`);
+    this.logger.debug(
+      `GET /repos/time-to-300-stars - age: ${age}, sort: ${sort}`,
+    );
 
     const result =
       sort === 'slowest'

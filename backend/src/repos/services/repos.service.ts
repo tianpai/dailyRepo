@@ -85,7 +85,10 @@ export class ReposService {
     if (!allData) return null;
 
     const slowest = [...allData.repos]
-      .sort((a, b) => (b?.daysToThreeHundredStars || 0) - (a?.daysToThreeHundredStars || 0))
+      .sort(
+        (a, b) =>
+          (b?.daysToThreeHundredStars || 0) - (a?.daysToThreeHundredStars || 0),
+      )
       .slice(0, limit);
 
     return { summary: allData.summary, repos: slowest };

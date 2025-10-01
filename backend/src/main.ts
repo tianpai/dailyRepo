@@ -9,6 +9,19 @@ async function bootstrap() {
   // Set global prefix for all routes
   app.setGlobalPrefix('api/v2');
 
+  // Enable CORS
+  app.enableCors({
+    origin: [
+      'http://localhost:5173',
+      'https://daily-repo.vercel.app',
+      'https://dailyrepo.tianpai.io',
+      'https://www.dailyrepo.tianpai.io',
+      'https://dailyrepo.up.railway.app',
+    ],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   // Register global interceptor for response wrapping
   app.useGlobalInterceptors(new ResponseInterceptor());
 

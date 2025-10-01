@@ -46,6 +46,13 @@ export class LanguagesService {
     ];
 
     const result = await this.repoModel.aggregate(pipeline);
-    return result;
+    const languageMap = result.reduce(
+      (acc, item) => {
+        acc[item.language] = item.count;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+    return languageMap;
   }
 }

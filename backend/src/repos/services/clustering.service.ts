@@ -48,9 +48,7 @@ export class ClusteringService {
     };
   }
 
-  private async getHuggingFaceEmbeddings(
-    texts: string[],
-  ): Promise<number[][]> {
+  private async getHuggingFaceEmbeddings(texts: string[]): Promise<number[][]> {
     const apiToken = this.configService.get<string>('HUGGING_FACE');
     if (!apiToken) {
       throw new Error('HUGGING_FACE environment variable is not set');
