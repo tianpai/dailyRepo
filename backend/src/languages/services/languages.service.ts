@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import { Repo } from '../../database/schemas/repo.schema';
 
 const SUPPORTED_LANGUAGES: string[] = [
@@ -13,6 +13,12 @@ const SUPPORTED_LANGUAGES: string[] = [
   'typescript',
 ];
 
+interface LanguageAggregationItem {
+  language: string;
+  count: number;
+  repos: number;
+}
+
 @Injectable()
 export class LanguagesService {
   constructor(@InjectModel(Repo.name) private repoModel: Model<Repo>) {}
@@ -21,8 +27,8 @@ export class LanguagesService {
     return SUPPORTED_LANGUAGES;
   }
 
-  async getTopLanguages(top = 5) {
-    const pipeline: any[] = [
+  async getTopLanguages(top = 5): Promise<Record<string, number>> {
+    const pipeline: PipelineStage[] = [
       { $match: { language: { $exists: true, $ne: null } } },
       { $project: { language: { $objectToArray: '$language' } } },
       { $unwind: '$language' },
@@ -45,9 +51,10 @@ export class LanguagesService {
       },
     ];
 
-    const result = await this.repoModel.aggregate(pipeline);
+    const result =
+      await this.repoModel.aggregate<LanguageAggregationItem>(pipeline);
     const languageMap = result.reduce(
-      (acc, item) => {
+      (acc: Record<string, number>, item: LanguageAggregationItem) => {
         acc[item.language] = item.count;
         return acc;
       },

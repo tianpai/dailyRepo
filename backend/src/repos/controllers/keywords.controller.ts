@@ -3,6 +3,13 @@ import { KeywordService } from '../services/keyword.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { z } from 'zod';
 
+interface KeywordAnalysisOutput {
+  originalTopicsCount?: number;
+  topKeywords: string[];
+  related: Record<string, string[]>;
+  clusterSizes: Record<string, number>;
+}
+
 const TrendingKeywordsQuerySchema = z.object({
   date: z.string().optional(),
   includeRelated: z.coerce.boolean().default(false),
@@ -83,13 +90,18 @@ export class KeywordsController {
     return dateStr;
   }
 
-  private normalizeKeywordAnalysis(input: any, includeRelated: boolean) {
+  private normalizeKeywordAnalysis(
+    input: KeywordAnalysisOutput | null,
+    includeRelated: boolean,
+  ): KeywordAnalysisOutput {
     const topKeywords: string[] = Array.isArray(input?.topKeywords)
-      ? input.topKeywords.filter((x: any) => typeof x === 'string')
+      ? input.topKeywords.filter((x): x is string => typeof x === 'string')
       : [];
 
-    const related: Record<string, string[]> = this.asObject(input?.related);
-    const clusterSizes: Record<string, number> = this.asObject(
+    const related: Record<string, string[]> = this.toObjectRecord(
+      input?.related,
+    );
+    const clusterSizes: Record<string, number> = this.toObjectRecord(
       input?.clusterSizes,
     );
 
@@ -98,10 +110,11 @@ export class KeywordsController {
         ? input.originalTopicsCount
         : Object.values(clusterSizes).reduce((a, b) => a + (b || 0), 0);
 
-    const base: any = {
+    const base: KeywordAnalysisOutput = {
       originalTopicsCount,
       topKeywords,
       clusterSizes,
+      related: {},
     };
 
     if (includeRelated) {
@@ -111,10 +124,13 @@ export class KeywordsController {
     return base;
   }
 
-  private asObject(v: any): Record<string, any> {
-    if (!v) return {};
-    if (v instanceof Map) return Object.fromEntries(v.entries());
+  private toObjectRecord<T>(
+    v: Record<string, T> | Map<string, T> | undefined,
+  ): Record<string, T> {
+    if (!v) return {} as Record<string, T>;
+    if (v instanceof Map)
+      return Object.fromEntries(v.entries()) as Record<string, T>;
     if (typeof v === 'object') return v;
-    return {};
+    return {} as Record<string, T>;
   }
 }

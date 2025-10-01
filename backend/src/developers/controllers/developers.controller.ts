@@ -20,7 +20,7 @@ export class DevelopersController {
   constructor(private readonly developersService: DevelopersService) {}
 
   @Get()
-  async getDevelopersList() {
+  getDevelopersList() {
     this.logger.debug('GET /developers');
     return { developers: [] };
   }

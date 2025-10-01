@@ -3,6 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TrendingDeveloper } from '../../database/schemas/developer.schema';
 
+interface DeveloperAggregationResult {
+  latestDate?: string;
+}
+
+export interface TopTrendingDeveloperResult extends TrendingDeveloper {
+  trendingCount: number;
+}
+
 @Injectable()
 export class DevelopersService {
   constructor(
@@ -16,14 +24,17 @@ export class DevelopersService {
       .sort({ username: 1 });
 
     if (!developers.length) {
-      const [{ latestDate } = {}] = await this.trendingDeveloperModel.aggregate(
-        [
-          { $unwind: '$trendingRecord' },
-          { $sort: { trendingRecord: -1 } },
-          { $limit: 1 },
-          { $group: { _id: null, latestDate: { $first: '$trendingRecord' } } },
-        ],
-      );
+      const [{ latestDate } = {}] =
+        await this.trendingDeveloperModel.aggregate<DeveloperAggregationResult>(
+          [
+            { $unwind: '$trendingRecord' },
+            { $sort: { trendingRecord: -1 } },
+            { $limit: 1 },
+            {
+              $group: { _id: null, latestDate: { $first: '$trendingRecord' } },
+            },
+          ],
+        );
 
       if (latestDate) {
         developers = await this.trendingDeveloperModel
@@ -35,12 +46,16 @@ export class DevelopersService {
     return developers;
   }
 
-  async fetchTopTrendingDevelopers(limit = 10) {
-    return await this.trendingDeveloperModel.aggregate([
-      { $addFields: { trendingCount: { $size: '$trendingRecord' } } },
-      { $sort: { trendingCount: -1 } },
-      { $limit: Math.min(Math.max(limit, 1), 50) },
-      { $unset: 'trendingCount' },
-    ]);
+  async fetchTopTrendingDevelopers(
+    limit = 10,
+  ): Promise<TopTrendingDeveloperResult[]> {
+    return await this.trendingDeveloperModel.aggregate<TopTrendingDeveloperResult>(
+      [
+        { $addFields: { trendingCount: { $size: '$trendingRecord' } } },
+        { $sort: { trendingCount: -1 } },
+        { $limit: Math.min(Math.max(limit, 1), 50) },
+        { $unset: 'trendingCount' },
+      ],
+    );
   }
 }

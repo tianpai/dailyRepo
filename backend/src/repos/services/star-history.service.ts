@@ -6,13 +6,24 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Repo } from '../../database/schemas/repo.schema';
-import { StarHistory } from '../../database/schemas/star-history.schema';
+import {
+  StarHistory,
+  StarHistoryEntry,
+} from '../../database/schemas/star-history.schema';
 
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface StarDataPoint {
   date: string;
   count: number;
+}
+
+interface PopulatedStarHistory {
+  repoId: {
+    fullName: string;
+  };
+  history: StarHistoryEntry[];
+  saveDate: Date;
 }
 
 @Injectable()
@@ -59,7 +70,7 @@ export class StarHistoryService {
     }
 
     const validRepoNames = repoNames.filter(
-      (name) =>
+      (name): name is string =>
         typeof name === 'string' &&
         name.includes('/') &&
         name.split('/').length === 2,
@@ -85,15 +96,15 @@ export class StarHistoryService {
       .distinct('_id');
 
     // Query StarHistory and populate repo.fullName
-    const starHistoryRecords = await this.starHistoryModel
+    const starHistoryRecords = (await this.starHistoryModel
       .find({ repoId: { $in: repoIds } })
       .populate('repoId', 'fullName')
-      .lean();
+      .lean()) as unknown as PopulatedStarHistory[];
 
     // Process star history records
     for (const record of starHistoryRecords) {
-      const repoName = (record.repoId as any).fullName;
-      const starHistory = record.history.map((point) => ({
+      const repoName: string = record.repoId.fullName;
+      const starHistory: StarDataPoint[] = record.history.map((point) => ({
         date: point.date,
         count: point.count,
       }));

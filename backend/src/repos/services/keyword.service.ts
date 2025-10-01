@@ -19,20 +19,24 @@ interface KeywordAnalysisOutput {
   clusterSizes: Record<string, number>;
 }
 
-interface TopicLanguage {
+interface AggregatedRepoTopics {
   _id: string;
   fullName: string;
   language: Record<string, number>;
   topics: string[];
 }
 
-interface RepoTopicLanguage {
+interface LatestRepoTopicsResult {
+  topics: string[];
+}
+
+interface RepoMainLanguageTopic {
   fullname: string;
   main_language: string;
   topics: string[];
 }
 
-interface LanguageTopicMap {
+interface LanguageClusterMap {
   [language: string]: { [cluster: string]: number };
 }
 
@@ -81,9 +85,10 @@ export class KeywordService {
 
     this.logger.debug('No cached keyword data, fetching from HuggingFace');
 
-    const repoTopicsResult = await this.repoModel.aggregate(
-      latestRepoTopicsPipeline,
-    );
+    const repoTopicsResult =
+      await this.repoModel.aggregate<LatestRepoTopicsResult>(
+        latestRepoTopicsPipeline,
+      );
     const allTopics: string[] = repoTopicsResult[0]?.topics || [];
     const topics: string[] = filterLanguage(allTopics);
 
@@ -152,7 +157,7 @@ export class KeywordService {
     };
   }
 
-  async groupTopicsByLanguage(): Promise<LanguageTopicMap> {
+  async groupTopicsByLanguage(): Promise<LanguageClusterMap> {
     const { year, week } = getCurrentWeekNumber();
 
     const existingFindings = await this.weeklyTopicFindingsModel.findOne({
@@ -185,11 +190,11 @@ export class KeywordService {
     return languageTopicMap;
   }
 
-  private async sanitizeTopicLangMap(): Promise<LanguageTopicMap> {
+  private async sanitizeTopicLangMap(): Promise<LanguageClusterMap> {
     const repos = await this.getTopicsLanguage();
     const allTopics = await this.getAllTopics();
     const clusteredTopics = await this.clusterTopicsWithHF(allTopics);
-    const langTopicMap: LanguageTopicMap = {};
+    const langTopicMap: LanguageClusterMap = {};
 
     if (!clusteredTopics) {
       return langTopicMap;
@@ -219,9 +224,9 @@ export class KeywordService {
     return finalMap;
   }
 
-  private async getTopicsLanguage(): Promise<RepoTopicLanguage[]> {
-    const repos: TopicLanguage[] =
-      await this.repoModel.aggregate(topicLangPipeline);
+  private async getTopicsLanguage(): Promise<RepoMainLanguageTopic[]> {
+    const repos: AggregatedRepoTopics[] =
+      await this.repoModel.aggregate<AggregatedRepoTopics>(topicLangPipeline);
     return repos
       .map((repo) => {
         let mainLanguage = 'Unknown';
@@ -291,9 +296,9 @@ export class KeywordService {
   }
 
   private filterAndSortClusters(
-    langTopicMap: LanguageTopicMap,
-  ): LanguageTopicMap {
-    const filteredLangTopicMap: LanguageTopicMap = {};
+    langTopicMap: LanguageClusterMap,
+  ): LanguageClusterMap {
+    const filteredLangTopicMap: LanguageClusterMap = {};
     for (const [lang, clusters] of Object.entries(langTopicMap)) {
       if (Object.keys(clusters).length > 0) {
         const sortedClusters = Object.entries(clusters)
@@ -313,10 +318,10 @@ export class KeywordService {
   }
 
   private filterLanguagesByTopicCount(
-    langTopicMap: LanguageTopicMap,
+    langTopicMap: LanguageClusterMap,
     minTopics: number = 3,
-  ): LanguageTopicMap {
-    const finalLangTopicMap: LanguageTopicMap = {};
+  ): LanguageClusterMap {
+    const finalLangTopicMap: LanguageClusterMap = {};
     for (const [lang, clusters] of Object.entries(langTopicMap)) {
       const totalTopics = Object.values(clusters).reduce(
         (sum, count) => sum + count,

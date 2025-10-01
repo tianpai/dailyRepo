@@ -39,7 +39,7 @@ export class StarHistoryController {
     const raw = await this.starHistoryService.fetchRepoStarHistory(fname);
 
     // Remove _id from entries
-    const starHistory = (raw ?? []).map((p: any) => ({
+    const starHistory = (raw ?? []).map((p) => ({
       date: p.date,
       count: p.count,
     }));

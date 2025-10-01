@@ -14,7 +14,7 @@ export class LanguagesController {
   constructor(private readonly languagesService: LanguagesService) {}
 
   @Get()
-  async getLanguagesList() {
+  getLanguagesList() {
     this.logger.debug('GET /languages');
     const languages = this.languagesService.getSupportedLanguages();
     return {
@@ -24,7 +24,7 @@ export class LanguagesController {
   }
 
   @Get('trending')
-  async getLanguageTrendingRepos() {
+  getLanguageTrendingRepos() {
     this.logger.debug('GET /languages/trending');
     return {
       trending: [],
@@ -37,7 +37,8 @@ export class LanguagesController {
   async getTopLang(@Query() query: z.infer<typeof TopLangQuerySchema>) {
     const { top } = query;
     this.logger.debug(`GET /languages/top - top: ${top}`);
-    const data = await this.languagesService.getTopLanguages(top);
+    const data: Record<string, number> =
+      await this.languagesService.getTopLanguages(top);
     return {
       data,
       _dateOverride: this.getTodayUTC(),
