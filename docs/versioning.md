@@ -1,12 +1,17 @@
 # API Versioning and Decorator Migration
 
-This project now exposes two API versions side‑by‑side:
+> [!NOTE]
+> This document describes the legacy Express-based API versioning strategy. The project has been fully migrated to NestJS. Only `/api/v2` endpoints are available. V1 endpoints have been removed.
+
+---
+
+This project previously exposed two API versions side‑by‑side:
 
 - v1 base: `/api/v1` — legacy controllers (functions with Express `req/res`)
 - v2 base: `/api/v2` — decorator‑based controllers (schema‑validated, cached)
 
-The goal is zero breaking changes for consumers: response shapes are preserved.
-v2 simplifies server code and centralizes cross‑cutting concerns.
+The goal was zero breaking changes for consumers: response shapes are preserved.
+v2 simplified server code and centralized cross‑cutting concerns.
 
 ## What’s Migrated in v2
 

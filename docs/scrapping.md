@@ -1,82 +1,84 @@
 # Scraping and Scheduling
 
-This document explains the `backend/scheduler-batched.ts` script, which is
-responsible for scraping trending GitHub repositories and developers, and
-collecting star history data in a rate-limit-friendly manner. Currently:
+The scraper (`backend/src/scraper.ts`) is a standalone NestJS application that scrapes trending GitHub repositories and developers, collecting star history data while respecting API rate limits.
 
-- **Batched Processing**: Large repository sets (150+ repos) are split into
-  batches of ~100 repositories
-- **Dynamic Rate Limiting**: Checks actual GitHub API rate limit status between
-  batches instead of fixed delays
-- **Intelligent 403 Handling**: Automatically checks actual rate limit status
-  via GitHub API on 403 errors
-- **Smart Waiting**: Only waits for rate limit reset when actually needed, not
-  on fixed schedules
-- **Automatic Retry**: Failed requests are retried with exponential backoff (up
-  to 3 attempts)
+**Key Features:**
 
-## `backend/scheduler-batched.ts` Overview
+- **Batched Processing**: Large repository sets (150+ repos) split into batches of ~100 repositories
+- **Dynamic Rate Limiting**: Checks actual GitHub API rate limit status between batches
+- **Intelligent 403 Handling**: Automatically verifies rate limit status via GitHub API on errors
+- **Smart Waiting**: Only waits for rate limit reset when actually needed
+- **Automatic Retry**: Failed requests retry with exponential backoff (up to 3 attempts)
 
-This script is designed to handle GitHub API rate limits by processing star
-history data in batches over an extended period. It performs the following main
-steps:
+## Scraper Architecture
 
-1. **Connect to Database**: Ensures a connection to the MongoDB database is
-   established.
-2. **Process Repositories**: Scrapes and saves trending repository data. This
-   step consumes minimal API requests.
-3. **Process Developers**: Scrapes and saves trending developer data. This
-   step also consumes minimal API requests.
-4. **Process Star History (Batched)**: This is the core of the batched
-   scraping. It estimates the processing time for star history collection and
-   then initiates a batched process. Each batch is processed with a delay to
-   stay within GitHub's API rate limits (5000 requests/hour).
+The scraper is a separate NestJS application (built with `nest-cli-scraper.json`) that performs:
 
-## Command Line Flags
+1. **Database Connection**: Establishes MongoDB connection
+2. **Repository Scraping**: Scrapes trending repository data (minimal API usage)
+3. **Developer Scraping**: Scrapes trending developer data (minimal API usage)
+4. **Star History (Batched)**: Core batched processing that estimates and collects star history over several hours, respecting GitHub's 5000 requests/hour limit
 
-The `backend/scheduler-batched.ts` script can be run with different
-command-line flags to control its behavior:
+## Running the Scraper
 
-### `--estimate`
+### Development Mode
 
-- **Purpose**: This flag allows you to get an estimation of the star history
-  processing requirements without actually running the full scraping job.
-- **Usage**: `bun run dev:scraper --estimate`
-- **Details**: When this flag is used, the script will:
-  - Scrape the initial list of trending repositories.
-  - Provide an estimate of how many batches will be required and the total
-    estimated time to process all star history data.
-  - It will also show the current GitHub API rate limit status.
-- **Output**: Provides a summary of the estimated processing time and batch information.
+```bash
+bun run dev:scraper              # Start scraper in watch mode
+```
 
-### `--run-batched`
+### Production Commands
 
-- **Purpose**: This flag initiates the full batched scraping job. This is the
-  recommended way to run the scraper for production or regular use.
-- **Usage**: `bun run dev:scraper --run-batched`
-- **Details**: When this flag is used, the script will:
-  - Connect to the database.
-  - Process trending repositories and developers.
-  - Start the batched star history collection. The script will log that the job
-    has been initiated, and the star history processing will continue in the
-    background over several hours, respecting GitHub API rate limits.
-  - It terminates after starting the batched process, allowing it to run
-    independently.
-- **Output**: Logs the progress of repository and developer processing, and
-  indicates that batched star history collection has started. It will also
-  provide an estimate of how long the batched processing will take.
+```bash
+bun run build:scraper            # Build scraper application
+bun run scrape:batched           # Run production scraper (recommended)
+bun run scrape:test              # Test mode without saving to database
+```
 
-### `--run-now`
+### Command Line Flags
 
-- **Purpose**: This flag runs the original, non-batched scraping job.
-- **Usage**: `bun run dev:scraper --run-now`
-- **Details**: This option uses the older, non-batched scraping logic.
-- **WARNING**: **Do not use `--run-now` for regular scraping.** This command
-  is likely to hit GitHub API rate limits very quickly, especially with a large
-  number of repositories, leading to incomplete data collection and potential API
-  blocking. It is primarily for testing or specific scenarios where rate limits
-  are not a concern or a quick, small scrape is needed. The batched approach
-  (`--run-batched`) is designed to prevent rate limit issues.
+The scraper requires one of the following flags:
+
+#### `--run-batched` (Production)
+
+**Full scraping with batched processing.**
+
+```bash
+bun run scrape:batched
+# or: node dist/scraper --run-batched
+```
+
+- Processes trending repositories and developers
+- Collects star history with batched processing
+- Respects GitHub API rate limits (5000 requests/hour)
+- Runs for several hours, logging progress
+- **Use this for production and scheduled jobs**
+
+#### `--test-no-save` (Testing)
+
+**Test mode without database writes.**
+
+```bash
+bun run scrape:test
+# or: node dist/scraper --test-no-save
+```
+
+- Runs full scraping logic
+- Does NOT save to database
+- Useful for testing scraper changes without affecting production data
+
+## GitHub Actions Automation
+
+The scraper runs daily via GitHub Actions (`.github/workflows/scrape.yml`):
+
+```yaml
+- Build scraper: npm run build:scraper
+- Run scraper: npm run scrape:batched
+```
+
+**Note**: Workflow uses `npm` instead of `bun` due to Bun compatibility issues on GitHub Actions runners.
+
+Schedule: Runs at 15:20 UTC daily (cron: `"20 15 * * *"`)
 
 ## Further Considerations and improvements
 

@@ -1,15 +1,17 @@
 # Development Commands
 
-## Backend (Bun/TypeScript)
+**Note**: Use Bun for local development. GitHub Actions uses npm (Bun compatibility issues).
+
+## Backend (NestJS/TypeScript)
 
 ```bash
 cd backend
-bun run dev              # Start development server
-bun run dev:scraper      # Start scheduler in development mode
-bun run dev:scraper:batched  # Start batched scheduler (recommended)
-bun run scrape:batched   # Run batched scraper job (respects API limits)
-bun run scrape:estimate  # Estimate processing time for batching
-bun run build            # Compile TypeScript to JavaScript
+bun run dev              # Start NestJS development server with watch mode
+bun run dev:scraper      # Start scraper in development mode
+bun run build            # Build main application
+bun run build:scraper    # Build scraper application
+bun run scrape:batched   # Run batched scraper (respects GitHub API limits)
+bun run scrape:test      # Test scraper without saving to database
 bun run test             # Run test suite
 ```
 
@@ -17,8 +19,8 @@ bun run test             # Run test suite
 
 ```bash
 cd frontend
-npm run dev              # Start development server
-npm run build            # Build for production
-npm run lint             # Run ESLint
-npm run preview          # Preview production build
+bun run dev              # Start Vite development server
+bun run build            # TypeScript compilation + Vite build
+bun run lint             # Run ESLint
+bun run preview          # Preview production build
 ```
