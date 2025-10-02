@@ -29,8 +29,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Build scraper
+        run: npm run build:scraper
+
       - name: Run scraper
-        run: npx tsx scheduler-batched.ts --run-batched
+        run: npm run scrape:batched
         env:
           MONGO: ${{ secrets.MONGO }}
           PORT: ${{ secrets.PORT }}
