@@ -3,12 +3,16 @@ import {
   Get,
   Query,
   UsePipes,
+  UseInterceptors,
   HttpStatus,
   HttpException,
   Logger,
 } from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { ReposService } from '../services/repos.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
+import { CACHE_TTL } from '../../common/cache/cache.constants';
 import { z } from 'zod';
 
 const TrendingQuerySchema = z.object({
@@ -36,6 +40,8 @@ export class ReposController {
   constructor(private readonly reposService: ReposService) {}
 
   @Get('trending')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._10_HOURS)
   @UsePipes(new ZodValidationPipe(TrendingQuerySchema))
   async getTrending(@Query() query: z.infer<typeof TrendingQuerySchema>) {
     const { date, page, limit } = query;
@@ -73,6 +79,8 @@ export class ReposController {
   }
 
   @Get('search')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._4_HOURS)
   @UsePipes(new ZodValidationPipe(SearchQuerySchema))
   async searchRepos(@Query() query: z.infer<typeof SearchQuerySchema>) {
     const { q, language, page, limit } = query;
@@ -108,6 +116,8 @@ export class ReposController {
   }
 
   @Get('time-to-300-stars')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._6_DAYS)
   @UsePipes(new ZodValidationPipe(TimeTo300QuerySchema))
   async getTimeToFirstThreeHundredStars(
     @Query() query: z.infer<typeof TimeTo300QuerySchema>,

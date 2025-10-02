@@ -1,6 +1,16 @@
-import { Controller, Get, Query, UsePipes, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UsePipes,
+  UseInterceptors,
+  Logger,
+} from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { DevelopersService } from '../services/developers.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
+import { CACHE_TTL } from '../../common/cache/cache.constants';
 import { z } from 'zod';
 
 const TrendingDevQuerySchema = z.object({
@@ -26,6 +36,8 @@ export class DevelopersController {
   }
 
   @Get('trending')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._10_HOURS)
   @UsePipes(new ZodValidationPipe(TrendingDevQuerySchema))
   async getTrendingDevelopers(
     @Query() query: z.infer<typeof TrendingDevQuerySchema>,
@@ -54,6 +66,8 @@ export class DevelopersController {
   }
 
   @Get('top')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._10_HOURS)
   @UsePipes(new ZodValidationPipe(TopDevQuerySchema))
   async getTopTrendingDevelopers(
     @Query() query: z.infer<typeof TopDevQuerySchema>,

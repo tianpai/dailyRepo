@@ -1,6 +1,16 @@
-import { Controller, Get, Query, UsePipes, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UsePipes,
+  UseInterceptors,
+  Logger,
+} from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { LanguagesService } from '../services/languages.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
+import { CACHE_TTL } from '../../common/cache/cache.constants';
 import { z } from 'zod';
 
 const TopLangQuerySchema = z.object({
@@ -14,6 +24,8 @@ export class LanguagesController {
   constructor(private readonly languagesService: LanguagesService) {}
 
   @Get()
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._7_DAYS)
   getLanguagesList() {
     this.logger.debug('GET /languages');
     const languages = this.languagesService.getSupportedLanguages();
@@ -33,6 +45,8 @@ export class LanguagesController {
   }
 
   @Get('top')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._2_DAYS)
   @UsePipes(new ZodValidationPipe(TopLangQuerySchema))
   async getTopLang(@Query() query: z.infer<typeof TopLangQuerySchema>) {
     const { top } = query;

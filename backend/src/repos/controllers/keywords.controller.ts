@@ -1,6 +1,16 @@
-import { Controller, Get, Query, UsePipes, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UsePipes,
+  UseInterceptors,
+  Logger,
+} from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { KeywordService } from '../services/keyword.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
+import { CACHE_TTL } from '../../common/cache/cache.constants';
 import { z } from 'zod';
 
 interface KeywordAnalysisOutput {
@@ -22,6 +32,8 @@ export class KeywordsController {
   constructor(private readonly keywordService: KeywordService) {}
 
   @Get('keywords')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._12_HOURS)
   @UsePipes(new ZodValidationPipe(TrendingKeywordsQuerySchema))
   async getTrendingKeywords(
     @Query() query: z.infer<typeof TrendingKeywordsQuerySchema>,
@@ -67,6 +79,8 @@ export class KeywordsController {
   }
 
   @Get('topics-by-language')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._6_DAYS)
   async getTopicByLanguage() {
     this.logger.debug('GET /repos/topics-by-language');
     const today = this.getTodayUTC();

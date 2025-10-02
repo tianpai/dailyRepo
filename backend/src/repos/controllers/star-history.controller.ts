@@ -5,10 +5,14 @@ import {
   Body,
   Param,
   UsePipes,
+  UseInterceptors,
   Logger,
 } from '@nestjs/common';
+import { CacheTTL } from '@nestjs/cache-manager';
 import { StarHistoryService } from '../services/star-history.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
+import { CACHE_TTL } from '../../common/cache/cache.constants';
 import { z } from 'zod';
 
 const StarHistoryParamsSchema = z.object({
@@ -29,6 +33,8 @@ export class StarHistoryController {
   constructor(private readonly starHistoryService: StarHistoryService) {}
 
   @Get(':owner/:repo/star-history')
+  @UseInterceptors(HttpCacheInterceptor)
+  @CacheTTL(CACHE_TTL._30_DAYS)
   async getStarHistory(
     @Param(new ZodValidationPipe(StarHistoryParamsSchema))
     params: z.infer<typeof StarHistoryParamsSchema>,
