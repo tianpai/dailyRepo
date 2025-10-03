@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectModel, InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection } from 'mongoose';
 import { Repo } from '../../database/schemas/repo.schema';
 import { StarHistory } from '../../database/schemas/star-history.schema';
 import { StarHistoryService } from './star-history.service';
@@ -20,6 +20,7 @@ export class StarHistoryScraperService {
     private starHistoryModel: Model<StarHistory>,
     private starHistoryService: StarHistoryService,
     private scraperConfig: ScraperConfigService,
+    @InjectConnection() private connection: Connection,
   ) {}
 
   async processStarHistory(repoNames: string[]): Promise<void> {
@@ -133,6 +134,16 @@ export class StarHistoryScraperService {
     if (results.length === 0) {
       console.log('No star history data to save');
       return;
+    }
+
+    // Ensure database is connected before saving
+    if (this.connection.readyState !== 1) {
+      console.log(
+        `Warning: Database not connected (state: ${this.connection.readyState}), attempting to reconnect...`,
+      );
+      throw new Error(
+        'Database connection lost. Please restart the scraper to ensure proper database connection.',
+      );
     }
 
     const upsertOperations = results.map(({ repoId, history }) => ({

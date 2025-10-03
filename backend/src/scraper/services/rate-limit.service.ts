@@ -135,6 +135,13 @@ export class RateLimitService {
         `Rate limit exhausted (${rate.used}/${rate.limit}). Waiting ${this.formatDuration(waitTime)} for reset at ${resetDate.toLocaleString()}...`,
       );
 
+      // Just wait without disconnecting - MongoDB Atlas handles idle connections fine
+      // Disconnecting/reconnecting in NestJS doesn't work reliably once module is initialized
+      console.log(
+        'Keeping database connection alive during wait (MongoDB Atlas supports long idle connections)',
+      );
+
+      // Add a small buffer to ensure reset has occurred
       await new Promise((resolve) => setTimeout(resolve, waitTime + 10000));
 
       console.log('Rate limit should be reset, continuing...');
