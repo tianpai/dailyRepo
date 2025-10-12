@@ -7,7 +7,12 @@ import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
     NestCacheModule.register({
       isGlobal: true,
       ttl: 3600 * 1000, // Default 1 hour (milliseconds)
-      max: 1000, // Maximum number of items in cache
+      max: 200, // Maximum number of items in cache
+      maxSize: 500 * 1024 * 1024, // 500MB memory limit
+      sizeCalculation: (value: any) => {
+        // Estimate size of cached value
+        return JSON.stringify(value).length;
+      },
     }),
   ],
   exports: [NestCacheModule],

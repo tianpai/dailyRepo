@@ -79,8 +79,6 @@ export class ReposController {
   }
 
   @Get('search')
-  @UseInterceptors(HttpCacheInterceptor)
-  @CacheTTL(CACHE_TTL._4_HOURS)
   @UsePipes(new ZodValidationPipe(SearchQuerySchema))
   async searchRepos(@Query() query: z.infer<typeof SearchQuerySchema>) {
     const { q, language, page, limit } = query;
