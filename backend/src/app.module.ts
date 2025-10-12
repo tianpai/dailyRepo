@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database';
@@ -13,6 +15,13 @@ import { LanguagesModule } from './languages/languages.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 900000, // 15 minutes in milliseconds
+        limit: 100, // 100 requests per IP per 15 minutes
+      },
+    ]),
     DatabaseModule,
     CacheModule,
     ReposModule,
@@ -20,6 +29,12 @@ import { LanguagesModule } from './languages/languages.module';
     LanguagesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

@@ -31,6 +31,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/throttler": "^6.4.0",
     "axios": "^1.12.2",
     "cache-manager": "^7.2.3",
     "cheerio": "^1.1.2",

@@ -9,6 +9,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { CacheTTL } from '@nestjs/cache-manager';
+import { Throttle } from '@nestjs/throttler';
 import { ReposService } from '../services/repos.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
@@ -79,6 +80,7 @@ export class ReposController {
   }
 
   @Get('search')
+  @Throttle({ default: { limit: 30, ttl: 900000 } }) // 30 searches per 15 minutes
   @UsePipes(new ZodValidationPipe(SearchQuerySchema))
   async searchRepos(@Query() query: z.infer<typeof SearchQuerySchema>) {
     const { q, language, page, limit } = query;
