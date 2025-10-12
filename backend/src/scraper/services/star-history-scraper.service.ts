@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
-import { Model, Connection } from 'mongoose';
+import { Model, Connection, ConnectionStates } from 'mongoose';
 import { Repo } from '../../database/schemas/repo.schema';
 import { StarHistory } from '../../database/schemas/star-history.schema';
 import { StarHistoryService } from './star-history.service';
@@ -137,7 +137,7 @@ export class StarHistoryScraperService {
     }
 
     // Ensure database is connected before saving
-    if (this.connection.readyState !== 1) {
+    if (this.connection.readyState !== ConnectionStates.connected) {
       console.log(
         `Warning: Database not connected (state: ${this.connection.readyState}), attempting to reconnect...`,
       );

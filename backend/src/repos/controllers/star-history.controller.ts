@@ -34,7 +34,7 @@ export class StarHistoryController {
 
   @Get(':owner/:repo/star-history')
   @UseInterceptors(HttpCacheInterceptor)
-  @CacheTTL(CACHE_TTL._30_DAYS)
+  @CacheTTL(CACHE_TTL._7_DAYS)
   async getStarHistory(
     @Param(new ZodValidationPipe(StarHistoryParamsSchema))
     params: z.infer<typeof StarHistoryParamsSchema>,
