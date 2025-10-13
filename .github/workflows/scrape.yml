@@ -26,6 +26,18 @@ jobs:
           echo "Runner public IP: $IP"
           echo "ip=$IP" >> $GITHUB_OUTPUT
 
+      - name: Add IP to Atlas allowlist
+        run: |
+          curl -X POST \
+            --digest \
+            -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -d '[{"ipAddress": "${{ steps.get_ip.outputs.ip }}", "comment": "GitHub Actions runner"}]' \
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.ATLAS_PROJECT_ID }}/accessList"
+          echo "Waiting for Atlas to propagate IP allowlist..."
+          sleep 5
+
       - name: Install dependencies
         run: npm install
 
@@ -41,3 +53,13 @@ jobs:
           ATLAS_PRIVATE_KEY: ${{ secrets.ATLAS_PRIVATE_KEY }}
           ATLAS_PUBLIC_KEY: ${{ secrets.ATLAS_PUBLIC_KEY }}
           ATLAS_PROJECT_ID: ${{ secrets.ATLAS_PROJECT_ID }}
+
+      - name: Remove IP from Atlas allowlist
+        if: always()
+        run: |
+          curl -X DELETE \
+            --digest \
+            -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
+            -H "Accept: application/json" \
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.ATLAS_PROJECT_ID }}/accessList/${{ steps.get_ip.outputs.ip }}%2F32"
+          echo "IP removed from Atlas allowlist"
