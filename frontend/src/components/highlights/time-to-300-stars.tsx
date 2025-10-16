@@ -152,13 +152,13 @@ function RepoRow({
 }) {
   return (
     <div
-      className="grid grid-cols-[2.5rem_1fr_auto] md:grid-cols-6 gap-2 px-3 py-2 border-b border-border text-foreground hover:bg-accent/10 cursor-pointer"
+      className="w-full grid grid-cols-[2.5rem_1fr_auto] md:grid-cols-[2.5rem_1fr_5.5rem_5.5rem_5.5rem] gap-2 px-3 py-2 border-b border-border text-foreground hover:bg-accent/10 cursor-pointer"
       onClick={() => onSelect(r)}
     >
       <span className="major-mono text-sm text-description text-center">
         {index + 1}
       </span>
-      <span className="truncate flex items-center gap-2 md:col-span-2">
+      <span className="min-w-0 flex items-center gap-2">
         <span className="major-mono text-sm truncate">
           {r.owner}/{r.name}
         </span>
@@ -191,12 +191,12 @@ function RepoTable({
 }) {
   return (
     <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-      <div className="border-2 border-border">
-        <div className="grid grid-cols-[2.5rem_1fr_auto] md:grid-cols-6 gap-2 px-3 py-2 border-b-2 border-border bg-background/80">
+      <div className="w-full border-2 border-border">
+        <div className="w-full grid grid-cols-[2.5rem_1fr_auto] md:grid-cols-[2.5rem_1fr_5.5rem_5.5rem_5.5rem] gap-2 px-3 py-2 border-b-2 border-border bg-background/80">
           <span className="major-mono text-xs text-description text-center">
             RANK
           </span>
-          <span className="major-mono text-xs text-description md:col-span-2">
+          <span className="major-mono text-xs text-description">
             REPOSITORY
           </span>
           <span className="major-mono text-xs text-description">VELOCITY</span>
@@ -376,7 +376,7 @@ export function TimeTo300StarsSummaryCard() {
   const ageFilter = summary?.ageFilter ?? age;
 
   return (
-    <div className="border-2 border-border bg-background text-foreground">
+    <div className="w-full border-2 border-border bg-background text-foreground">
       <HeaderSection ageFilter={ageFilter} />
       <FiltersBar age={age} sort={sort} onAge={setAge} onSort={setSort} />
       {summary && (
