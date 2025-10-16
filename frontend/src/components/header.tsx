@@ -1,6 +1,7 @@
 import { ModeToggle } from "./mode-toggle";
 import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { FaGithub } from "react-icons/fa";
 
 export function HeaderContainer({ children }: { children: ReactNode }) {
   return (
@@ -29,10 +30,19 @@ export function Header() {
       <HeaderActions>
         <Link
           to="/"
-          className="major-mono text-lg font-normal text-foreground hover:opacity-70 transition-opacity"
+          className="major-mono text-sm sm:text-base md:text-lg font-normal text-foreground hover:opacity-70 transition-opacity"
         >
           DAILY REPO
         </Link>
+        <a
+          href="https://github.com/tianpai/dailyRepo"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2 text-foreground hover:opacity-70 transition-opacity"
+          aria-label="View on GitHub"
+        >
+          <FaGithub className="w-5 h-5" />
+        </a>
         <ModeToggle />
       </HeaderActions>
     </HeaderContainer>

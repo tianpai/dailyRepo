@@ -97,6 +97,11 @@ function LegalDisclaimer(): React.JSX.Element {
       </h2>
       <div className="major-mono text-lg text-description space-y-3">
         <p>
+          <span className="text-foreground">NOT AFFILIATED WITH GITHUB:</span> This
+          site is an independent project and is not affiliated with, endorsed by,
+          or associated with GitHub, Inc. or Microsoft Corporation.
+        </p>
+        <p>
           <span className="text-foreground">DATA SOURCE:</span> All repository
           data is sourced from GitHub's public API. We do not claim ownership of
           any repository information displayed.

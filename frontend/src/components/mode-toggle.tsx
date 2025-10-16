@@ -1,6 +1,4 @@
-import { Moon, Circle } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 
 export function ModeToggle() {
@@ -11,9 +9,22 @@ export function ModeToggle() {
   };
 
   return (
-    <Button onClick={toggleTheme}>
-      <Circle className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all duration-300 ease-in-out dark:scale-0 dark:-rotate-90" />
-      <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all duration-300 ease-in-out dark:scale-100 dark:rotate-0" />
-    </Button>
+    <button
+      onClick={toggleTheme}
+      className="relative inline-flex h-8 w-14 items-center rounded-full border-2 border-border bg-background transition-colors hover:opacity-70"
+      aria-label="Toggle theme"
+    >
+      <span
+        className={`inline-block h-6 w-6 transform rounded-full bg-foreground transition-transform ${
+          theme === "dark" ? "translate-x-7" : "translate-x-1"
+        }`}
+      >
+        {theme === "dark" ? (
+          <Moon className="h-4 w-4 m-1 text-background" />
+        ) : (
+          <Sun className="h-4 w-4 m-1 text-background" />
+        )}
+      </span>
+    </button>
   );
 }

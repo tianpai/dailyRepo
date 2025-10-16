@@ -77,6 +77,10 @@ export function SearchPage() {
                   <Lightbulb className="w-4 h-4" />
                   <span className="major-mono text-xs">Tip: you can click keywords anywhere to search quickly.</span>
                 </div>
+                <div className="flex items-center gap-2 text-description">
+                  <Lightbulb className="w-4 h-4" />
+                  <span className="major-mono text-xs">Note: searches only trending repositories in our database, not all of GitHub.</span>
+                </div>
                 {(query || language) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {query && (
