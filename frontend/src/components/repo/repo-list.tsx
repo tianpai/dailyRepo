@@ -17,20 +17,22 @@ export function RepoList() {
 
   return (
     <div>
-      {data.map((repo) => (
-        <RepoCard
-          key={repo.url}
-          owner={repo.owner}
-          name={repo.name}
-          description={repo.description}
-          url={repo.url}
-          topics={repo.topics}
-          language={repo.language}
-          trendingRecord={repo.trendingRecord}
-          license={repo.license}
-          createdAt={repo.createdAt}
-        />
-      ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {data.map((repo) => (
+          <RepoCard
+            key={repo.url}
+            owner={repo.owner}
+            name={repo.name}
+            description={repo.description}
+            url={repo.url}
+            topics={repo.topics}
+            language={repo.language}
+            trendingRecord={repo.trendingRecord}
+            license={repo.license}
+            createdAt={repo.createdAt}
+          />
+        ))}
+      </div>
       <RepoPagination />
     </div>
   );
