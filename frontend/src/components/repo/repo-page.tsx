@@ -26,7 +26,7 @@ function RepoDataConsumer() {
         title="Daily Trending"
         description="Discover the most trending repositories of the day"
       />
-      <div className="w-full max-w-4xl">
+      <div className="w-full">
         <RepoList />
       </div>
     </div>

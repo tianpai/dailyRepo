@@ -16,14 +16,12 @@ export function DailyHighlight() {
             title="highlights"
             description="Discover trending topics and programming languages"
           />
-          <div className="w-full max-w-4xl">
-            <div className="space-y-3">
-              <TimeTo300StarsSummaryCard />
-              <KeywordsContainer />
-              <TopDevelopersContainer />
-              <LanguagesContainer />
-              <TopicsByLanguageContainer />
-            </div>
+          <div className="space-y-3">
+            <TimeTo300StarsSummaryCard />
+            <KeywordsContainer />
+            <TopDevelopersContainer />
+            <LanguagesContainer />
+            <TopicsByLanguageContainer />
           </div>
         </div>
       </SidebarLayout>

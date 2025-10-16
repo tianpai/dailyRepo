@@ -62,7 +62,7 @@ export function SearchPage() {
             title="Search Repositories"
             description="Search for repositories by name, owner, or topics"
           />
-          <div className="w-full max-w-4xl">
+          <div className="w-full">
             <div className="space-y-6">
               <SearchForm
                 onSearch={handleSearch}

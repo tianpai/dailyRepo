@@ -49,7 +49,7 @@ function DeveloperPageContent() {
         title="Trending Developers"
         description={`Discover the most active developers - ${pagination?.totalCount || 0} developers`}
       />
-      <div className="w-full max-w-6xl">
+      <div className="w-full">
         <DeveloperGrid developers={data} />
         {pagination && (
           <GenericPagination
