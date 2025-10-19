@@ -4,7 +4,7 @@ import { InferenceClient } from '@huggingface/inference';
 import {
   ClusteringInput,
   ClusteringOutput,
-} from '../../common/interfaces/clustering.interface';
+} from '@/common/interfaces/clustering.interface';
 
 @Injectable()
 export class ClusteringService {

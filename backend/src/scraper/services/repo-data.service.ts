@@ -3,9 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { Repo } from '../../database/schemas/repo.schema';
-import { TrendingDeveloper } from '../../database/schemas/developer.schema';
-import { getTodayUTC, getUTCDate } from '../../common/utils/time.util';
+import { Repo } from '@/database/schemas/repo.schema';
+import { TrendingDeveloper } from '@/database/schemas/developer.schema';
+import { getTodayUTC, getUTCDate } from '@/common/utils/time.util';
 import { RepoScrapingService } from './repo-scraping.service';
 import { ScraperConfigService } from './scraper-config.service';
 

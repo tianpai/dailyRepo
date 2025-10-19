@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage } from 'mongoose';
-import { Repo } from '../../database/schemas/repo.schema';
+import { Repo } from '@/database/schemas/repo.schema';
 
 const SUPPORTED_LANGUAGES: string[] = [
   'c++',

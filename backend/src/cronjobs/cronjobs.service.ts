@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { KeywordService } from '../repos/services/keyword.service';
+import { KeywordService } from '@/repos/keyword.service';
 
 @Injectable()
 export class CronjobsService {

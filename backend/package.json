@@ -81,6 +81,16 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1",
+      "^@/common/(.*)$": "<rootDir>/common/$1",
+      "^@/database/(.*)$": "<rootDir>/database/$1",
+      "^@/developers/(.*)$": "<rootDir>/developers/$1",
+      "^@/languages/(.*)$": "<rootDir>/languages/$1",
+      "^@/repos/(.*)$": "<rootDir>/repos/$1",
+      "^@/scraper/(.*)$": "<rootDir>/scraper/$1",
+      "^@/cronjobs/(.*)$": "<rootDir>/cronjobs/$1"
+    }
   }
 }

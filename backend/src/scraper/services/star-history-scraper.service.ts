@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection, ConnectionStates } from 'mongoose';
-import { Repo } from '../../database/schemas/repo.schema';
-import { StarHistory } from '../../database/schemas/star-history.schema';
+import { Repo } from '@/database/schemas/repo.schema';
+import { StarHistory } from '@/database/schemas/star-history.schema';
 import { StarHistoryService } from './star-history.service';
 import { ScraperConfigService } from './scraper-config.service';
 

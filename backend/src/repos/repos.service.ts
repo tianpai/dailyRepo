@@ -7,8 +7,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Repo } from '../../database/schemas/repo.schema';
-import { StarHistory } from '../../database/schemas/star-history.schema';
+import { Repo } from '@/database/schemas/repo.schema';
+import { StarHistory } from '@/database/schemas/star-history.schema';
 
 @Injectable()
 export class ReposService {

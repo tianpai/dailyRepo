@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule } from '../database';
+import { DatabaseModule } from '@/database';
 import { RepoScrapingService } from './services/repo-scraping.service';
 import { RepoDataService } from './services/repo-data.service';
 import { StarHistoryService } from './services/star-history.service';

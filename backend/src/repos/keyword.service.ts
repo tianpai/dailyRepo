@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Keywords } from '../../database/schemas/keywords.schema';
-import { WeeklyTopicFindings } from '../../database/schemas/weekly-topics.schema';
-import { Repo } from '../../database/schemas/repo.schema';
+import { Keywords } from '@/database/schemas/keywords.schema';
+import { WeeklyTopicFindings } from '@/database/schemas/weekly-topics.schema';
+import { Repo } from '@/database/schemas/repo.schema';
 import { ClusteringService } from './clustering.service';
-import { filterLanguage } from '../../common/utils/language-filter.util';
-import { getCurrentWeekNumber } from '../../common/utils/date.util';
+import { filterLanguage } from '@/common/utils/language-filter.util';
+import { getCurrentWeekNumber } from '@/common/utils/date.util';
 import {
   latestRepoTopicsPipeline,
   topicLangPipeline,
-} from '../../common/utils/db-pipelines.util';
+} from '@/common/utils/db-pipelines.util';
 
 interface KeywordAnalysisOutput {
   originalTopicsCount?: number;

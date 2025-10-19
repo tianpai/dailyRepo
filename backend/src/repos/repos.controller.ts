@@ -10,10 +10,10 @@ import {
 } from '@nestjs/common';
 import { CacheTTL } from '@nestjs/cache-manager';
 import { Throttle } from '@nestjs/throttler';
-import { ReposService } from '../services/repos.service';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
-import { CACHE_TTL } from '../../common/cache/cache.constants';
+import { ReposService } from './repos.service';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { HttpCacheInterceptor } from '@/common/interceptors/http-cache.interceptor';
+import { CACHE_TTL } from '@/common/cache/cache.constants';
 import { z } from 'zod';
 
 const TrendingQuerySchema = z.object({

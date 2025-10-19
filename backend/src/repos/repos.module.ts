@@ -1,12 +1,12 @@
 import { Module, Logger, OnModuleInit } from '@nestjs/common';
-import { DatabaseModule } from '../database';
-import { ReposController } from './controllers/repos.controller';
-import { StarHistoryController } from './controllers/star-history.controller';
-import { KeywordsController } from './controllers/keywords.controller';
-import { ReposService } from './services/repos.service';
-import { StarHistoryService } from './services/star-history.service';
-import { KeywordService } from './services/keyword.service';
-import { ClusteringService } from './services/clustering.service';
+import { DatabaseModule } from '@/database';
+import { ReposController } from './repos.controller';
+import { StarHistoryController } from './star-history.controller';
+import { KeywordsController } from './keywords.controller';
+import { ReposService } from './repos.service';
+import { StarHistoryService } from './star-history.service';
+import { KeywordService } from './keyword.service';
+import { ClusteringService } from './clustering.service';
 
 @Module({
   imports: [DatabaseModule],

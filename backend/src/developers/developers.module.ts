@@ -1,7 +1,7 @@
 import { Module, Logger, OnModuleInit } from '@nestjs/common';
-import { DatabaseModule } from '../database';
-import { DevelopersController } from './controllers/developers.controller';
-import { DevelopersService } from './services/developers.service';
+import { DatabaseModule } from '@/database';
+import { DevelopersController } from './developers.controller';
+import { DevelopersService } from './developers.service';
 
 @Module({
   imports: [DatabaseModule],

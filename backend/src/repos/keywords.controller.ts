@@ -7,10 +7,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import { CacheTTL } from '@nestjs/cache-manager';
-import { KeywordService } from '../services/keyword.service';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
-import { CACHE_TTL } from '../../common/cache/cache.constants';
+import { KeywordService } from './keyword.service';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { HttpCacheInterceptor } from '@/common/interceptors/http-cache.interceptor';
+import { CACHE_TTL } from '@/common/cache/cache.constants';
 import { z } from 'zod';
 
 interface KeywordAnalysisOutput {

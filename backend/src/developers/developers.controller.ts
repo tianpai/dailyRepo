@@ -7,10 +7,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import { CacheTTL } from '@nestjs/cache-manager';
-import { DevelopersService } from '../services/developers.service';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import { HttpCacheInterceptor } from '../../common/interceptors/http-cache.interceptor';
-import { CACHE_TTL } from '../../common/cache/cache.constants';
+import { DevelopersService } from './developers.service';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { HttpCacheInterceptor } from '@/common/interceptors/http-cache.interceptor';
+import { CACHE_TTL } from '@/common/cache/cache.constants';
 import { z } from 'zod';
 
 const TrendingDevQuerySchema = z.object({
