@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Repo } from '@/database/schemas/repo.schema';
-import { StarHistory } from '@/database/schemas/star-history.schema';
+import {
+  StarHistory,
+  StarHistoryEntry,
+} from '@/database/schemas/star-history.schema';
 
 @Injectable()
 export class ReposService {
@@ -104,19 +104,23 @@ export class ReposService {
       .sort({ saveDate: -1 })
       .lean();
 
-    const repoStarHistoryMap = new Map();
+    const repoStarHistoryMap = new Map<string, StarHistoryEntry[]>();
     starHistories.forEach((starHistory) => {
-      if (!repoStarHistoryMap.has(starHistory.repoId.toString())) {
-        repoStarHistoryMap.set(starHistory.repoId.toString(), starHistory);
+      const key = (
+        starHistory.repoId as unknown as Types.ObjectId
+      ).toHexString();
+      if (!repoStarHistoryMap.has(key)) {
+        repoStarHistoryMap.set(key, starHistory.history as StarHistoryEntry[]);
       }
     });
 
     const validRepos = repos
       .map((repo) => {
-        const starHistory = repoStarHistoryMap.get(repo._id.toString());
-        if (!starHistory?.history) return null;
+        const history = repoStarHistoryMap.get(
+          (repo._id as unknown as Types.ObjectId).toHexString(),
+        );
+        if (!history) return null;
 
-        const history = starHistory.history;
         const maxStars = Math.max(...history.map((h) => h.count));
         if (maxStars < 300) return null;
 
@@ -210,13 +214,13 @@ export class ReposService {
 
   private calculateStartDate(age: string): Date | null {
     const now = new Date();
-    const calculators = {
+    const calculators: Record<string, () => Date> = {
       YTD: () => new Date(now.getFullYear(), 0, 1),
       '5y': () =>
         new Date(now.getFullYear() - 5, now.getMonth(), now.getDate()),
       '10y': () =>
         new Date(now.getFullYear() - 10, now.getMonth(), now.getDate()),
     };
-    return calculators[age]?.() || null;
+    return calculators[age]?.() ?? null;
   }
 }
