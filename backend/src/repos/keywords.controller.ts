@@ -25,6 +25,10 @@ const TrendingKeywordsQuerySchema = z.object({
   includeRelated: z.coerce.boolean().default(false),
 });
 
+const TopicsByLanguageQuerySchema = z.object({
+  force: z.coerce.boolean().optional(),
+});
+
 @Controller('repos')
 export class KeywordsController {
   private readonly logger = new Logger(KeywordsController.name);
@@ -81,10 +85,14 @@ export class KeywordsController {
   @Get('topics-by-language')
   @UseInterceptors(HttpCacheInterceptor)
   @CacheTTL(CACHE_TTL._6_DAYS)
-  async getTopicByLanguage() {
+  @UsePipes(new ZodValidationPipe(TopicsByLanguageQuerySchema))
+  async getTopicByLanguage(
+    @Query() query: z.infer<typeof TopicsByLanguageQuerySchema>,
+  ) {
+    const { force } = query;
     this.logger.debug('GET /repos/topics-by-language');
     const today = this.getTodayUTC();
-    const data = await this.keywordService.groupTopicsByLanguage();
+    const data = await this.keywordService.groupTopicsByLanguage({ force });
 
     return {
       ...(data || {}),

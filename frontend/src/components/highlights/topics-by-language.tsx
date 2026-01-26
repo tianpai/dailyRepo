@@ -165,15 +165,21 @@ export function TopicsByLanguageContainer() {
 
       {/* Language Cards Grid */}
       <div className="p-2 sm:p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
-          {languages.map((language) => (
-            <TopicLanguageCard
-              key={language}
-              language={language}
-              topicCounts={data[language]}
-            />
-          ))}
-        </div>
+        {languages.length === 0 ? (
+          <div className="flex items-center justify-center h-24 major-mono text-sm text-description">
+            No topic data available yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
+            {languages.map((language) => (
+              <TopicLanguageCard
+                key={language}
+                language={language}
+                topicCounts={data[language]}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ export class CronjobsService {
   async handleWeeklyTopics() {
     this.logger.log('Starting weekly topics job');
     try {
-      await this.keywordService.groupTopicsByLanguage();
+      await this.keywordService.groupTopicsByLanguage({ force: true });
       this.logger.log('Weekly topics job completed successfully');
     } catch (error) {
       this.logger.error('Weekly topics job failed', error);

@@ -6,7 +6,10 @@ import { WeeklyTopicFindings } from '@/database/schemas/weekly-topics.schema';
 import { Repo } from '@/database/schemas/repo.schema';
 import { ClusteringService } from './clustering.service';
 import { filterLanguage } from '@/common/utils/language-filter.util';
-import { getCurrentWeekNumber } from '@/common/utils/date.util';
+import {
+  getCurrentWeekDateRangeUTC,
+  getCurrentWeekNumber,
+} from '@/common/utils/date.util';
 import {
   latestRepoTopicsPipeline,
   topicLangPipeline,
@@ -38,6 +41,14 @@ interface RepoMainLanguageTopic {
 
 interface LanguageClusterMap {
   [language: string]: { [cluster: string]: number };
+}
+
+const MIN_TOPICS_FOR_CLUSTERING = 20;
+const WEEKLY_CLUSTER_BATCH_SIZE = 4;
+const WEEKLY_CLUSTER_CONCURRENCY = 3;
+
+interface GroupTopicsByLanguageOptions {
+  force?: boolean;
 }
 
 @Injectable()
@@ -157,17 +168,33 @@ export class KeywordService {
     };
   }
 
-  async groupTopicsByLanguage(): Promise<LanguageClusterMap> {
+  async groupTopicsByLanguage(
+    options: GroupTopicsByLanguageOptions = {},
+  ): Promise<LanguageClusterMap> {
     const { year, week } = getCurrentWeekNumber();
+    const force = options.force === true;
 
     const existingFindings = await this.weeklyTopicFindingsModel.findOne({
       year,
       week,
     });
 
-    if (existingFindings) {
+    if (
+      existingFindings &&
+      !this.isLanguageTopicMapEmpty(existingFindings.languageTopicMap)
+    ) {
       this.logger.debug(`Found cached data for week ${year}-W${week}`);
       return existingFindings.languageTopicMap;
+    }
+
+    if (!force) {
+      const fallback = await this.getLatestNonEmptyWeeklyTopics();
+      if (fallback) {
+        this.logger.debug(
+          `Using fallback weekly topics from ${fallback.year}-W${fallback.week}`,
+        );
+        return fallback.languageTopicMap;
+      }
     }
 
     this.logger.debug(
@@ -176,12 +203,26 @@ export class KeywordService {
 
     const languageTopicMap = await this.sanitizeTopicLangMap();
 
+    if (this.isLanguageTopicMapEmpty(languageTopicMap)) {
+      this.logger.warn(
+        `Weekly topic map empty for ${year}-W${week}, skipping save`,
+      );
+      const fallback = await this.getLatestNonEmptyWeeklyTopics();
+      if (fallback) {
+        this.logger.warn(
+          `Using fallback weekly topics from ${fallback.year}-W${fallback.week}`,
+        );
+        return fallback.languageTopicMap;
+      }
+      return languageTopicMap;
+    }
+
     try {
-      await this.weeklyTopicFindingsModel.create({
-        year,
-        week,
-        languageTopicMap,
-      });
+      await this.weeklyTopicFindingsModel.findOneAndUpdate(
+        { year, week },
+        { $set: { languageTopicMap } },
+        { upsert: true, new: true },
+      );
       this.logger.debug('Saved weekly topic findings to database');
     } catch (error) {
       this.logger.error('Failed to save weekly topic findings', error);
@@ -192,41 +233,94 @@ export class KeywordService {
 
   private async sanitizeTopicLangMap(): Promise<LanguageClusterMap> {
     const repos = await this.getTopicsLanguage();
-    const allTopics = await this.getAllTopics();
-    const clusteredTopics = await this.clusterTopicsWithHF(allTopics);
     const langTopicMap: LanguageClusterMap = {};
 
-    if (!clusteredTopics) {
+    if (!repos.length) {
       return langTopicMap;
     }
 
+    const topicsByLanguage = new Map<string, string[]>();
+
     for (const repo of repos) {
       const lang = repo.main_language;
+      if (!lang) continue;
 
-      if (!langTopicMap[lang]) {
-        langTopicMap[lang] = {};
-      }
+      const filteredTopics = filterLanguage(repo.topics || []);
+      if (filteredTopics.length === 0) continue;
 
-      for (const topic of repo.topics) {
-        const cluster = this.findCluster(topic, clusteredTopics);
-        if (cluster) {
-          if (!langTopicMap[lang][cluster]) {
-            langTopicMap[lang][cluster] = 0;
-          }
-          langTopicMap[lang][cluster] += 1;
-        }
+      const existing = topicsByLanguage.get(lang);
+      if (existing) {
+        existing.push(...filteredTopics);
+      } else {
+        topicsByLanguage.set(lang, [...filteredTopics]);
       }
     }
 
-    const filteredAndSortedMap = this.filterAndSortClusters(langTopicMap);
-    const finalMap = this.filterLanguagesByTopicCount(filteredAndSortedMap);
+    const entries = Array.from(topicsByLanguage.entries());
+    const fallbackLanguages: Array<{ language: string; reason: string }> = [];
+    const clusteredLanguages: string[] = [];
+    const concurrency = WEEKLY_CLUSTER_CONCURRENCY;
+    let cursor = 0;
 
-    return finalMap;
+    const workers = Array.from(
+      { length: Math.min(concurrency, entries.length) },
+      async () => {
+        while (cursor < entries.length) {
+          const [lang, topics] = entries[cursor];
+          cursor += 1;
+          await this.processLanguageTopics(
+            lang,
+            topics,
+            langTopicMap,
+            fallbackLanguages,
+            clusteredLanguages,
+          );
+        }
+      },
+    );
+
+    await Promise.all(workers);
+
+    if (fallbackLanguages.length > 0) {
+      const byReason = fallbackLanguages.reduce<Record<string, string[]>>(
+        (acc, { language, reason }) => {
+          if (!acc[reason]) acc[reason] = [];
+          acc[reason].push(language);
+          return acc;
+        },
+        {},
+      );
+
+      for (const [reason, languages] of Object.entries(byReason)) {
+        this.logger.warn(
+          `Raw count fallback (${reason}): ${languages.join(', ')}`,
+        );
+      }
+    }
+
+    this.logger.debug(
+      `Weekly topics summary: clustered=${clusteredLanguages.length}, rawFallback=${fallbackLanguages.length}`,
+    );
+
+    const filteredAndSortedMap = this.filterAndSortClusters(langTopicMap);
+    return this.filterLanguagesByTopicCount(filteredAndSortedMap);
   }
 
   private async getTopicsLanguage(): Promise<RepoMainLanguageTopic[]> {
+    const { start, end } = getCurrentWeekDateRangeUTC();
+    this.logger.debug(
+      `Filtering weekly topics by trendingDate: ${start} to ${end}`,
+    );
+    const weeklyTrendingMatch = {
+      $match: {
+        trendingDate: { $gte: start, $lte: end },
+      },
+    };
     const repos: AggregatedRepoTopics[] =
-      await this.repoModel.aggregate<AggregatedRepoTopics>(topicLangPipeline);
+      await this.repoModel.aggregate<AggregatedRepoTopics>([
+        weeklyTrendingMatch,
+        ...topicLangPipeline,
+      ]);
     return repos
       .map((repo) => {
         let mainLanguage = 'Unknown';
@@ -248,51 +342,72 @@ export class KeywordService {
       .filter((repo) => repo.main_language !== 'Unknown');
   }
 
-  private async getAllTopics(): Promise<string[]> {
-    const repos = await this.getTopicsLanguage();
-    let topics: string[] = [];
-
-    for (const repo of repos) {
-      topics.push(...repo.topics);
-    }
-
-    topics = filterLanguage(topics);
-
-    return topics;
-  }
-
-  private async clusterTopicsWithHF(
-    allTopics: string[],
-  ): Promise<KeywordAnalysisOutput | null> {
+  private async clusterTopicsForLanguage(
+    language: string,
+    topics: string[],
+  ): Promise<{ [cluster: string]: number } | null> {
     try {
-      this.logger.debug('Using HuggingFace clustering for topic-language map');
+      this.logger.debug(
+        `Clustering ${topics.length} topics for ${language} with HuggingFace`,
+      );
       const hfResult = await this.clusteringService.clusterTopics({
-        topics: allTopics,
-        topN: 100,
+        topics,
+        topN: 50,
         includeRelated: true,
         distance_threshold: 0.35,
         includeClusterSizes: true,
-        batchSize: 64,
+        batchSize: WEEKLY_CLUSTER_BATCH_SIZE,
       });
 
-      this.logger.debug('Successfully used HuggingFace clustering');
-      return hfResult;
+      this.logger.debug(`Successfully clustered topics for ${language}`);
+      return hfResult.clusterSizes;
     } catch (error) {
-      this.logger.error('HuggingFace clustering failed', error);
+      this.logger.error(
+        `HuggingFace clustering failed for ${language}`,
+        error,
+      );
       return null;
     }
   }
 
-  private findCluster(
-    topic: string,
-    mlResult: KeywordAnalysisOutput,
-  ): string | null {
-    for (const [cluster, topicList] of Object.entries(mlResult.related)) {
-      if (topicList.includes(topic)) {
-        return cluster;
-      }
+  private async processLanguageTopics(
+    language: string,
+    topics: string[],
+    langTopicMap: LanguageClusterMap,
+    fallbackLanguages: Array<{ language: string; reason: string }>,
+    clusteredLanguages: string[],
+  ) {
+    if (topics.length < MIN_TOPICS_FOR_CLUSTERING) {
+      langTopicMap[language] = this.buildRawTopicCountMap(topics);
+      fallbackLanguages.push({
+        language,
+        reason: `topics<${MIN_TOPICS_FOR_CLUSTERING}`,
+      });
+      return;
     }
-    return null;
+
+    const clustered = await this.clusterTopicsForLanguage(language, topics);
+    if (clustered) {
+      langTopicMap[language] = clustered;
+      clusteredLanguages.push(language);
+      return;
+    }
+
+    this.logger.warn(
+      `Falling back to raw topic counts for ${language} (no clustering)`,
+    );
+    langTopicMap[language] = this.buildRawTopicCountMap(topics);
+    fallbackLanguages.push({ language, reason: 'hf-timeout' });
+  }
+
+  private buildRawTopicCountMap(topics: string[]): { [topic: string]: number } {
+    const counts: { [topic: string]: number } = {};
+    for (const topic of topics) {
+      if (!topic) continue;
+      const key = topic.toLowerCase();
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
   }
 
   private filterAndSortClusters(
@@ -332,5 +447,28 @@ export class KeywordService {
       }
     }
     return finalLangTopicMap;
+  }
+
+  private isLanguageTopicMapEmpty(map: LanguageClusterMap | null | undefined) {
+    return !map || Object.keys(map).length === 0;
+  }
+
+  private async getLatestNonEmptyWeeklyTopics() {
+    return this.weeklyTopicFindingsModel
+      .findOne({
+        $expr: {
+          $gt: [
+            {
+              $size: {
+                $objectToArray: {
+                  $ifNull: ['$languageTopicMap', {}],
+                },
+              },
+            },
+            0,
+          ],
+        },
+      })
+      .sort({ year: -1, week: -1 });
   }
 }
