@@ -13,11 +13,11 @@ export class ClusteringService {
   constructor(private configService: ConfigService) {}
 
   async clusterTopics(input: ClusteringInput): Promise<ClusteringOutput> {
-    const { topics, topN, distance_threshold } = input;
+    const { topics, topN, distance_threshold, batchSize } = input;
 
     this.logger.debug(`Clustering ${topics.length} topics with HuggingFace`);
 
-    const embeddings = await this.getHuggingFaceEmbeddings(topics);
+    const embeddings = await this.getHuggingFaceEmbeddings(topics, batchSize);
     const { related, clusterSizes } = this.performClustering(
       topics,
       embeddings,
@@ -48,40 +48,107 @@ export class ClusteringService {
     };
   }
 
-  private async getHuggingFaceEmbeddings(texts: string[]): Promise<number[][]> {
+  private async getHuggingFaceEmbeddings(
+    texts: string[],
+    batchSize: number = 64,
+  ): Promise<number[][]> {
     const apiToken = this.configService.get<string>('HUGGING_FACE');
     if (!apiToken) {
       throw new Error('HUGGING_FACE environment variable is not set');
     }
 
+    if (texts.length === 0) {
+      return [];
+    }
+
     const client = new InferenceClient(apiToken);
+    const uniqueTexts: string[] = [];
+    const textIndex = new Map<string, number>();
+
+    for (const text of texts) {
+      if (!textIndex.has(text)) {
+        textIndex.set(text, uniqueTexts.length);
+        uniqueTexts.push(text);
+      }
+    }
+
+    const safeBatchSize = Math.max(1, Math.min(batchSize || 64, 128));
 
     try {
-      this.logger.debug('Making HuggingFace API call');
+      this.logger.debug(
+        `Making HuggingFace API call for ${uniqueTexts.length} unique texts`,
+      );
 
-      const output = await client.featureExtraction({
-        model: 'sentence-transformers/all-MiniLM-L6-v2',
-        inputs: texts,
-        provider: 'hf-inference',
+      const uniqueEmbeddings: number[][] = [];
+
+      for (let i = 0; i < uniqueTexts.length; i += safeBatchSize) {
+        const batch = uniqueTexts.slice(i, i + safeBatchSize);
+        const output = await client.featureExtraction({
+          model: 'sentence-transformers/all-MiniLM-L6-v2',
+          inputs: batch,
+          provider: 'hf-inference',
+        });
+
+        const batchEmbeddings: number[][] = Array.isArray(output[0])
+          ? (output as number[][])
+          : ([output] as number[][]);
+
+        if (batchEmbeddings.length !== batch.length) {
+          throw new Error(
+            `Unexpected embedding batch size: expected ${batch.length}, got ${batchEmbeddings.length}`,
+          );
+        }
+
+        uniqueEmbeddings.push(...batchEmbeddings);
+      }
+
+      if (uniqueEmbeddings.length !== uniqueTexts.length) {
+        throw new Error(
+          `Unexpected embedding count: expected ${uniqueTexts.length}, got ${uniqueEmbeddings.length}`,
+        );
+      }
+
+      const embeddings: number[][] = texts.map((text) => {
+        const index = textIndex.get(text);
+        if (index === undefined) {
+          throw new Error(`Missing embedding for text: ${text}`);
+        }
+        return uniqueEmbeddings[index];
       });
-
-      const embeddings: number[][] = Array.isArray(output[0])
-        ? (output as number[][])
-        : ([output] as number[][]);
 
       this.logger.debug(`Generated embeddings for ${texts.length} texts`);
       return embeddings;
     } catch (error) {
       this.logger.error('HuggingFace API error', error);
-      if (error instanceof Error) {
-        if (error.message.includes('429')) {
-          throw new Error('HuggingFace API rate limit exceeded');
-        }
-        if (error.message.includes('503')) {
-          throw new Error(
-            'HuggingFace model is loading, please try again in a few moments',
-          );
-        }
+      const status =
+        typeof error === 'object' && error !== null && 'httpResponse' in error
+          ? (
+              error as {
+                httpResponse?: {
+                  status?: number;
+                };
+              }
+            ).httpResponse?.status
+          : undefined;
+
+      if (
+        status === 429 ||
+        (error instanceof Error && error.message.includes('429'))
+      ) {
+        throw new Error('HuggingFace API rate limit exceeded');
+      }
+      if (
+        status === 503 ||
+        (error instanceof Error && error.message.includes('503'))
+      ) {
+        throw new Error(
+          'HuggingFace model is loading, please try again in a few moments',
+        );
+      }
+      if (status === 504) {
+        throw new Error(
+          'HuggingFace inference timed out; try a smaller batch size or retry later',
+        );
       }
       throw error;
     }

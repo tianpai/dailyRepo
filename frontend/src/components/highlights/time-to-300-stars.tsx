@@ -367,18 +367,18 @@ export function TimeTo300StarsSummaryCard() {
   const [sort, setSort] = useState<Sort>("fastest");
   const { summary, repos, isLoading, error } = useTimeTo300Stars(age, sort);
   const [selected, setSelected] = useState<TimeTo300Repo | null>(null);
-
-  const renderStateMessage = (message: string) => (
-    <div className="flex items-center justify-center h-24">{message}</div>
-  );
-
-  if (error) return renderStateMessage(`Error: ${error}`);
+  const errorMessage = error ? `Error: ${error}` : null;
   const ageFilter = summary?.ageFilter ?? age;
 
   return (
     <div className="w-full border-2 border-border bg-background text-foreground">
       <HeaderSection ageFilter={ageFilter} />
       <FiltersBar age={age} sort={sort} onAge={setAge} onSort={setSort} />
+      {errorMessage && (
+        <div className="px-3 sm:px-4 pb-2 major-mono text-xs text-description">
+          {errorMessage}
+        </div>
+      )}
       {summary && (
         <StatsGrid
           total={summary.totalAnalyzedRepos}

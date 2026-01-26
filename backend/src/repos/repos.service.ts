@@ -72,8 +72,6 @@ export class ReposService {
 
   async fetchTimeToFirstThreeHundredStars(age?: string, limit = 20) {
     const allData = await this.fetchAllTimeToFirstThreeHundredStars(age);
-    if (!allData) return null;
-
     return {
       summary: allData.summary,
       repos: allData.repos.slice(0, limit),
@@ -82,7 +80,6 @@ export class ReposService {
 
   async fetchSlowestTimeToFirstThreeHundredStars(age?: string, limit = 20) {
     const allData = await this.fetchAllTimeToFirstThreeHundredStars(age);
-    if (!allData) return null;
 
     const slowest = [...allData.repos]
       .sort(
@@ -97,6 +94,10 @@ export class ReposService {
   private async fetchAllTimeToFirstThreeHundredStars(age?: string) {
     const ageFilter = this.getAgeFilter(age);
     const repos = await this.repoModel.find(ageFilter).lean();
+    if (!repos.length) {
+      return this.buildEmptyTimeToThreeHundredResult(age);
+    }
+
     const repoIds = repos.map((repo) => repo._id);
 
     const starHistories = await this.starHistoryModel
@@ -155,7 +156,9 @@ export class ReposService {
       .filter(Boolean)
       .sort((a, b) => (b?.velocity || 0) - (a?.velocity || 0));
 
-    if (!validRepos.length) return null;
+    if (!validRepos.length) {
+      return this.buildEmptyTimeToThreeHundredResult(age);
+    }
 
     const days = validRepos.map((r) => r?.daysToThreeHundredStars || 0);
     const sortedDays = days.sort((a, b) => a - b);
@@ -173,6 +176,20 @@ export class ReposService {
         ageFilter: age || 'YTD',
       },
       repos: validRepos,
+    };
+  }
+
+  private buildEmptyTimeToThreeHundredResult(age?: string) {
+    return {
+      summary: {
+        totalAnalyzedRepos: 0,
+        averageDays: 0,
+        medianDays: 0,
+        minDays: 0,
+        maxDays: 0,
+        ageFilter: age || 'YTD',
+      },
+      repos: [],
     };
   }
 
