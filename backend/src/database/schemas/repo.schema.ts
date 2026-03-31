@@ -32,8 +32,8 @@ export class Repo extends Document {
   @Prop()
   lastUpdate: string;
 
-  @Prop()
-  license: string;
+  @Prop({ default: null })
+  license: string | null;
 
   @Prop()
   trendingDate: string;
