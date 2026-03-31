@@ -32,7 +32,7 @@ export class Repo extends Document {
   @Prop()
   lastUpdate: string;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   license: string | null;
 
   @Prop()
