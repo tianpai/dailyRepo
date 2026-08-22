@@ -5,6 +5,9 @@
   "author": "",
   "private": true,
   "license": "MIT",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "build": "nest build",
     "build:scraper": "nest build --config nest-cli-scraper.json",
