@@ -3,6 +3,7 @@ import { useRepoDataContext } from "@/components/repo/repo-data-provider";
 import { PageContainer } from "@/components/page-container.tsx";
 import { SidebarLayout } from "@/components/app-sidebar.tsx";
 import { PageTitle } from "@/components/page-title";
+import { HistoricalStarDataNotice } from "@/components/historical-star-data-notice";
 
 export function RepoPage() {
   return (
@@ -26,6 +27,7 @@ function RepoDataConsumer() {
         title="Daily Trending"
         description="Discover the most trending repositories of the day"
       />
+      <HistoricalStarDataNotice />
       <div className="w-full">
         <RepoList />
       </div>

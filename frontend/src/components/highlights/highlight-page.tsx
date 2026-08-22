@@ -6,6 +6,7 @@ import { TopicsByLanguageContainer } from "@/components/highlights/topics-by-lan
 import { TopDevelopersContainer } from "@/components/highlights/top-developers";
 import { PageTitle } from "@/components/page-title";
 import { TimeTo300StarsSummaryCard } from "@/components/highlights/time-to-300-stars";
+import { HistoricalStarDataNotice } from "@/components/historical-star-data-notice";
 
 export function DailyHighlight() {
   return (
@@ -16,6 +17,7 @@ export function DailyHighlight() {
             title="highlights"
             description="Discover trending topics and programming languages"
           />
+          <HistoricalStarDataNotice />
           <div className="space-y-3">
             <TimeTo300StarsSummaryCard />
             <KeywordsContainer />
