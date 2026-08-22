@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { ScraperModule } from './scraper/scraper.module';
 import { formatDuration } from './common/utils/time.util';
 import { RepoDataService } from './scraper/services/repo-data.service';
-import { StarHistoryScraperService } from './scraper/services/star-history-scraper.service';
 
 async function runBatchedScrapeJob() {
   const jobStartTime = performance.now();
@@ -17,9 +16,8 @@ async function runBatchedScrapeJob() {
   try {
     const app = await NestFactory.createApplicationContext(ScraperModule);
     const repoDataService = app.get(RepoDataService);
-    const starHistoryScraperService = app.get(StarHistoryScraperService);
 
-    console.log('\n[1/3] PROCESSING REPOSITORIES');
+    console.log('\n[1/2] PROCESSING REPOSITORIES');
     const repoStartTime = performance.now();
     const repos = await repoDataService.prepTrendingData();
     console.log(
@@ -36,21 +34,12 @@ async function runBatchedScrapeJob() {
     }
     console.log(`Step 1 completed in ${formatDuration(repoStartTime)}\n`);
 
-    console.log('[2/3] PROCESSING DEVELOPERS');
+    console.log('[2/2] PROCESSING DEVELOPERS');
     const devStartTime = performance.now();
     await new Promise((resolve) => setTimeout(resolve, 3000));
     const developers = await repoDataService.prepTrendingDevelopers();
     await repoDataService.saveTrendingDevelopers(developers);
     console.log(`Step 2 completed in ${formatDuration(devStartTime)}\n`);
-
-    console.log('[3/3] PROCESSING STAR HISTORY');
-    const starHistoryStartTime = performance.now();
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    const repoNames = repos.map((r) => r.fullName);
-    await starHistoryScraperService.processStarHistory(repoNames);
-    console.log(
-      `Step 3 completed in ${formatDuration(starHistoryStartTime)}\n`,
-    );
 
     await app.close();
     process.exitCode = 0;
