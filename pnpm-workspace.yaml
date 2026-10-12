@@ -3,10 +3,52 @@ packages:
   - packages/*
 verifyDepsBeforeRun: error
 allowBuilds:
-  "@nestjs/core@11.1.17": true
+  "@nestjs/core@11.2.7": true
+  "@parcel/watcher@2.6.0": true
   "esbuild@0.25.9": true
-  "unrs-resolver@1.11.1": true
+  "unrs-resolver@1.12.2": true
 overrides:
-  path-to-regexp: 8.4.0
-  "@angular-devkit/core>picomatch": 4.0.4
-  "jest-util>picomatch": 4.0.4
+  path-to-regexp: 8.4.2
+  "@angular-devkit/core>picomatch": 4.0.7
+  "jest-util>picomatch": 4.0.7
+minimumReleaseAgeExclude:
+  - '@radix-ui/primitive@1.2.0'
+  - '@radix-ui/react-arrow@1.1.17'
+  - '@radix-ui/react-avatar@1.3.0'
+  - '@radix-ui/react-collection@1.2.0'
+  - '@radix-ui/react-context@1.3.0'
+  - '@radix-ui/react-dialog@1.3.0'
+  - '@radix-ui/react-direction@1.2.0'
+  - '@radix-ui/react-dismissable-layer@1.2.0'
+  - '@radix-ui/react-dropdown-menu@2.2.0'
+  - '@radix-ui/react-focus-guards@1.2.0'
+  - '@radix-ui/react-focus-scope@1.3.0'
+  - '@radix-ui/react-label@2.1.17'
+  - '@radix-ui/react-menu@2.2.0'
+  - '@radix-ui/react-popover@1.3.0'
+  - '@radix-ui/react-popper@1.4.0'
+  - '@radix-ui/react-portal@1.2.0'
+  - '@radix-ui/react-primitive@2.2.0'
+  - '@radix-ui/react-roving-focus@1.2.0'
+  - '@radix-ui/react-separator@1.2.0'
+  - '@radix-ui/react-slot@1.5.0'
+  - '@radix-ui/react-tooltip@1.4.0'
+  - '@radix-ui/react-use-callback-ref@1.1.5'
+  - '@radix-ui/react-use-controllable-state@1.3.0'
+  - '@radix-ui/react-visually-hidden@1.2.13'
+  - '@tanstack/query-core@5.104.2'
+  - '@tanstack/query-devtools@5.104.2'
+  - '@tanstack/react-query-devtools@5.104.2'
+  - '@tanstack/react-query@5.104.2'
+  - '@typescript-eslint/eslint-plugin@8.71.2'
+  - '@typescript-eslint/parser@8.71.2'
+  - '@typescript-eslint/project-service@8.71.2'
+  - '@typescript-eslint/scope-manager@8.71.2'
+  - '@typescript-eslint/tsconfig-utils@8.71.2'
+  - '@typescript-eslint/type-utils@8.71.2'
+  - '@typescript-eslint/types@8.71.2'
+  - '@typescript-eslint/typescript-estree@8.71.2'
+  - '@typescript-eslint/utils@8.71.2'
+  - '@typescript-eslint/visitor-keys@8.71.2'
+  - typescript-eslint@8.71.2
+  - zod@4.6.7
