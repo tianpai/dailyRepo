@@ -12,6 +12,7 @@ import { RepoScrapingService } from './repo-scraping.service';
 import { ScraperConfigService } from './scraper-config.service';
 
 interface GitHubRepoData {
+  id: number;
   full_name: string;
   name: string;
   owner: { login: string };
@@ -24,6 +25,7 @@ interface GitHubRepoData {
 }
 
 export interface ProcessedRepo {
+  repo_id: number;
   fullName: string;
   date: string;
   owner: string;
@@ -188,6 +190,7 @@ export class RepoDataService {
     const language = await this.fetchLanguages(data.languages_url);
     await this.wait(3000);
     return {
+      repo_id: data.id,
       fullName: data.full_name,
       date,
       owner: data.owner.login,

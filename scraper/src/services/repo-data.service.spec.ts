@@ -18,6 +18,7 @@ import { ScraperConfigService } from './scraper-config.service';
 jest.mock('axios');
 
 const observation: ProcessedRepo = {
+  repo_id: 123456,
   fullName: 'owner/repo',
   date: '2026-10-09',
   owner: 'owner',
@@ -264,6 +265,7 @@ describe('collection inputs', () => {
       if (url === 'https://api.github.com/repos/owner/repo')
         return {
           data: {
+            id: observation.repo_id,
             full_name: 'owner/repo',
             owner: { login: 'owner' },
             name: 'repo',
@@ -292,6 +294,7 @@ describe('collection inputs', () => {
     jest.setSystemTime(new Date('2026-10-10T00:01:00Z'));
     const developers = await service.prepTrendingDevelopers();
     expect(repositories.items[0]).toMatchObject({
+      repo_id: observation.repo_id,
       date: '2026-10-09',
       createdAt: observation.createdAt,
       lastUpdate: observation.lastUpdate,

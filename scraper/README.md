@@ -58,12 +58,14 @@ For example, two days for the same repository are two documents in `repos`:
 ```json
 [
   {
+    "repo_id": 123456,
     "fullName": "owner/repo",
     "date": "2026-10-09",
     "topics": ["computer-vision"],
     "language": { "Python": 100000 }
   },
   {
+    "repo_id": 123456,
     "fullName": "owner/repo",
     "date": "2026-10-10",
     "topics": ["computer-vision", "OCR"],
@@ -71,6 +73,13 @@ For example, two days for the same repository are two documents in `repos`:
   }
 ]
 ```
+
+The numeric `repo_id` comes from GitHub's repository API `id` and identifies the
+same repository across renames and ownership transfers. MongoDB's `_id`
+identifies each dated observation separately. Existing observations are not
+backfilled; same-day retries preserve the first saved metadata. Persistence
+still uses `(fullName, date)`, while a `(repo_id, date)` index supports querying a
+repository's observations across name changes.
 
 The documents also include owner, name, description, license, and repository
 timestamps. Repository URLs are derived as `https://github.com/{fullName}`
