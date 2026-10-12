@@ -5,6 +5,10 @@ packages:
   - scraper
   - packages/*
 verifyDepsBeforeRun: error
+allowBuilds:
+  "@nestjs/core@11.1.17": true
+  "esbuild@0.25.9": true
+  "unrs-resolver@1.11.1": true
 overrides:
   path-to-regexp: 8.4.0
   "@angular-devkit/core>picomatch": 4.0.4
