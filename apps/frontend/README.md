@@ -1,6 +1,6 @@
 # DAILY REPO (Frontend)
 
-More on [frontend structure](../docs/frontend-structure.md)
+More on [frontend structure](#project-structure)
 
 ## Features
 

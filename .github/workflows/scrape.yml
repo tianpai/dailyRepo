@@ -56,10 +56,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build scraper
-        run: pnpm --filter @dailyrepo/scraper... build
+        run: pnpm build:scraper
 
       - name: Run scraper
-        run: pnpm --filter @dailyrepo/scraper scrape:batched
+        run: pnpm scrape
         env:
           SCRAPER_MONGODB_URI: ${{ secrets.SCRAPER_MONGODB_URI }}
           GITHUB_TOKEN: ${{ github.token }}

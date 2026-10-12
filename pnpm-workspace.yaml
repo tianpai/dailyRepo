@@ -1,8 +1,5 @@
 packages:
-  - frontend
-  - backend
-  - jobs
-  - scraper
+  - apps/*
   - packages/*
 verifyDepsBeforeRun: error
 allowBuilds:

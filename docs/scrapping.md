@@ -1,4 +1,9 @@
-# Scraping and Scheduling
+# Historical Scraping and Scheduling
+
+These notes describe the previous scraper architecture and Bun/npm commands.
+The current pnpm scraper lives under `apps/scraper/` and no longer collects star
+history. Use [scraper operations](../apps/scraper/README.md) and
+[development commands](dev-build-cmd.md) for current configuration and commands.
 
 The scraper (`backend/src/scraper.ts`) is a standalone NestJS application that scrapes trending GitHub repositories and developers, collecting star history data while respecting API rate limits.
 

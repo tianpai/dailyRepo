@@ -41,12 +41,24 @@ pnpm dev:web
 ```
 
 The API, frontend, GitHub scraper, and standalone analysis jobs are separate
-workspaces. See [data collection and analysis operations](OPERATIONS.md) for
-local job commands, schedules, secrets, and historical backfill requirements.
+workspaces under `apps/`; shared libraries live under `packages/`:
+
+```text
+apps/
+  backend/     HTTP API
+  frontend/    Web interface
+  jobs/        Analysis commands and scheduler
+  scraper/     Daily GitHub collection
+packages/
+  database/    Shared schemas and database utilities
+```
+
+See [data collection and analysis operations](OPERATIONS.md) for local job
+commands, schedules, secrets, and historical backfill requirements.
 
 ## Documentation
 
 1. [Documentation](docs/)
 2. [API Versioning (v1 vs v2)](docs/versioning.md)
-3. [Backend README](backend/README.md)
-4. [Frontend README](frontend/README.md)
+3. [Backend README](apps/backend/README.md)
+4. [Frontend README](apps/frontend/README.md)

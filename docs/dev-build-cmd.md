@@ -1,26 +1,51 @@
 # Development Commands
 
-**Note**: Use Bun for local development. GitHub Actions uses npm (Bun compatibility issues).
+Use pnpm 12.4.2 and Node 22.20 or newer within Node 22. Run these commands
+from the repository root; pnpm selects the workspace under `apps/`.
 
 ## Backend (NestJS/TypeScript)
 
 ```bash
-cd backend
-bun run dev              # Start NestJS development server with watch mode
-bun run dev:scraper      # Start scraper in development mode
-bun run build            # Build main application
-bun run build:scraper    # Build scraper application
-bun run scrape:batched   # Run batched scraper (respects GitHub API limits)
-bun run scrape:test      # Test scraper without saving to database
-bun run test             # Run test suite
+pnpm install --frozen-lockfile
+pnpm --filter @dailyrepo/api... build
+pnpm dev:api
+pnpm --filter @dailyrepo/api test --runInBand
 ```
 
 ## Frontend (React/TypeScript)
 
 ```bash
-cd frontend
-bun run dev              # Start Vite development server
-bun run build            # TypeScript compilation + Vite build
-bun run lint             # Run ESLint
-bun run preview          # Preview production build
+pnpm dev:web
+pnpm --filter @dailyrepo/web build
+pnpm --filter @dailyrepo/web lint
+pnpm --filter @dailyrepo/web preview
+```
+
+## Scraper
+
+```bash
+pnpm build:scraper
+pnpm scrape
+pnpm --filter @dailyrepo/scraper scrape:test
+```
+
+Local scraper configuration lives in `apps/scraper/.env`. The dry run does not
+connect to MongoDB or save observations. See [scraper operations](../apps/scraper/README.md).
+
+## Analysis jobs
+
+```bash
+pnpm --filter @dailyrepo/jobs... build
+pnpm jobs:daily --help
+pnpm jobs:weekly --help
+```
+
+The analysis workspace still reads the previous database schema. See
+[operations](../OPERATIONS.md) before running calculations or its scheduler.
+
+## All workspaces
+
+```bash
+pnpm build
+pnpm test
 ```

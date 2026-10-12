@@ -12,7 +12,7 @@ node_modules/
 
 .vscode
 .DS_Store
-backend/dist
+apps/backend/dist
 CLAUDE.md
-backend/completed-repos.txt
-backend/failed-repos.txt
+apps/backend/completed-repos.txt
+apps/backend/failed-repos.txt

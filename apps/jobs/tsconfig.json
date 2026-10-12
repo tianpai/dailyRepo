@@ -1,5 +1,5 @@
 {
-  "extends": "../packages/database/tsconfig.json",
+  "extends": "../../packages/database/tsconfig.json",
   "compilerOptions": { "outDir": "dist", "rootDir": "src" },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.spec.ts"]

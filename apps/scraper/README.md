@@ -6,7 +6,7 @@ server or analysis jobs.
 
 ## Configuration
 
-Create `scraper/.env` from `.env.example` with:
+Create `apps/scraper/.env` from `.env.example` with:
 
 ```dotenv
 SCRAPER_MONGODB_URI=mongodb://localhost:27017/dailyrepo_dev
@@ -25,7 +25,7 @@ From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm --filter @dailyrepo/scraper... build
+pnpm build:scraper
 pnpm scrape
 ```
 
@@ -111,7 +111,9 @@ pages; it cannot recover an earlier page that is no longer available.
 
 ## GitHub Actions
 
-The workflow retains the daily 15:20 UTC schedule and Atlas IP allowlisting.
+The workflow runs `pnpm build:scraper` and `pnpm scrape` from the repository root,
+targeting this workspace under `apps/scraper/` and its shared database dependency.
+It retains the daily 15:20 UTC schedule and Atlas IP allowlisting.
 It requires the new repository secret `SCRAPER_MONGODB_URI`, uses GitHub's runner
 token, and serializes runs. It fails before allowlisting when that secret is
 missing. The existing Atlas secrets continue controlling network access.

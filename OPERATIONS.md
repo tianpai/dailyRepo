@@ -1,12 +1,12 @@
 # Data collection and analysis
 
-DailyRepo is a pnpm workspace: `frontend/`, `backend/`, `scraper/`, `jobs/`, and
-shared database code under `packages/database/`.
+DailyRepo is a pnpm workspace: `apps/frontend/`, `apps/backend/`, `apps/scraper/`,
+`apps/jobs/`, and shared database code under `packages/database/`.
 
 The scraper now uses the dated observation model: one repository document per
 repository per UTC day. The API and analysis workspace still use the previous
 schema. Analysis is paused for the new database while those readers are adapted.
-See [scraper operations](scraper/README.md) for the complete storage and failure
+See [scraper operations](apps/scraper/README.md) for the complete storage and failure
 contract.
 
 ## Build and local development
@@ -27,18 +27,18 @@ PORT=3000 pnpm dev:api
 VITE_BASE_URL=http://localhost:3000 VITE_API_V2=/api/v2 PORT=5173 pnpm dev:web
 ```
 
-The API loads `backend/.env` and uses `MONGODB_URI` or `MONGO`. It reads stored
+The API loads `apps/backend/.env` and uses `MONGODB_URI` or `MONGO`. It reads stored
 analysis results and does not launch scheduled calculation.
 
 ## New scraper configuration
 
 Set `SCRAPER_MONGODB_URI` to a connection string selecting the new database,
-and supply `GITHUB_TOKEN` for GitHub API access. The scraper reads `scraper/.env`
+and supply `GITHUB_TOKEN` for GitHub API access. The scraper reads `apps/scraper/.env`
 or a file selected by `ENV_FILE`. A mounted `SCRAPER_MONGODB_URI_FILE` takes
 precedence over the environment value. No real environment files are tracked.
 
 ```sh
-pnpm --filter @dailyrepo/scraper... build
+pnpm build:scraper
 pnpm scrape
 ```
 

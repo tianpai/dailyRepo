@@ -15,7 +15,7 @@ pnpm dev:api
 For production, `pnpm --filter @dailyrepo/api prod` runs the compiled server.
 Configure `MONGODB_URI` (or `MONGO`) and optionally `PORT`; the default port is 3000.
 Mounted secret files are supported through `MONGODB_URI_FILE` or `MONGO_FILE`.
-Local development continues loading `backend/.env`.
+Local development continues loading `apps/backend/.env`.
 
-See [operations](../OPERATIONS.md) for collection, analysis commands, local
+See [operations](../../OPERATIONS.md) for collection, analysis commands, local
 configuration, and production transition details.
