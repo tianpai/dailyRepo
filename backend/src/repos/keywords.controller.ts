@@ -10,7 +10,6 @@ import { CacheTTL } from '@nestjs/cache-manager';
 import { KeywordService } from './keyword.service';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { HttpCacheInterceptor } from '@/common/interceptors/http-cache.interceptor';
-import { CACHE_TTL } from '@/common/cache/cache.constants';
 import { z } from 'zod';
 
 interface KeywordAnalysisOutput {
@@ -25,10 +24,6 @@ const TrendingKeywordsQuerySchema = z.object({
   includeRelated: z.coerce.boolean().default(false),
 });
 
-const TopicsByLanguageQuerySchema = z.object({
-  force: z.coerce.boolean().optional(),
-});
-
 @Controller('repos')
 export class KeywordsController {
   private readonly logger = new Logger(KeywordsController.name);
@@ -37,7 +32,7 @@ export class KeywordsController {
 
   @Get('keywords')
   @UseInterceptors(HttpCacheInterceptor)
-  @CacheTTL(CACHE_TTL._12_HOURS)
+  @CacheTTL(5 * 60 * 1000)
   @UsePipes(new ZodValidationPipe(TrendingKeywordsQuerySchema))
   async getTrendingKeywords(
     @Query() query: z.infer<typeof TrendingKeywordsQuerySchema>,
@@ -84,15 +79,11 @@ export class KeywordsController {
 
   @Get('topics-by-language')
   @UseInterceptors(HttpCacheInterceptor)
-  @CacheTTL(CACHE_TTL._6_DAYS)
-  @UsePipes(new ZodValidationPipe(TopicsByLanguageQuerySchema))
-  async getTopicByLanguage(
-    @Query() query: z.infer<typeof TopicsByLanguageQuerySchema>,
-  ) {
-    const { force } = query;
+  @CacheTTL(5 * 60 * 1000)
+  async getTopicByLanguage() {
     this.logger.debug('GET /repos/topics-by-language');
     const today = this.getTodayUTC();
-    const data = await this.keywordService.groupTopicsByLanguage({ force });
+    const data = await this.keywordService.groupTopicsByLanguage();
 
     return {
       ...(data || {}),

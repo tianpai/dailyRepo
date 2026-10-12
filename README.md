@@ -1,7 +1,7 @@
 # DailyRepo
 
 ![License](https://img.shields.io/github/license/tianpai/dailyRepo)
-![Bun](https://img.shields.io/badge/Bun-1.2.17+-green?logo=Bun)
+![pnpm](https://img.shields.io/badge/pnpm-12.4.2-orange?logo=pnpm)
 ![React](https://img.shields.io/badge/React-19-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue?logo=typescript)
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)
@@ -34,14 +34,15 @@ Track trending GitHub repositories with historical data analysis and interactive
 ## Development
 
 ```bash
-# Backend
-cd backend
-bun run dev
-
-# Frontend
-cd frontend
-npm run dev
+pnpm install --frozen-lockfile
+pnpm build
+pnpm dev:api
+pnpm dev:web
 ```
+
+The API, frontend, GitHub scraper, and standalone analysis jobs are separate
+workspaces. See [data collection and analysis operations](OPERATIONS.md) for
+local job commands, schedules, secrets, and historical backfill requirements.
 
 ## Documentation
 

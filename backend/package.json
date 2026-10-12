@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "@dailyrepo/api",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -10,15 +10,11 @@
   },
   "scripts": {
     "build": "nest build",
-    "build:scraper": "nest build --config nest-cli-scraper.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "dev": "nest start --watch",
-    "dev:scraper": "nest start --config nest-cli-scraper.json --watch",
     "debug": "nest start --debug --watch",
     "prod": "node dist/main",
-    "scrape:batched": "node dist/scraper --run-batched",
-    "scrape:test": "node dist/scraper --test-no-save",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -27,22 +23,19 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@huggingface/inference": "^4.13.15",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.17",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.17",
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.1.17",
-    "@nestjs/schedule": "^6.1.1",
     "@nestjs/throttler": "^6.5.0",
-    "axios": "^1.14.0",
     "cache-manager": "^7.2.8",
-    "cheerio": "^1.2.0",
     "mongoose": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@dailyrepo/database": "workspace:*"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
@@ -69,15 +62,6 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.58.0"
   },
-  "overrides": {
-    "path-to-regexp": "8.4.0",
-    "@angular-devkit/core": {
-      "picomatch": "4.0.4"
-    },
-    "jest-util": {
-      "picomatch": "4.0.4"
-    }
-  },
   "jest": {
     "moduleFileExtensions": [
       "js",
@@ -95,14 +79,7 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/$1",
-      "^@/common/(.*)$": "<rootDir>/common/$1",
-      "^@/database/(.*)$": "<rootDir>/database/$1",
-      "^@/developers/(.*)$": "<rootDir>/developers/$1",
-      "^@/languages/(.*)$": "<rootDir>/languages/$1",
-      "^@/repos/(.*)$": "<rootDir>/repos/$1",
-      "^@/scraper/(.*)$": "<rootDir>/scraper/$1",
-      "^@/cronjobs/(.*)$": "<rootDir>/cronjobs/$1"
+      "^@/(.*)$": "<rootDir>/$1"
     }
   }
 }

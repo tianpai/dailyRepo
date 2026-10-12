@@ -1,0 +1,44 @@
+{
+  "name": "@dailyrepo/jobs",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "daily": "node dist/main.js daily",
+    "weekly": "node dist/main.js weekly",
+    "schedule": "node dist/main.js schedule",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@dailyrepo/database": "workspace:*",
+    "@huggingface/inference": "4.13.15",
+    "@nestjs/common": "11.1.17",
+    "@nestjs/config": "4.0.3",
+    "@nestjs/core": "11.1.17",
+    "@nestjs/mongoose": "11.0.4",
+    "@nestjs/schedule": "6.1.1",
+    "mongoose": "8.23.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@types/jest": "30.0.0",
+    "@types/node": "22.19.15",
+    "jest": "30.3.0",
+    "ts-jest": "29.4.6",
+    "typescript": "5.9.3"
+  },
+  "jest": {
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.test.json"
+        }
+      ]
+    },
+    "testEnvironment": "node"
+  }
+}

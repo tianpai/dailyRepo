@@ -4,11 +4,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Repo } from '@/database/schemas/repo.schema';
-import {
-  StarHistory,
-  StarHistoryEntry,
-} from '@/database/schemas/star-history.schema';
+import { Repo } from '@dailyrepo/database';
+import { StarHistory, StarHistoryEntry } from '@dailyrepo/database';
 
 @Injectable()
 export class ReposService {

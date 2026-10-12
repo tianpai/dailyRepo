@@ -1,0 +1,11 @@
+packages:
+  - frontend
+  - backend
+  - jobs
+  - scraper
+  - packages/*
+verifyDepsBeforeRun: error
+overrides:
+  path-to-regexp: 8.4.0
+  "@angular-devkit/core>picomatch": 4.0.4
+  "jest-util>picomatch": 4.0.4

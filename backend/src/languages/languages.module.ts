@@ -1,5 +1,5 @@
 import { Module, Logger, OnModuleInit } from '@nestjs/common';
-import { DatabaseModule } from '@/database';
+import { DatabaseModule } from '@dailyrepo/database';
 import { LanguagesController } from './languages.controller';
 import { LanguagesService } from './languages.service';
 

@@ -15,14 +15,7 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"],
-      "@/common/*": ["src/common/*"],
-      "@/database/*": ["src/database/*"],
-      "@/developers/*": ["src/developers/*"],
-      "@/languages/*": ["src/languages/*"],
-      "@/repos/*": ["src/repos/*"],
-      "@/scraper/*": ["src/scraper/*"],
-      "@/cronjobs/*": ["src/cronjobs/*"]
+      "@/*": ["src/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

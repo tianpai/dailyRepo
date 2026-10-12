@@ -5,11 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Repo } from '@/database/schemas/repo.schema';
-import {
-  StarHistory,
-  StarHistoryEntry,
-} from '@/database/schemas/star-history.schema';
+import { Repo } from '@dailyrepo/database';
+import { StarHistory, StarHistoryEntry } from '@dailyrepo/database';
 
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
