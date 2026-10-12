@@ -5,9 +5,14 @@ on:
     - cron: "20 15 * * *"
   workflow_dispatch:
 
+concurrency:
+  group: daily-repo-scrape
+  cancel-in-progress: false
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    timeout-minutes: 250
     steps:
       - uses: actions/checkout@v4
 
@@ -15,9 +20,18 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+
+      - name: Check scraper database configuration
+        env:
+          SCRAPER_MONGODB_URI: ${{ secrets.SCRAPER_MONGODB_URI }}
+        run: |
+          if [ -z "$SCRAPER_MONGODB_URI" ]; then
+            echo "::error::Set SCRAPER_MONGODB_URI to the new database before running this scraper."
+            exit 1
+          fi
 
       - name: Get runner public IP
         id: get_ip
@@ -28,7 +42,7 @@ jobs:
 
       - name: Add IP to Atlas allowlist
         run: |
-          curl -X POST \
+          curl --fail-with-body -X POST \
             --digest \
             -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
             -H "Content-Type: application/json" \
@@ -47,17 +61,13 @@ jobs:
       - name: Run scraper
         run: pnpm --filter @dailyrepo/scraper scrape:batched
         env:
-          MONGO: ${{ secrets.MONGO }}
-          PORT: ${{ secrets.PORT }}
+          SCRAPER_MONGODB_URI: ${{ secrets.SCRAPER_MONGODB_URI }}
           GITHUB_TOKEN: ${{ github.token }}
-          ATLAS_PRIVATE_KEY: ${{ secrets.ATLAS_PRIVATE_KEY }}
-          ATLAS_PUBLIC_KEY: ${{ secrets.ATLAS_PUBLIC_KEY }}
-          ATLAS_PROJECT_ID: ${{ secrets.ATLAS_PROJECT_ID }}
 
       - name: Remove IP from Atlas allowlist
-        if: always()
+        if: always() && steps.get_ip.outputs.ip != ''
         run: |
-          curl -X DELETE \
+          curl --fail-with-body -X DELETE \
             --digest \
             -u "${{ secrets.ATLAS_PUBLIC_KEY }}:${{ secrets.ATLAS_PRIVATE_KEY }}" \
             -H "Accept: application/json" \

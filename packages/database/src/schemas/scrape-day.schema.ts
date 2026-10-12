@@ -9,8 +9,20 @@ export class ScrapeDay extends Document {
   @Prop({ required: true })
   repositoryCount: number;
 
-  @Prop({ required: true })
-  completedAt: Date;
+  @Prop({ enum: ['running', 'complete', 'partial', 'failed'] })
+  status?: 'running' | 'complete' | 'partial' | 'failed';
+
+  @Prop()
+  expectedRepositoryCount?: number;
+
+  @Prop({ type: [String], default: [] })
+  failedRepositories: string[];
+
+  @Prop({ type: [String], default: [] })
+  failedPages: string[];
+
+  @Prop()
+  completedAt?: Date;
 }
 
 export const ScrapeDaySchema = SchemaFactory.createForClass(ScrapeDay);

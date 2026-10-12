@@ -6,4 +6,6 @@ export * from './schemas/keywords.schema';
 export * from './schemas/weekly-topics.schema';
 export * from './schemas/repo-snapshot.schema';
 export * from './schemas/scrape-day.schema';
+export * from './schemas/repo-observation.schema';
+export * from './schemas/developer-observation.schema';
 export * from './secrets';

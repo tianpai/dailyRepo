@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { getTodayUTC } from '../time.util';
 
 @Injectable()
 export class ScraperConfigService {
-  private readonly testMode: boolean;
-
-  constructor() {
-    this.testMode = process.argv.includes('--test-no-save');
-  }
+  constructor(
+    private readonly testMode = false,
+    private readonly date = getTodayUTC(),
+  ) {}
 
   isTestMode(): boolean {
     return this.testMode;
+  }
+
+  getDate(): string {
+    return this.date;
   }
 }

@@ -3,10 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { Repo } from '@dailyrepo/database';
-import { TrendingDeveloper } from '@dailyrepo/database';
-import { RepoSnapshot, ScrapeDay } from '@dailyrepo/database';
-import { getTodayUTC, getUTCDate } from '../time.util';
+import {
+  DeveloperObservation,
+  RepoObservation,
+  ScrapeDay,
+} from '@dailyrepo/database';
 import { RepoScrapingService } from './repo-scraping.service';
 import { ScraperConfigService } from './scraper-config.service';
 
@@ -19,324 +20,273 @@ interface GitHubRepoData {
   license?: { name: string } | null;
   created_at: string;
   updated_at: string;
-  topics: string[];
+  topics?: string[];
   languages_url: string;
 }
 
-interface LanguageData {
-  [language: string]: number;
-}
-
-interface ProcessedRepo {
+export interface ProcessedRepo {
   fullName: string;
+  date: string;
   owner: string;
   name: string;
   description: string;
   url: string;
-  language: LanguageData;
+  language: Record<string, number>;
   topics: string[];
   createdAt: string;
   lastUpdate: string;
   license: string | null;
-  trendingDate: string;
 }
 
-interface ProcessedDeveloper {
+export interface ProcessedDeveloper {
   username: string;
+  date: string;
   repositoryPath: string;
   profileUrl: string;
   location?: string;
   avatar_url: string;
 }
 
-interface GithubUser {
-  login: string;
+interface GitHubUser {
   avatar_url: string;
   location?: string;
 }
 
+export interface CaptureBatch<T> {
+  date: string;
+  items: T[];
+  expectedCount: number;
+  failedRecords: string[];
+  failedPages: string[];
+}
+
+export function isCompleteCapture<T>(batch: CaptureBatch<T>): boolean {
+  return (
+    batch.expectedCount > 0 &&
+    batch.items.length === batch.expectedCount &&
+    batch.failedRecords.length === 0 &&
+    batch.failedPages.length === 0
+  );
+}
+
 @Injectable()
 export class RepoDataService {
-  private readonly githubToken: string;
+  private readonly headers: Record<string, string>;
 
   constructor(
-    @InjectModel(Repo.name) private repoModel: Model<Repo>,
-    @InjectModel(TrendingDeveloper.name)
-    private developerModel: Model<TrendingDeveloper>,
-    @InjectModel(RepoSnapshot.name) private snapshotModel: Model<RepoSnapshot>,
+    @InjectModel(RepoObservation.name)
+    private repoModel: Model<RepoObservation>,
+    @InjectModel(DeveloperObservation.name)
+    private developerModel: Model<DeveloperObservation>,
     @InjectModel(ScrapeDay.name) private scrapeDayModel: Model<ScrapeDay>,
-    private configService: ConfigService,
+    config: ConfigService,
     private repoScrapingService: RepoScrapingService,
     private scraperConfig: ScraperConfigService,
   ) {
-    this.githubToken = this.configService.get<string>('GITHUB_TOKEN') || '';
+    const token = config.get<string>('GITHUB_TOKEN');
+    this.headers = {
+      Accept: 'application/vnd.github+json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
   }
 
-  async prepTrendingData(): Promise<ProcessedRepo[]> {
-    const trendingData = await this.repoScrapingService.scrapeTrending();
-    let trendingRepoNames = trendingData || [];
-    const today = getTodayUTC();
+  async prepTrendingData(): Promise<CaptureBatch<ProcessedRepo>> {
+    const date = this.scraperConfig.getDate();
+    const scraped = await this.repoScrapingService.scrapeTrending();
+    const names = this.scraperConfig.isTestMode()
+      ? scraped.items.slice(0, 3)
+      : scraped.items;
+    const items: ProcessedRepo[] = [];
+    const failedRecords: string[] = [];
 
-    if (this.scraperConfig.isTestMode()) {
-      trendingRepoNames = trendingRepoNames.slice(0, 3);
-    }
-
-    const repoNamesWithSlash = trendingRepoNames.map((name) => `/${name}`);
-
-    console.log(
-      `Processing ${repoNamesWithSlash.length} trending repos sequentially...`,
-    );
-    console.log(
-      'There is a 1 second delay between each repo to avoid rate limits',
-    );
-
-    const repos: ProcessedRepo[] = [];
-    for (let i = 0; i < repoNamesWithSlash.length; i++) {
-      const repoName = repoNamesWithSlash[i];
-      const totalNumRepo = repoNamesWithSlash.length;
+    for (let index = 0; index < names.length; index++) {
+      const name = names[index];
+      console.log(`[${index + 1}/${names.length}] ${name}`);
       try {
-        console.log(`[${i + 1}/${totalNumRepo}] ${repoName}...`);
-        const repo = await this.processOneRepo(repoName, today);
-        repos.push(repo);
-      } catch (error) {
-        console.error(`Error processing repo ${repoName}:`, error);
+        items.push(await this.processOneRepo(name, date));
+      } catch {
+        failedRecords.push(name);
+        console.error(`Failed to collect repository metadata: ${name}`);
       }
-
-      if (i < repoNamesWithSlash.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+      if (index < names.length - 1) await this.wait(1000);
     }
 
-    return repos;
+    return {
+      date,
+      items,
+      expectedCount: names.length,
+      failedRecords,
+      failedPages: scraped.failedPages,
+    };
   }
 
-  async saveTrendingData(repos: ProcessedRepo[]): Promise<void> {
-    if (!repos.length) {
-      return;
-    }
-
+  async saveTrendingData(batch: CaptureBatch<ProcessedRepo>) {
     if (this.scraperConfig.isTestMode()) {
-      return;
+      return { date: batch.date, status: 'test-no-save', repositoryCount: 0 };
     }
+    this.validateDates(batch);
+    await this.repoModel.init();
+    await this.scrapeDayModel.init();
 
-    const date = repos[0].trendingDate;
-    if (repos.some((repo) => repo.trendingDate !== date)) {
-      throw new Error('A repository batch must belong to one UTC date');
-    }
+    // Clear any earlier completion before starting another persistence attempt.
+    // If writing fails, this date remains unfinished rather than reporting success.
+    await this.scrapeDayModel.updateOne(
+      { date: batch.date },
+      {
+        $set: {
+          status: 'running',
+          expectedRepositoryCount: batch.expectedCount,
+          failedRepositories: batch.failedRecords,
+          failedPages: batch.failedPages,
+        },
+        $setOnInsert: { repositoryCount: 0 },
+        $unset: { completedAt: '' },
+      },
+      { upsert: true },
+    );
 
-    // Preserve the first observation of each repo for this day. A rerun can
-    // fill missing repos without replacing the captured analysis inputs.
-    await this.snapshotModel.bulkWrite(
-      repos.map((repo) => ({
-        updateOne: {
-          filter: { date, fullName: repo.fullName },
-          update: {
-            $setOnInsert: {
-              date,
-              fullName: repo.fullName,
-              language: repo.language,
-              topics: repo.topics,
-            },
+    if (batch.items.length) {
+      await this.repoModel.bulkWrite(
+        batch.items.map((repo) => ({
+          updateOne: {
+            filter: { fullName: repo.fullName, date: batch.date },
+            update: { $setOnInsert: repo },
+            upsert: true,
           },
+        })),
+      );
+    }
+
+    const repositoryCount = await this.repoModel.countDocuments({
+      date: batch.date,
+    });
+    const status = isCompleteCapture(batch)
+      ? 'complete'
+      : batch.items.length
+        ? 'partial'
+        : 'failed';
+    await this.scrapeDayModel.updateOne(
+      { date: batch.date },
+      {
+        $set: {
+          status,
+          repositoryCount,
+          ...(status === 'complete' ? { completedAt: new Date() } : {}),
+        },
+      },
+    );
+    return { date: batch.date, status, repositoryCount };
+  }
+
+  private async processOneRepo(
+    name: string,
+    date: string,
+  ): Promise<ProcessedRepo> {
+    const { data } = await axios.get<GitHubRepoData>(
+      `https://api.github.com/repos/${name}`,
+      { headers: this.headers, timeout: 30_000 },
+    );
+    await this.wait(3000);
+    const language = await this.fetchLanguages(data.languages_url);
+    await this.wait(3000);
+    return {
+      fullName: data.full_name,
+      date,
+      owner: data.owner.login,
+      name: data.name,
+      description: data.description,
+      url: data.html_url,
+      language,
+      topics: data.topics || [],
+      createdAt: data.created_at,
+      lastUpdate: data.updated_at,
+      license: data.license?.name || null,
+    };
+  }
+
+  private async fetchLanguages(url: string): Promise<Record<string, number>> {
+    try {
+      const response = await axios.get<Record<string, number>>(url, {
+        headers: this.headers,
+        timeout: 30_000,
+      });
+      return response.data;
+    } catch (error) {
+      if (!axios.isAxiosError(error) || error.response?.status !== 403)
+        throw error;
+      await this.wait(2000);
+      const response = await axios.get<Record<string, number>>(url, {
+        headers: this.headers,
+        timeout: 30_000,
+      });
+      return response.data;
+    }
+  }
+
+  async prepTrendingDevelopers(): Promise<CaptureBatch<ProcessedDeveloper>> {
+    const date = this.scraperConfig.getDate();
+    const scraped = await this.repoScrapingService.scrapeTrendingDevelopers();
+    const developers = this.scraperConfig.isTestMode()
+      ? scraped.items.slice(0, 3)
+      : scraped.items;
+    const items: ProcessedDeveloper[] = [];
+    const failedRecords: string[] = [];
+
+    for (let index = 0; index < developers.length; index++) {
+      const developer = developers[index];
+      try {
+        const { data } = await axios.get<GitHubUser>(
+          `https://api.github.com/users/${developer.username}`,
+          { headers: this.headers, timeout: 30_000 },
+        );
+        items.push({
+          ...developer,
+          date,
+          profileUrl: `https://github.com/${developer.username}`,
+          location: data.location || undefined,
+          avatar_url: data.avatar_url || '',
+        });
+      } catch {
+        failedRecords.push(developer.username);
+        console.error(
+          `Failed to collect developer metadata: ${developer.username}`,
+        );
+      }
+      if (index < developers.length - 1) await this.wait(2000);
+    }
+
+    return {
+      date,
+      items,
+      expectedCount: developers.length,
+      failedRecords,
+      failedPages: scraped.failedPages,
+    };
+  }
+
+  async saveTrendingDevelopers(batch: CaptureBatch<ProcessedDeveloper>) {
+    if (this.scraperConfig.isTestMode()) return;
+    this.validateDates(batch);
+    if (!batch.items.length) return;
+    await this.developerModel.init();
+    await this.developerModel.bulkWrite(
+      batch.items.map((developer) => ({
+        updateOne: {
+          filter: { username: developer.username, date: batch.date },
+          update: { $setOnInsert: developer },
           upsert: true,
         },
       })),
     );
-
-    const ops = repos.map((repo) => ({
-      updateOne: {
-        filter: { owner: repo.owner, name: repo.name },
-        update: {
-          $set: repo,
-          $addToSet: { trendingRecord: repo.trendingDate },
-        },
-        upsert: true,
-      },
-    }));
-
-    await this.repoModel.bulkWrite(ops);
-
-    // Analysis only consumes days whose repository persistence finished.
-    await this.scrapeDayModel.updateOne(
-      { date },
-      {
-        $set: {
-          repositoryCount: await this.snapshotModel.countDocuments({ date }),
-          completedAt: new Date(),
-        },
-      },
-      { upsert: true },
-    );
   }
 
-  private async processOneRepo(
-    rawName: string,
-    today: string,
-  ): Promise<ProcessedRepo> {
-    const fullData = await this.getRepo(rawName);
-    if (!fullData) {
-      throw new Error(`Failed to fetch repo data for ${rawName}`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    const langs = await this.fetchLanguages(fullData.languages_url);
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    return this.transformRepo(fullData, langs, today);
-  }
-
-  private async getRepo(repo: string): Promise<GitHubRepoData | null> {
-    try {
-      const res = await axios.get<GitHubRepoData>(
-        `https://api.github.com/repos${repo}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.githubToken}`,
-            Accept: 'application/vnd.github.v3.raw',
-          },
-        },
-      );
-      return res.data;
-    } catch (error) {
-      console.error('Error fetching repository information:', error);
-      return null;
+  private validateDates<T extends { date: string }>(batch: CaptureBatch<T>) {
+    if (batch.items.some((item) => item.date !== batch.date)) {
+      throw new Error('All observations must belong to the batch UTC date');
     }
   }
 
-  private async fetchLanguages(url: string): Promise<LanguageData> {
-    try {
-      const res = await axios.get<LanguageData>(url, {
-        headers: {
-          Authorization: `Bearer ${this.githubToken}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
-      });
-      return res.data;
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 403) {
-        console.log('Rate limit hit, waiting 2 seconds...');
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const res = await axios.get<LanguageData>(url, {
-          headers: {
-            Authorization: `Bearer ${this.githubToken}`,
-            Accept: 'application/vnd.github.v3+json',
-          },
-        });
-        return res.data;
-      }
-      throw error;
-    }
-  }
-
-  private transformRepo(
-    rawdata: GitHubRepoData,
-    languages: LanguageData,
-    today: string,
-  ): ProcessedRepo {
-    const {
-      full_name,
-      name,
-      owner: { login: owner },
-      description,
-      html_url,
-      license,
-      created_at,
-      updated_at,
-      topics = [],
-    } = rawdata;
-
-    const createdAt = getUTCDate(created_at);
-    const lastUpdate = getUTCDate(updated_at);
-
-    return {
-      fullName: full_name,
-      owner,
-      name,
-      description,
-      url: html_url,
-      language: languages,
-      topics,
-      createdAt,
-      lastUpdate,
-      license: license?.name || null,
-      trendingDate: today,
-    };
-  }
-
-  async prepTrendingDevelopers(): Promise<ProcessedDeveloper[]> {
-    let trendingDevelopers =
-      await this.repoScrapingService.scrapeTrendingDevelopers();
-
-    if (this.scraperConfig.isTestMode()) {
-      trendingDevelopers = trendingDevelopers.slice(0, 3);
-    }
-
-    const processedDevelopers: ProcessedDeveloper[] = [];
-
-    for (let i = 0; i < trendingDevelopers.length; i++) {
-      const dev = trendingDevelopers[i];
-      try {
-        const userInfo = await this.getGitHubUser(dev.username);
-        const processedDev: ProcessedDeveloper = {
-          username: dev.username,
-          repositoryPath: dev.repositoryPath,
-          profileUrl: `https://github.com/${dev.username}`,
-          location: userInfo?.location || undefined,
-          avatar_url: userInfo?.avatar_url || '',
-        };
-        processedDevelopers.push(processedDev);
-
-        console.log(`${i + 1}/${trendingDevelopers.length}:`, dev.username);
-        if (i < trendingDevelopers.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-      } catch (error) {
-        console.error(`Error processing developer ${dev.username}:`, error);
-      }
-    }
-
-    return processedDevelopers;
-  }
-
-  private async getGitHubUser(username: string): Promise<GithubUser | null> {
-    try {
-      const res = await axios.get<GithubUser>(
-        `https://api.github.com/users/${username}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.githubToken}`,
-            Accept: 'application/vnd.github.v3+json',
-          },
-        },
-      );
-      return res.data;
-    } catch (error) {
-      console.error(`Error fetching user ${username}:`, error);
-      return null;
-    }
-  }
-
-  async saveTrendingDevelopers(
-    developers: ProcessedDeveloper[],
-  ): Promise<void> {
-    if (!developers.length) {
-      return;
-    }
-
-    if (this.scraperConfig.isTestMode()) {
-      return;
-    }
-
-    const today = getTodayUTC();
-    const ops = developers.map((dev) => ({
-      updateOne: {
-        filter: { username: dev.username },
-        update: {
-          $set: dev,
-          $addToSet: { trendingRecord: today },
-        },
-        upsert: true,
-      },
-    }));
-
-    await this.developerModel.bulkWrite(ops);
+  private wait(milliseconds: number) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
   }
 }

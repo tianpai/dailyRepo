@@ -1,81 +1,87 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ScraperModule } from './scraper.module';
 import { formatDuration } from './time.util';
-import { RepoDataService } from './services/repo-data.service';
+import {
+  isCompleteCapture,
+  RepoDataService,
+} from './services/repo-data.service';
 
-async function runBatchedScrapeJob() {
+async function runBatchedScrapeJob(testMode: boolean) {
   const jobStartTime = performance.now();
-  const MAX_RUNTIME = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
-  const isTestMode = process.argv.includes('--test-no-save');
-
-  const timeout = setTimeout(() => {
-    console.error('Job exceeded maximum runtime of 4 hours. Terminating...');
-    process.exit(1);
-  }, MAX_RUNTIME);
+  const timeout = setTimeout(
+    () => {
+      console.error('Job exceeded maximum runtime of 4 hours. Terminating.');
+      process.exit(1);
+    },
+    4 * 60 * 60 * 1000,
+  );
+  let app:
+    | Awaited<ReturnType<typeof NestFactory.createApplicationContext>>
+    | undefined;
 
   try {
-    const app = await NestFactory.createApplicationContext(ScraperModule);
-    const repoDataService = app.get(RepoDataService);
-
-    console.log('\n[1/2] PROCESSING REPOSITORIES');
-    const repoStartTime = performance.now();
-    const repos = await repoDataService.prepTrendingData();
-    console.log(
-      `Prepared ${repos.length} repos at ${new Date().toISOString()}`,
+    app = await NestFactory.createApplicationContext(
+      ScraperModule.forRoot(testMode),
+      { abortOnError: false },
     );
-    await repoDataService.saveTrendingData(repos);
-    repos.forEach((r, i) => {
-      console.log(` ${i + 1}. [${r.fullName}]`);
-    });
-    if (!isTestMode) {
-      console.log(
-        `\nSaved ${repos.length} repos to database at ${new Date().toISOString()}`,
-      );
-    }
-    console.log(`Step 1 completed in ${formatDuration(repoStartTime)}\n`);
+    const service = app.get(RepoDataService);
+
+    console.log('[1/2] PROCESSING REPOSITORIES');
+    const repositories = await service.prepTrendingData();
+    const result = await service.saveTrendingData(repositories);
+    console.log(JSON.stringify(result));
 
     console.log('[2/2] PROCESSING DEVELOPERS');
-    const devStartTime = performance.now();
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    const developers = await repoDataService.prepTrendingDevelopers();
-    await repoDataService.saveTrendingDevelopers(developers);
-    console.log(`Step 2 completed in ${formatDuration(devStartTime)}\n`);
+    const developers = await service.prepTrendingDevelopers();
+    await service.saveTrendingDevelopers(developers);
+    console.log(
+      `Collected ${developers.items.length}/${developers.expectedCount} developers for ${developers.date}`,
+    );
 
-    await app.close();
-    process.exitCode = 0;
-  } catch (err) {
-    console.log('\n' + '!'.repeat(60));
-    console.error(`[ERROR] Job failed at ${new Date().toISOString()}`);
-    console.error(err);
-    console.log('!'.repeat(60));
+    const complete =
+      isCompleteCapture(repositories) && isCompleteCapture(developers);
+    if (!complete) {
+      console.error(
+        'Collection was incomplete. Successful observations were retained; rerun the job to retry.',
+      );
+    }
+    process.exitCode = complete ? 0 : 1;
+  } catch {
+    // Network/driver error objects can contain credentials in their configuration.
+    console.error(
+      'Scraper failed. Check the collection configuration and preceding logs.',
+    );
     process.exitCode = 1;
   } finally {
     clearTimeout(timeout);
-    const totalDuration = formatDuration(jobStartTime);
-    const status = process.exitCode === 0 ? 'SUCCESS' : 'FAILED';
-    const statusSuffix = isTestMode ? ' (test-no-save)' : '';
-
-    console.log('\n' + '='.repeat(60));
-    console.log(`[${new Date().toISOString()}] JOB COMPLETED`);
-    console.log(`Total Duration: ${totalDuration}`);
-    console.log(`Status: ${status}${statusSuffix}`);
-    console.log('='.repeat(60) + '\n');
+    if (app) await app.close();
+    console.log(
+      `Job ${process.exitCode === 0 ? 'succeeded' : 'failed'} in ${formatDuration(jobStartTime)}${testMode ? ' (test-no-save)' : ''}`,
+    );
   }
 }
 
-const isTestMode = process.argv.includes('--test-no-save');
-const isBatchMode = process.argv.includes('--run-batched');
-
-if (isTestMode || isBatchMode) {
-  void runBatchedScrapeJob().finally(() => {
+const args = process.argv.slice(2);
+const testMode = args.includes('--test-no-save');
+if (args.length === 1 && (testMode || args.includes('--run-batched'))) {
+  void runBatchedScrapeJob(testMode).finally(() => {
     process.exit(process.exitCode || 0);
   });
+} else if (args.length === 1 && args[0] === '--help') {
+  console.log(`Usage:
+  --run-batched    Collect and persist daily observations
+  --test-no-save   Collect up to three repos/developers without connecting to MongoDB
+
+Saving requires SCRAPER_MONGODB_URI pointing at the new database.
+GITHUB_TOKEN authorizes GitHub API requests.
+ENV_FILE selects an environment file relative to the scraper directory.`);
 } else {
-  console.log('Use --run-batched or --test-no-save flag to run the scraper');
-  process.exit(1);
+  console.error('Use --run-batched, --test-no-save, or --help.');
+  process.exitCode = 1;
 }
 
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err);
+process.on('unhandledRejection', () => {
+  console.error('Unhandled scraper failure.');
   process.exit(1);
 });

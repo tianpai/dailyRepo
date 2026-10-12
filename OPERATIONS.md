@@ -1,122 +1,103 @@
 # Data collection and analysis
 
-DailyRepo is a pnpm workspace. The frontend and API remain in `frontend/` and
-`backend/`; analysis lives in `jobs/`, scraping in `scraper/`, and MongoDB schemas
-and connection configuration in `packages/database/`.
+DailyRepo is a pnpm workspace: `frontend/`, `backend/`, `scraper/`, `jobs/`, and
+shared database code under `packages/database/`.
 
-The API only reads saved analysis. It does not run the analysis scheduler or call
-Hugging Face. Its keyword/topic response cache expires after five minutes, so a
-job's database updates become visible without restarting the API.
+The scraper now uses the dated observation model: one repository document per
+repository per UTC day. The API and analysis workspace still use the previous
+schema. Analysis is paused for the new database while those readers are adapted.
+See [scraper operations](scraper/README.md) for the complete storage and failure
+contract.
 
-## Local commands
+## Build and local development
 
-Use Node 22.20 or newer within the Node 22 series and the pnpm version pinned in
-the root package manifest.
+Use Node 22.20 or newer within Node 22 and pnpm 12.4.2 as pinned in the root
+package manifest. From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm build
 pnpm test
-pnpm dev:api
-pnpm dev:web
 ```
 
-One-off analysis commands do not start an HTTP server or register scheduled jobs:
+The existing API/frontend can still run against their existing configuration:
 
 ```sh
-pnpm jobs:daily --date 2026-10-10
-pnpm jobs:weekly --week-of 2026-10-05
+PORT=3000 pnpm dev:api
+VITE_BASE_URL=http://localhost:3000 VITE_API_V2=/api/v2 PORT=5173 pnpm dev:web
 ```
 
-`daily` defaults to today's UTC date. `weekly` defaults to the previous completed
-Monday–Sunday UTC week. `--week-of` can name any date inside a completed week;
-the command resolves it to that week's Monday and Sunday. Existing analysis is
-preserved by default. `--force` explicitly replaces the saved result, after
-validating the input capture. Output includes `saved` or `existing` and the target
-period; a failed command exits unsuccessfully.
+The API loads `backend/.env` and uses `MONGODB_URI` or `MONGO`. It reads stored
+analysis results and does not launch scheduled calculation.
 
-The continuous scheduler uses the same commands internally:
+## New scraper configuration
+
+Set `SCRAPER_MONGODB_URI` to a connection string selecting the new database,
+and supply `GITHUB_TOKEN` for GitHub API access. The scraper reads `scraper/.env`
+or a file selected by `ENV_FILE`. A mounted `SCRAPER_MONGODB_URI_FILE` takes
+precedence over the environment value. No real environment files are tracked.
 
 ```sh
-pnpm jobs:schedule
+pnpm --filter @dailyrepo/scraper... build
+pnpm scrape
 ```
 
-It runs daily at 18:00 UTC and Monday at 19:00 UTC. The Monday job analyzes the
-preceding completed week. Keep one scheduler active; scheduled invocations of the
-same job do not overlap within that process. A stopped or sleeping local machine
-does not execute schedules or automatically catch up. The dated commands can run
-missed periods later when their captured inputs are available.
-
-## Configuration and secrets
-
-The API and scraper accept `MONGODB_URI` or the existing `MONGO` variable. Jobs
-also need `HUGGING_FACE`. The scraper also needs `GITHUB_TOKEN`; GitHub Actions
-continues supplying its existing token and Atlas credentials.
-
-Jobs normally load `jobs/.env`. `ENV_FILE` can select an existing local file
-without copying credentials. Paths are relative to the workspace executing the
-command, for example:
+For collection without any MongoDB connection or writes:
 
 ```sh
-ENV_FILE=../backend/.env pnpm jobs:daily --date 2026-10-10
-ENV_FILE=../backend/.env pnpm jobs:schedule
+pnpm --filter @dailyrepo/scraper scrape:test
 ```
 
-Runtime environment variables also work. For Compose secrets, `MONGODB_URI_FILE`
-(or `MONGO_FILE`) and `HUGGING_FACE_FILE` select mounted files. The file value takes
-precedence over its corresponding environment value. Secret files stay outside
-Git and Docker images. The templates contain no production credentials.
+The scraper requires its dedicated database setting; the old API database
+variables are not used. No database has been created or populated by this change.
 
-## Captured inputs and backfills
+## Captured data
 
-The existing `repos`, `trendingdevelopers`, `keywords`, and `weeklytopicfindings`
-collections remain. Scraping additionally writes:
+In the new database:
 
-- `reposnapshots`: topics and language counts keyed by UTC date and repository.
-  A rerun preserves the first captured metadata for each repository that day and
-  can add repositories that were missing from the earlier attempt.
-- `scrapedays`: a completion record with the number of persisted repository
-  snapshots. This is written only after snapshot and current-repository saves
-  finish. It describes the repositories successfully collected by the scraper;
-  it does not establish that every GitHub trending page/request succeeded.
+- `repos` stores complete dated repository observations with unique
+  `(fullName, date)` keys. Latest and historical data are queried from this one
+  collection. Later days never replace earlier days.
+- `trendingdevelopers` stores dated developer observations keyed by
+  `(username, date)`.
+- `scrapedays` tracks repository collection status, saved/expected counts,
+  failed fetches, and completion time. Failed/partial captures are not marked
+  complete. Same-day retries preserve captured metadata and can fill missing
+  observations.
 
-Daily jobs require a completed capture for the requested date. Weekly jobs require
-all seven days and use each repository once, with its latest captured metadata
-inside that week. The job checks snapshot counts against the completion records.
-Missing or inconsistent input prevents analysis writes; a latest scrape is never
-stored under an earlier requested date.
+The scraper registers only these models. It does not write the old mutable repo
+model, `reposnapshots`, keyword outputs, or weekly topic outputs. The shared
+package retains the legacy schemas for the API and existing analysis workspace.
 
-New outputs keep the existing document keys and add input provenance. Weekly
-outputs also include `periodStart` and `periodEnd`. The storage `year`/`week` keeps
-the existing convention, computed consistently from the input week's Monday in
-UTC; these keys are not ISO week numbers. Weekly clustering keeps the existing
-raw-topic-count fallback when Hugging Face fails or a language has fewer than 20
-topics.
+## Analysis and backfill
 
-Before this change, `trendingRecord` retained appearance dates while topics and
-language counts were overwritten on later scrapes. Those dates alone do not
-provide exact historical metadata. Existing saved analyses remain usable, but
-the new commands refuse to invent missing historical snapshots. Original snapshots
-or backups would be needed to reproduce older inputs. Captured inputs make later
-calculation possible; changing the inference model or algorithm may still change
-the output.
+The captured `date`, `fullName`, `topics`, and `language` fields are the inputs
+needed by the current daily keyword and weekly topic algorithms. An analysis
+reader for the new schema will select dated observations, validate collection
+coverage, and calculate explicitly requested dates or completed weeks.
 
-## Keeping production collection running during reconstruction
+That reader is not part of the scraper change. The existing `jobs` workspace
+still expects `reposnapshots`; do not start its scheduler against this new
+schema. Preserving inputs now allows dated calculation after analysis is adapted.
+The model and calculation configuration also affect the produced results.
 
-Local edits do not change the running Railway backend or GitHub's checked-in
-workflow. The updated GitHub workflow keeps the existing schedule, credentials,
-and temporary Atlas allowlisting; it installs from the root pnpm lockfile and
-builds the scraper with its shared database dependency.
+Existing saved results and the old database remain intact. No legacy data is
+converted automatically. The old `trendingRecord` contains appearance dates,
+but does not contain the topics/languages that existed on each older date.
 
-When releasing this structure, roll out the scraper capture first while the
-existing production analysis continues running. Daily snapshot input is available
-after the first successful repository capture. A full Monday–Sunday window is
-needed before the new weekly job can compute a missing result. A partial first
-week will fail the coverage check.
+## Production transition
 
-Enable the new scheduler only once its inputs and runtime are verified, then
-disable the old Railway schedules. Deploying the new API by itself removes
-scheduled analysis from that service, so the existing production revision must
-remain active until the jobs process is ready. Stopping only the website does not affect
-collection or the separate analysis process. No production database migration or
-backfill is run by building or testing the workspaces.
+The branch's GitHub workflow retains the daily 15:20 UTC schedule and temporary
+Atlas IP allowlisting, installs from the root pnpm lockfile, and builds the
+scraper with its database dependency. It requires `SCRAPER_MONGODB_URI` as a new
+repository secret. This avoids directing the new model at the old API database.
+
+Local edits do not modify the deployed API, the default branch's workflow, or
+any GitHub secrets. The new database and daily workflow need an explicit rollout
+and a verified saved capture before the old collector is retired. Scheduled
+workflows run only from the default branch.
+
+The website and analysis can be stopped once the new collector is running;
+collection does not require either process. A sleeping/stopped local machine
+does not execute collection. GitHub schedule delays/failures still need handling;
+rerunning collection later cannot reconstruct a missed historical trending page.
