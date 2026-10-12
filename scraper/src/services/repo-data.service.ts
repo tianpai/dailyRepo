@@ -14,8 +14,6 @@ import { ScraperConfigService } from './scraper-config.service';
 interface GitHubRepoData {
   id: number;
   full_name: string;
-  name: string;
-  owner: { login: string };
   description: string;
   license?: { name: string } | null;
   created_at: string;
@@ -28,8 +26,6 @@ export interface ProcessedRepo {
   repo_id: number;
   fullName: string;
   date: string;
-  owner: string;
-  name: string;
   description: string;
   language: Record<string, number>;
   topics: string[];
@@ -193,8 +189,6 @@ export class RepoDataService {
       repo_id: data.id,
       fullName: data.full_name,
       date,
-      owner: data.owner.login,
-      name: data.name,
       description: data.description,
       language,
       topics: data.topics || [],

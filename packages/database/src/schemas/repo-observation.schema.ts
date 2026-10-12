@@ -13,12 +13,6 @@ export class RepoObservation extends Document {
   @Prop({ required: true })
   date: string;
 
-  @Prop({ required: true })
-  owner: string;
-
-  @Prop({ required: true })
-  name: string;
-
   @Prop()
   description: string;
 

@@ -21,8 +21,6 @@ const observation: ProcessedRepo = {
   repo_id: 123456,
   fullName: 'owner/repo',
   date: '2026-10-09',
-  owner: 'owner',
-  name: 'repo',
   description: '',
   language: { TypeScript: 100 },
   topics: ['observability'],

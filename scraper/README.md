@@ -81,10 +81,11 @@ backfilled; same-day retries preserve the first saved metadata. Persistence
 still uses `(fullName, date)`, while a `(repo_id, date)` index supports querying a
 repository's observations across name changes.
 
-The documents also include owner, name, description, license, and repository
-timestamps. Repository URLs are derived as `https://github.com/{fullName}`
-instead of stored. Unique indexes prevent duplicate repository/day and developer/day
-records. The scraper waits for those indexes before saving. A same-day rerun
+The documents also include description, license, and repository timestamps.
+Owner and repository name are derived by splitting `fullName` at `/`, and
+repository URLs are derived as `https://github.com/{fullName}` instead of stored.
+Unique indexes prevent duplicate repository/day and developer/day records.
+The scraper waits for those indexes before saving. A same-day rerun
 preserves the first successfully saved metadata and can add missing observations.
 A later date always uses a different key.
 
