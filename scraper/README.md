@@ -72,8 +72,9 @@ For example, two days for the same repository are two documents in `repos`:
 ]
 ```
 
-The documents also include owner, name, description, URL, license, and repository
-timestamps. Unique indexes prevent duplicate repository/day and developer/day
+The documents also include owner, name, description, license, and repository
+timestamps. Repository URLs are derived as `https://github.com/{fullName}`
+instead of stored. Unique indexes prevent duplicate repository/day and developer/day
 records. The scraper waits for those indexes before saving. A same-day rerun
 preserves the first successfully saved metadata and can add missing observations.
 A later date always uses a different key.

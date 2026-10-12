@@ -16,7 +16,6 @@ interface GitHubRepoData {
   name: string;
   owner: { login: string };
   description: string;
-  html_url: string;
   license?: { name: string } | null;
   created_at: string;
   updated_at: string;
@@ -30,7 +29,6 @@ export interface ProcessedRepo {
   owner: string;
   name: string;
   description: string;
-  url: string;
   language: Record<string, number>;
   topics: string[];
   createdAt: string;
@@ -195,7 +193,6 @@ export class RepoDataService {
       owner: data.owner.login,
       name: data.name,
       description: data.description,
-      url: data.html_url,
       language,
       topics: data.topics || [],
       createdAt: data.created_at,

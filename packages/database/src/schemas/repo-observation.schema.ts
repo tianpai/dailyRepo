@@ -19,9 +19,6 @@ export class RepoObservation extends Document {
   @Prop()
   description: string;
 
-  @Prop({ required: true })
-  url: string;
-
   @Prop({ type: Object, required: true })
   language: LanguageMap;
 
