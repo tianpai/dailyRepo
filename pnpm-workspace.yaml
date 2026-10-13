@@ -8,6 +8,7 @@ allowBuilds:
   "esbuild@0.25.9": true
   "unrs-resolver@1.12.2": true
 overrides:
+  "@nestjs/platform-express": 11.2.7
   path-to-regexp: 8.4.2
   "@angular-devkit/core>picomatch": 4.0.7
   "jest-util>picomatch": 4.0.7
